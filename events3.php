@@ -35,192 +35,181 @@
  *
  *
  */
-// Temporary Developement
-$iStart = microtime(true);
-
-// All functionality of the events3 framwork is in this
-// handler class. Get the event handler by way of this call.
-// It is a singleton pattern implementation
-$Events3 = Events3::GetHandler();
-// Set some properties. Note that these are the default settings
-// and only displayed for demonstrating the basic configuration of the handler
-$Events3->bDebug = true;  //
-$Events3->Run();
-
-// Temporary Developement 
-//echo '<br /><br /><hr />Doorlooptijd: '. round( (microtime(true)-$iStart)*1000 , 2) . 'm.s.';
-
 class Events3 {
-  // Singleton pattern
-  private static $_oInstance = null;
-  // true for development, false for producton
 
-  public $bDebug = FALSE;
+    // Singleton pattern
+    private static $_oInstance = null;
+// True for development, false for producton
+    public $bDebug = FALSE;
+    private $_aInstances = array();
+    // Unique list of available modules
+    private $_aModuleList = array();
+    // Unique list of modules by event
+    private $_aEventList = array();
+    // Filecache for the modulelist
+    public $bEventFileCache = true;
 
-  /**
-   * Events3::Run()
-   *
-   * Start the eventhandling sequence
-   *
-   * @return void
-   */
-  public function Run() {
-    // Initialize modules
-    $this->Raise('PreRun');
-    // Basic functionality
-    $this->Raise('Run');
-    // Cleanup
-    $this->Raise('PostRun');
-  }
+    public function __construct() {
+        // Scan all modules and build the lists
+        $this->BuildModuleList();
+    }
 
-  /**
-   * Events3::Raise()
-   *
-   * First argument shoudl be the case sensitive event name
-   * followed by a optional number of extra parameters
-   *
-   * @return void
-   */
-  public function Raise() {
-    // If a module/class is instantiated it is saved 
-    // for the duration of the request.
-    static $aInstances = array();
-    $aParams = func_get_args();
-    $sEvent = array_shift($aParams);
-    $aModuleList = $this->GetModules( $sEvent );
-    $sEventName = 'Events3'.$sEvent;
-    foreach($aModuleList as $cModulePath ) {
-      // Lazy loading!!!
-      if( !array_key_exists($cModulePath, $aInstances)) {
-        $cModuleName = basename($cModulePath);
-        $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
-        if(is_readable($cModuleFile)) {
-          include_once $cModuleFile;
-          $aInstances[$cModulePath] = new $cModuleName;
+    /**
+     * Events3::Run()
+     *
+     * Start the eventhandling sequence
+     *
+     * @return void
+     */
+    public function Run() {
+        // Initialize modules
+        $this->Raise('PreRun');
+        // Basic functionality
+        $this->Raise('Run');
+        // Cleanup
+        $this->Raise('PostRun');
+    }
+
+    /**
+     * Events3::Raise()
+     *
+     * First argument shoudl be the case sensitive event name
+     * followed by a optional number of extra parameters
+     *
+     * @return void
+     */
+    public function Raise() {
+        // If a module/class is instantiated it is saved 
+        // for the duration of the request.
+        static $aInstances = array();
+        $aParams = func_get_args();
+        $sEvent = array_shift($aParams);
+        $aModuleList = (array) $this->_aEventList[$sEvent];
+        $sEventName = 'Events3' . $sEvent;
+        foreach ($aModuleList as $cModulePath) {
+            $oModule = $this->LoadModule($cModulePath);
+            call_user_func_array(array($oModule, $sEventName), $aParams);
         }
-      }
-      $oModule = $aInstances[$cModulePath];
-      call_user_func_array(array($oModule, $sEventName), $aParams);
     }
-    //print_r(get_defined_vars());
-    //echo '<br />';
-  }
 
-  /**
-   * Events3::GetModules()
-   *
-   * Return module instances that implement a specified event
-   *
-   * @param string $sEvent
-   * @return void
-   */
-  private function GetModules( $sEvent ) {
-    $aModules = array();
-    $aFullModuleList = $this->GetModuleList();
-    return (array) $aFullModuleList[ $sEvent ];
-  }
-
-  /**
-   * Events3::GetModuleList()
-   *
-   * Create a list of all available modules and the events they implement.
-   * In production mode this list is fully cached for optimal performance
-   *
-   * So, lazy loading is only available in production mode because we
-   * need to determine which modules implement our events.
-   * Once we know that, we only include the modules at the moment the
-   * first event is fired.
-   *
-   *
-   *
-   * @return void
-   */
-  private function GetModuleList(){
-    // Implement static caching
-    // First level cache
-    static $cache = null;
-    if(!is_null($cache)) {
-      return $cache;
-    } 
-    
-    // Implement file caching
-    // Second level cache
-    if (!$this->bDebug) {
-      // Regenerate cache every minute
-      $iTimeStamp = (integer) (time()/60);
-      $sFileName = sys_get_temp_dir() . '/Events3EventCache.' . $iTimeStamp . '.tmp';
-      if (is_readable($sFileName)) {
-        $aEventList = (array) unserialize(file_get_contents($sFileName));
-        if(count($aEventList)>1) {
-          return $aEventList;
+    private function LoadModule($cModuleName) {
+        $cModulePath = $cModuleName;
+        // Is it a plain modulename?
+        if (isset($this->_aModuleList[$cModuleName])) {
+            $cModulePath = $this->_aModuleList[$cModuleName];
         }
-      }
-    }
-    
-    // Scan all the module paths recursive for all the packages
-    $aList = array();
-    $aLibraries = $this->GetModulePaths();
-    foreach($aLibraries as $sPath) {
-      $aList = array_merge($aList, $this->_getModuleListRecursive($sPath));
-    }
-    // Now scan all the packages for the events the implement
-    $aEventList = array();
-    foreach($aList as $cModulePath) {
-      $cModuleName = basename($cModulePath);
-      $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
-      if(is_readable($cModuleFile)) {
-        include_once $cModuleFile;
-        $aMethods = get_class_methods( $cModuleName );
-        foreach($aMethods as $cMethodName) {
-          if ( strpos($cMethodName,'Events3') === 0 ) {
-            $cEventName = substr($cMethodName, 7);
-            $aEventList[ $cEventName ][] = $cModulePath;
-          }
-        }
-      }
-    }
-    
-    // Write file cache
-    if (!$this->bDebug) {
-       file_put_contents($sFileName, serialize($aEventList));
-    }
-    
-    // Write static cache
-    $cache = $aEventList;
-    
-    //print_r($aEventList);
-    //echo('<br />');
-    return $aEventList;
-  }
-  
-  private function _getModuleListRecursive( $sDir ) {
-    $aList = glob( $sDir . '/*', GLOB_ONLYDIR);
-    foreach($aList as $sPath) {
-      $aList = array_merge($aList, $this->_getModuleListRecursive($sPath));
-      //$aList += $this->_getModuleListRecursive($sPath);
-    }
-    //print_r($aList);
-    //echo('<br />');
-    return $aList;
-  }
 
-  private function GetModulePaths() {
-    // @todo implement addon paths
-    return array( 'modules', 'lib');
-  }
-  /**
-   * Events3::GetHandler()
-   *
-   * @return instance of Events3
-   */
-  static function GetHandler() {
-    if (is_null(self::$_oInstance)) {
-      self::$_oInstance = new Events3();
+        // Lazy loading!!!
+        if (!array_key_exists($cModulePath, $this->_aInstances)) {
+            $cModuleName = basename($cModulePath);
+            $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
+            if (is_readable($cModuleFile)) {
+                include_once $cModuleFile;
+                $this->_aInstances[$cModulePath] = new $cModuleName;
+            }
+        }
+
+        $oModule = NULL;
+        if (is_object($this->_aInstances[$cModulePath])) {
+            $oModule = $this->_aInstances[$cModulePath];
+        }
+
+        return $oModule;
     }
-    return self::$_oInstance;
-  }
+
+    
+
+    private function BuildModuleList() {
+
+        // Implement file caching
+        if ($this->bEventFileCache) {
+            // Regenerate cache every minute
+            $iTimeStamp = (integer) (time() / 60);
+            $sFileName = sys_get_temp_dir() . '/Events3EventCache.' . $iTimeStamp . '.tmp';
+            if (is_readable($sFileName)) {
+                $aCache = (array) unserialize(file_get_contents($sFileName));
+                $this->_aModuleList = (array) $aCache['modules'];
+                $this->_aEventList = (array) $aCache['events'];
+                if (count($this->_aEventList) > 0) {
+                    return;
+                }
+            }
+        }
+
+        // Scan all the module paths recursive for all the packages
+        $aList = array();
+        $aLibraries = $this->GetModulePaths();
+        foreach ($aLibraries as $sPath) {
+            $aList = array_merge($aList, $this->_getModuleListRecursive($sPath));
+        }
+
+        // Now scan all the packages for the events the implement
+        $aEventList = array();
+        foreach ($aList as $cModulePath) {
+            $cModuleName = basename($cModulePath);
+            $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
+            // Create the entry in the main modulelist
+            $this->_aModuleList[$cModuleName] = $cModulePath;
+            if (is_readable($cModuleFile)) {
+                include_once $cModuleFile;
+                $aMethods = get_class_methods($cModuleName);
+                foreach ($aMethods as $cMethodName) {
+                    if (strpos($cMethodName, 'Events3') === 0) {
+                        $cEventName = substr($cMethodName, 7);
+                        $this->_aEventList[$cEventName][] = $cModulePath;
+                    }
+                }
+            }
+        }
+
+        // Write file cache
+        if (!$this->bEventFileCache) {
+            $aCache = array(
+                'modules' => $this->_aModuleList,
+                'events' => $this->_aEventList,
+            );
+            file_put_contents($sFileName, serialize($aCache));
+        }
+    }
+
+    private function _getModuleListRecursive($sDir) {
+        $aList = glob($sDir . '/*', GLOB_ONLYDIR);
+        foreach ($aList as $sPath) {
+            $aList = array_merge($aList, $this->_getModuleListRecursive($sPath));
+            //$aList += $this->_getModuleListRecursive($sPath);
+        }
+        //print_r($aList);
+        //echo('<br />');
+        return $aList;
+    }
+
+    private function GetModulePaths() {
+        // @todo implement addon paths
+        return array('modules', 'lib');
+    }
+
+    /**
+     * Events3::GetHandler()
+     *
+     * @return instance of Events3
+     */
+    static function GetHandler() {
+        if (is_null(self::$_oInstance)) {
+            self::$_oInstance = new Events3();
+        }
+        return self::$_oInstance;
+    }
+
 }
 
-class Events3Module  {
-
+class Events3Module {
+   /**
+    * Simple function to load and return a module instance
+    * @param string $cMod Name of the module
+    * @return object|null Instantiated module
+    */
+    public function load( $cMod ) {
+       $ev3 = Events3::GetHandler();
+       return $ev3->LoadModule($cMod); 
+   } 
 }

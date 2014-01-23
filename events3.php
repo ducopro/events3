@@ -47,7 +47,7 @@ class Events3 {
     // Unique list of modules by event
     private $_aEventList = array();
     // Filecache for the modulelist
-    public $bEventFileCache = true;
+    public $bEventFileCache = false;
 
     public function __construct() {
         // Scan all modules and build the lists
@@ -73,15 +73,12 @@ class Events3 {
     /**
      * Events3::Raise()
      *
-     * First argument shoudl be the case sensitive event name
-     * followed by a optional number of extra parameters
+     * First argument should be the case sensitive event name
+     * followed by an optional number of extra parameters
      *
      * @return void
      */
     public function Raise() {
-        // If a module/class is instantiated it is saved 
-        // for the duration of the request.
-        static $aInstances = array();
         $aParams = func_get_args();
         $sEvent = array_shift($aParams);
         $aModuleList = (array) $this->_aEventList[$sEvent];
@@ -92,6 +89,12 @@ class Events3 {
         }
     }
 
+    /**
+     * Load a single module
+     * 
+     * @param string $cModuleName
+     * @return object Instantiaded Module/Class
+     */
     private function LoadModule($cModuleName) {
         $cModulePath = $cModuleName;
         // Is it a plain modulename?
@@ -117,8 +120,10 @@ class Events3 {
         return $oModule;
     }
 
-    
-
+    /**
+     * Scan and save all the modules and events in the system
+     * @return void
+     */
     private function BuildModuleList() {
 
         // Implement file caching
@@ -137,15 +142,14 @@ class Events3 {
         }
 
         // Scan all the module paths recursive for all the packages
-        $aList = array();
+        $this->_aModuleList = array();
         $aLibraries = $this->GetModulePaths();
         foreach ($aLibraries as $sPath) {
-            $aList = array_merge($aList, $this->_getModuleListRecursive($sPath));
+            $this->_getModuleListRecursive($sPath);
         }
 
         // Now scan all the packages for the events the implement
-        $aEventList = array();
-        foreach ($aList as $cModulePath) {
+        foreach ($this->_aModuleList as $cModulePath) {
             $cModuleName = basename($cModulePath);
             $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
             // Create the entry in the main modulelist
@@ -172,17 +176,20 @@ class Events3 {
         }
     }
 
+    /**
+     * @param string $sDir Path to scan
+     */
     private function _getModuleListRecursive($sDir) {
         $aList = glob($sDir . '/*', GLOB_ONLYDIR);
         foreach ($aList as $sPath) {
-            $aList = array_merge($aList, $this->_getModuleListRecursive($sPath));
-            //$aList += $this->_getModuleListRecursive($sPath);
+            $this->_aModuleList[ basename($sPath) ] = $sPath;            
+            $this->_getModuleListRecursive($sPath);
         }
-        //print_r($aList);
-        //echo('<br />');
-        return $aList;
     }
 
+    /**
+     * @return array List of paths where modules can be found
+     */
     private function GetModulePaths() {
         // @todo implement addon paths
         return array('modules', 'lib');
@@ -203,13 +210,15 @@ class Events3 {
 }
 
 class Events3Module {
-   /**
-    * Simple function to load and return a module instance
-    * @param string $cMod Name of the module
-    * @return object|null Instantiated module
-    */
-    public function load( $cMod ) {
-       $ev3 = Events3::GetHandler();
-       return $ev3->LoadModule($cMod); 
-   } 
+
+    /**
+     * Simple function to load and return a module instance
+     * @param string $cMod Name of the module
+     * @return object|null Instantiated module
+     */
+    public function load($cMod) {
+        $ev3 = Events3::GetHandler();
+        return $ev3->LoadModule($cMod);
+    }
+
 }

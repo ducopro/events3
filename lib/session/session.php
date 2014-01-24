@@ -17,6 +17,9 @@ class session extends Events3Module {
         session_destroy();
     }
     
+    function Destroy() {
+        session_destroy();
+    }
    
     
 }

@@ -1,5 +1,8 @@
 <?php
 
+// NO ERROR reporting
+error_reporting(0);
+
 /**
  * @file
  * events3.php
@@ -39,7 +42,7 @@ class Events3 {
 
     // Singleton pattern
     private static $_oInstance = null;
-// True for development, false for producton
+    // True for development, false for producton
     public $bDebug = FALSE;
     private $_aInstances = array();
     // Unique list of available modules
@@ -62,6 +65,9 @@ class Events3 {
      * @return void
      */
     public function Run() {
+        if ($this->bDebug) {
+            error_reporting(E_ALL);
+        }
         // Initialize modules
         $this->Raise('PreRun');
         // Basic functionality
@@ -95,9 +101,11 @@ class Events3 {
      * @param string $cModuleName
      * @return object Instantiaded Module/Class
      */
-    private function LoadModule($cModuleName) {
+    public function LoadModule($cModuleName) {
         $cModulePath = $cModuleName;
-        // Is it a plain modulename?
+
+        //print_r($this->_aModuleList);
+// Is it a plain modulename?
         if (isset($this->_aModuleList[$cModuleName])) {
             $cModulePath = $this->_aModuleList[$cModuleName];
         }
@@ -182,7 +190,7 @@ class Events3 {
     private function _getModuleListRecursive($sDir) {
         $aList = glob($sDir . '/*', GLOB_ONLYDIR);
         foreach ($aList as $sPath) {
-            $this->_aModuleList[ basename($sPath) ] = $sPath;            
+            $this->_aModuleList[basename($sPath)] = $sPath;
             $this->_getModuleListRecursive($sPath);
         }
     }
@@ -209,6 +217,9 @@ class Events3 {
 
 }
 
+/**
+ * Use this class as a baseclass for your modules
+ */
 class Events3Module {
 
     /**
@@ -222,3 +233,45 @@ class Events3Module {
     }
 
 }
+
+
+/**
+ * Use this class as a baseclass for your modules that implement
+ * unittesting for you module
+ * 
+ * Example:
+ * 
+ * /Example/Example.php                   extends Events3Module
+ *         /TestExample/TestExample.php   extends Events3TestCase
+ * 
+ * 
+ * 
+ * 
+ */
+class Events3TestCase extends Events3Module {
+    
+    /**
+     * Most basic assert to compare two values
+     * @param type $var1
+     * @param type $var2
+     */
+    public function assert( $var1, $var2) {
+        $this->_assert($var1, $var2);
+    }
+    
+    /**
+     * Workhorse assertion function
+     * 
+     * @param type $var1
+     * @param type $var2
+     * @param type $op
+     * @param type $message
+     */
+    private function _assert( $var1, $var2, $op = '==', $message = 'Values do not match' ) {
+       if ( !eval(" return ('{$var1}' {$op} '{$var2}');")) {
+           // TODO
+       } 
+    }
+        
+    
+};

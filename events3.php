@@ -1,5 +1,4 @@
 <?php
-
 // NO ERROR reporting
 error_reporting(0);
 
@@ -74,6 +73,24 @@ class Events3 {
         $this->Raise('Run');
         // Cleanup
         $this->Raise('PostRun');
+    }
+
+    /**
+     * Events3::Test()
+     *
+     * Start the testing sequence
+     *
+     * @return void
+     */
+    public function Test() {
+        error_reporting(0);
+
+        // Initialize testing (optional)
+        $this->Raise('PreTest');
+        // Run tests
+        $this->Raise('Test');
+        // Cleanup environment (optional)
+        $this->Raise('PostTest');
     }
 
     /**
@@ -234,7 +251,6 @@ class Events3Module {
 
 }
 
-
 /**
  * Use this class as a baseclass for your modules that implement
  * unittesting for you module
@@ -249,29 +265,62 @@ class Events3Module {
  * 
  */
 class Events3TestCase extends Events3Module {
-    
-    /**
-     * Most basic assert to compare two values
-     * @param type $var1
-     * @param type $var2
-     */
-    public function assert( $var1, $var2) {
-        $this->_assert($var1, $var2);
+
+    private static $iStartTime = null;
+    private static $oAssertList = array();
+    private static $iAssertCountTotal = 0;
+    private static $iAssertCountFailed = 0;
+
+    public function __construct() {
+        if (is_null(self::$iStartTime)) {
+            self::$iStartTime = microtime(true);
+        }
     }
-    
+
     /**
-     * Workhorse assertion function
+     * Test an assertion and store some information about the assertions
+     * that ran.
      * 
-     * @param type $var1
-     * @param type $var2
-     * @param type $op
-     * @param type $message
+     * @param boolean $bShouldBeTrue
+     * @param string $message
      */
-    private function _assert( $var1, $var2, $op = '==', $message = 'Values do not match' ) {
-       if ( !eval(" return ('{$var1}' {$op} '{$var2}');")) {
-           // TODO
-       } 
+    public function assert($bShouldBeTrue, $cMessage = 'Assertion failed') {
+        self::$iAssertCountTotal++;
+        if (!$bShouldBeTrue) {
+            $this->AddAssertFailed($cMessage);
+        }
     }
+
+    private function AddAssertFailed($cMessage) {
+        self::$iAssertCountFailed++;
+        $cClassName = get_class();
+
+        $bt = debug_backtrace();
+        $caller = array_shift($bt);
+        $caller = array_shift($bt);
+        //print_r($caller);
         
-    
-};
+        $file_line = $caller['file'] . "(Line: {$caller['line']}) -> "; 
+        $cClassName = get_class( $caller['object']);
+        self::$oAssertList[$cClassName][] = $file_line . $cMessage;
+    }
+
+    public function __destruct() {
+        $iTotalMilliSeconds = round((microtime(true) - self::$iStartTime) * 1000, 2);
+        $iTotal = self::$iAssertCountTotal;
+        echo "{$iTotal} assertions ran in {$iTotalMilliSeconds} m.s.<br />";
+        if (self::$iAssertCountFailed) {
+            $iFailed = self::$iAssertCountFailed;
+            echo "{$iFailed} of them failed<br /><br />";
+            foreach (self::$oAssertList as $cClassName => $aMessages) {
+                echo "<b>{$cClassName}</b><br />";
+                echo implode('<br/>', $aMessages) . '<br />';
+            }
+        }
+    }
+
+}
+
+
+
+;

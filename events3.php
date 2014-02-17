@@ -83,7 +83,7 @@ class Events3 {
      * @return void
      */
     public function Test() {
-        error_reporting(0);
+        error_reporting(E_ALL);
 
         // Initialize testing (optional)
         $this->Raise('PreTest');
@@ -101,14 +101,25 @@ class Events3 {
      *
      * @return void
      */
-    public function Raise() {
+    public function Raise( $sEvent, &$xParam = null ) {
+        // Get generic parameters
         $aParams = func_get_args();
-        $sEvent = array_shift($aParams);
-        $aModuleList = (array) $this->_aEventList[$sEvent];
+        // Strip the first two .. we already have them
+        array_shift($aParams);
+        array_shift($aParams);
+        // Now add the first parameter again, but by reference
+        //$aNewParams = array( &$xParam );
+        $aNewParams = array_merge( array(&$xParam), $aParams );
+        //print_r($aNewParams);
+        // By now, the parameter array is filled with a first
+        // element by reference and the optional rest by value
+
+        // Now create an array with the modules
+        $aModuleList = (array) @$this->_aEventList[$sEvent];
         $sEventName = 'Events3' . $sEvent;
         foreach ($aModuleList as $cModulePath) {
             $oModule = $this->LoadModule($cModulePath);
-            call_user_func_array(array($oModule, $sEventName), $aParams);
+            call_user_func_array(array($oModule, $sEventName), $aNewParams);
         }
     }
 
@@ -293,30 +304,66 @@ class Events3TestCase extends Events3Module {
 
     private function AddAssertFailed($cMessage) {
         self::$iAssertCountFailed++;
-        $cClassName = get_class();
 
         $bt = debug_backtrace();
         $caller = array_shift($bt);
         $caller = array_shift($bt);
         //print_r($caller);
-        
-        $file_line = $caller['file'] . "(Line: {$caller['line']}) -> "; 
+
+        // What is the name of the testclass?
         $cClassName = get_class( $caller['object']);
-        self::$oAssertList[$cClassName][] = $file_line . $cMessage;
+        
+        // Let's get the codeline that is responsible for the error
+        $aContent = file( $caller['file'] );
+        $iCodeLine = (int) $caller['line'] - 1;
+        $cCodeLine = trim($aContent[ $iCodeLine ]);
+        //print_r($aContent);
+        
+        // Now get the relative path
+        $cOriginalFileName =  $caller['file'];
+        $cThisFilePath =  dirname( __FILE__);
+        $cRelativeFilePath = str_ireplace( $cThisFilePath, '', $cOriginalFileName);
+
+        // Add the relative filepath to the classname
+        $cClassName .= "  ({$cRelativeFilePath})";       
+        
+        // Build the line to display the error
+        $file_line = "{$cMessage} -> {$caller['line']}: {$cCodeLine}"; 
+
+        self::$oAssertList[$cClassName][] = $file_line;
     }
 
     public function __destruct() {
+        static $bRunOnce = false;
+        
+        // We only need to display output one time
+        if($bRunOnce) {
+			return;
+		}
+		$bRunOnce = true;
+        
+        // Determine what type of line-break to use
+        $cLb = (PHP_SAPI=='cli') ? "\n" : '<br />';
         $iTotalMilliSeconds = round((microtime(true) - self::$iStartTime) * 1000, 2);
         $iTotal = self::$iAssertCountTotal;
-        echo "{$iTotal} assertions ran in {$iTotalMilliSeconds} m.s.<br />";
+        
+        echo "----------------" . $cLb;
+        echo "Events3 UnitTest" . $cLb;
+        echo "----------------" . $cLb . $cLb;
+        
+        echo "{$iTotal} assertions ran in {$iTotalMilliSeconds} m.s." . $cLb;
         if (self::$iAssertCountFailed) {
             $iFailed = self::$iAssertCountFailed;
-            echo "{$iFailed} of them failed<br /><br />";
+            echo "{$iFailed} of them failed." . $cLb;
             foreach (self::$oAssertList as $cClassName => $aMessages) {
-                echo "<b>{$cClassName}</b><br />";
-                echo implode('<br/>', $aMessages) . '<br />';
+                echo "{$cLb}## {$cClassName}{$cLb}";
+                echo implode( $cLb, $aMessages) . $cLb;
             }
         }
+        else {
+			echo "All tests completed without failures.";
+			
+		}
     }
 
 }

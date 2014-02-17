@@ -7,17 +7,33 @@
  */
 
 class Testmvc extends Events3TestCase {
+    
+    public $bHookWasCalled = false;
 
     public function Events3Test() {
         /* @var $Events3 Events3 */
         $Events3 = Events3::GetHandler();
         $this->assert( is_object($Events3), 'Events3 Framework object kan niet worden geladen.');
         
+        /* @var  $oMvc mvc */
         $oMvc = $Events3->LoadModule('mvc');
         $this->assert( is_object($oMvc), 'MVC module cannot be loaded.');
+
+        // Test if the right hook is called, default hook is: index
+        $this->bHookWasCalled = false;
+        $oMvc->Events3Run();
+        $this->assert( $this->bHookWasCalled);
         
-        $this->assert(true, 'This is a good assertion');
-        $this->assert(false, 'This is a bad assertion');
+        
     }
+    
+    /**
+	* Event handler to test the MVC functionality
+	* 
+	* @return
+	*/
+    public function Events3mvcindex() {
+		$this->bHookWasCalled = true;
+	}
 
 }

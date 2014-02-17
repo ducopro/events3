@@ -15,8 +15,5 @@ class mvc extends Events3Module {
 
     }
 
-    function Events3mvctest() {
-        echo 'hello mvc test';
-    }
 
 }

@@ -38,7 +38,8 @@ error_reporting(0);
  *
  */
 class Events3 {
-
+    // Configuration file
+    public $ConfigFile;
     // Singleton pattern
     private static $_oInstance = null;
     // True for development, false for producton
@@ -52,6 +53,7 @@ class Events3 {
     public $bEventFileCache = false;
 
     public function __construct() {
+        $this->ConfigFile = dirname(__FILE__) . '/config/config.ini';
         // Scan all modules and build the lists
         $this->BuildModuleList();
     }

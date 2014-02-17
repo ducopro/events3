@@ -16,5 +16,7 @@ require_once 'events3.php';
 /* @var $Events3 Events3*/
 $Events3 = Events3::GetHandler();
 
+$Events3->ConfigFile = dirname(__FILE) . '/config/config.test.ini';
+
 // This is the main event in the UnitTest module
 $Events3->Test();

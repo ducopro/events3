@@ -10,8 +10,8 @@ class TestConfig extends Events3TestCase {
         $this->assert( is_writable($cFile));
 
         /* @var $oConfig Config */
-        $oConfig = $this->load('Config');
-        $oConfig->Events3PreRun();
+        //$oConfig = $this->load('Config');
+        //$oConfig->Events3PreRun();
 
     }
 

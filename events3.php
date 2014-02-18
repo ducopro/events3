@@ -87,12 +87,16 @@ class Events3 {
     public function Test() {
         error_reporting(E_ALL);
 
+        // Initialize modules
+        $this->Raise('PreRun');
         // Initialize testing (optional)
         $this->Raise('PreTest');
         // Run tests
         $this->Raise('Test');
         // Cleanup environment (optional)
         $this->Raise('PostTest');
+        // Cleanup
+        $this->Raise('PostRun');        
     }
 
     /**

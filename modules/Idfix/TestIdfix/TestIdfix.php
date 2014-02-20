@@ -10,7 +10,7 @@ class TestIdfix extends Events3TestCase
         $this->assert(is_a($idfix, 'Idfix'));
 
 
-        $out = $idfix->Render('testconfig', 'table1', 'field1', 0, 'list');
+        $out = $idfix->Render('testconfig', 'todo', 'field1', 0, 'list');
         $this->assert(is_string($out));
         // Ok, the eventhandling is working
         $this->assert(strpos($out, 'testconfig'));
@@ -38,13 +38,14 @@ class TestIdfix extends Events3TestCase
                 // Table descriptions
                 'tables' => array(
                     // Todo list
-                    'Todo' => array(
+                    'todo' => array(
                         'name' => 'Todo List System',
                         'description' => 'Give this system a few items todo :-)',
                         'icon' => 'time.png',
+                        'pager' => 25,
                         // Fieldlist for the todo system
                         'fields' => array(
-                            //
+                            'field1' => array(),//
                         ),
                     ),
                     // Userlist

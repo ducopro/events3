@@ -150,7 +150,7 @@ class IdfixStorage extends Events3Module
      */
     public function GetTableSpaceName()
     {
-        return $this->oIdfix->ValidIdentifier($this->oIdfix->cConfigName);
+        return $this->oIdfix->aConfig['tablespace'];
     }
 
 

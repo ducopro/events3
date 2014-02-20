@@ -8,7 +8,7 @@
 class Idfix extends Events3Module
 {
     // Command line parameter values
-    public $aConfig, $cConfigName, $cTablename, $cFieldName, $iObject, $cAction;
+    public $aConfig, $cConfigName, $cTableName, $cFieldName, $iObject, $cAction;
 
 
     /**
@@ -117,12 +117,22 @@ class Idfix extends Events3Module
      */
     public function RenderTemplate($cTemplateName, $aVars = array())
     {
+        // Add reference to idfix to the template
+        $aVars['oIdfix'] = &$this;
         /* @var $oTemplate Template*/
         $oTemplate = $this->load('Template');
         $cTemplateFile = dirname(__file__) . "/templates/{$cTemplateName}.php";
         return $oTemplate->Render($cTemplateFile, $aVars);
     }
 
+    public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $cAction = '') {
+        $cConfigName = $cConfigName ? $cConfigName : $this->cConfigName;
+        $cTablename = $cTablename ? $cTablename : $this->cTableName;
+        $cFieldName = $cFieldName ? $cFieldName : $this->cFieldName;
+        $iObject = is_numeric($iObject) ? $iObject : $this->iObject;
+        $cAction = $cAction ? $cAction : $this->cAction;
+        return "index.php?idfix={$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$cAction}";
+    }
     public function ValidIdentifier($key)
     {
         $key = strtolower($key);

@@ -1,0 +1,22 @@
+-name=Unit Test Idfix Configuration
+-description=Special configuration file for unittesting the idfix framework
+-iconlib=bootstrap
+
+#tables
+
+    //Todo List
+    #todo
+        -id=10
+        -name=ToDo
+        -description=List of things to bedone
+        -icon=time.png
+        -pager=10
+        #fields
+            #SubTypeID
+                -type=select
+                #options
+                    -todo
+                    -working
+                    -done
+            #Title
+                -description=What needs to be done    

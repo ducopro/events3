@@ -58,16 +58,22 @@ class Database extends Events3Module
      }
      public function DataQuerySingleRow( $cSql, $aParams = array()) {
         $set = $this->DataQuery($cSql, $aParams);
-        return array_shift($set);
+        return (array) array_shift($set);
      }
      public function DataQuerySingleValue($cSql, $aParams = array()) {
         $row = $this->DataQuerySingleRow($cSql, $aParams);
         return array_shift($row);
      }
      
-     public function ShowTables() {
+     public function ShowTables( $cWildCard = '') {
         $return = array();
-        $list = $this->DataQuery('SHOW TABLES');
+        $cSql = 'SHOW TABLES';
+        
+        if($cWildCard) {
+            $cSql .= " LIKE '{$cWildCard}'";
+        }
+        
+        $list = $this->DataQuery($cSql);
         foreach($list as $row) {
             $cTableName = $row[0];
             $return[ $cTableName ] = $cTableName;

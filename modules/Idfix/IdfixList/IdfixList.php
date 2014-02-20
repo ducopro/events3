@@ -3,28 +3,40 @@
 class IdfixList extends Events3Module
 {
 
-    public function Events3IdfixActionList(&$output, $config, $configname, $tablename, $fieldname, $object)
+    public function Events3IdfixActionList(&$output)
     {
-        $ev3 = Events3::GetHandler();
+        /* @var $idfix Idfix*/
+        $idfix = $this->load('Idfix');
+
         $aTemplateVars = array();
 
         // Get the title
-        $title = '';
-        $ev3->Raise('IdfixActionListTitle', $title, $config, $configname, $tablename);
-        $aTemplateVars['title'] = $title;
-
-        // Get the breadcrumb
-        $cBreadCrumb = '';
-        $ev3->Raise('IdfixActionListBreadcrumb', $cBreadCrumb, $config, $configname, $tablename);
-        $aTemplateVars['breadcrumb'] = $$cBreadCrumb;
-
+        $cHook = 'ActionListTitle';
+        $aData = array();
+        $idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $idfix->RenderTemplate($cHook, $aData);
+        // Get the Breadcrumb trail
+        $cHook = 'ActionListBreadcrumb';
+        $aData = array();
+        $idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $idfix->RenderTemplate($cHook, $aData);
         // Get the buttonbar
-        // Get the main list
+        $cHook = 'ActionListButtonbar';
+        $aData = array();
+        $idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $idfix->RenderTemplate($cHook, $aData);
+        // Get the grid
+        $cHook = 'ActionListMain';
+        $aData = array();
+        $idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $idfix->RenderTemplate($cHook, $aData);
         // Get the pager
+        $cHook = 'ActionListPager';
+        $aData = array();
+        $idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $idfix->RenderTemplate($cHook, $aData);
 
         // Put them in the template
-        $template = '';
-        // And add it to the output
-        $ouput .= $template;
+        $output = $idfix->RenderTemplate('ActionList', $aTemplateVars);
     }
 }

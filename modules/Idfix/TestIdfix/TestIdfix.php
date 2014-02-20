@@ -14,14 +14,25 @@ class TestIdfix extends Events3TestCase
         $this->assert(is_string($out));
         // Ok, the eventhandling is working
         $this->assert(strpos($out, 'testconfig'));
+        $this->assert( $idfix->aConfig['name'] == 'IdFixTest');
+        
+        // Template system
+        $cOut = $idfix->RenderTemplate('UnitTest');
+        $this->assert( strpos($cOut, 'Hello Idfix'));
+        
+        
     }
 
-    public function Events3IdfixGetConfig($config, $cConfigName)
+    public function Events3IdfixGetConfig()
     {
+        /* @var $idfix Idfix*/
+        $idfix = $this->load('Idfix');
+        $cConfigName = $idfix->cConfigName;
 
         if ($cConfigName == 'testconfig')
         {
-            $config = array(
+            $idfix->aConfig = array(
+                'name' => 'IdFixTest',
                 'description' => 'Configuration test for the Idfix system',
                 'iconlib' => 'http://cdn.dustball.com/',
                 // Table descriptions
@@ -43,11 +54,15 @@ class TestIdfix extends Events3TestCase
         }
     }
 
-    public function Events3IdfixActionList(&$output, $config, $configname, $tablename, $fieldname, $object)
+    public function Events3IdfixActionList(&$output)
     {
-        if ($configname == 'testconfig')
+        /* @var $idfix Idfix*/
+        $idfix = $this->load('Idfix');
+        $cConfigName = $idfix->cConfigName;
+
+        if ($cConfigName == 'testconfig')
         {
-            $output .= "##{$configname}##{$tablename}##$fieldname";
+            $output .= "##{$cConfigName}##";
         }
     }
 

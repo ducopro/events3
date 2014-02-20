@@ -1,39 +1,24 @@
 <?php
 
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+* To change this license header, choose License Headers in Project Properties.
+* To change this template file, choose Tools | Templates
+* and open the template in the editor.
+*/
 
-class Testmvc extends Events3TestCase {
-    
+class Testmvc extends Events3TestCase
+{
+
     public $bHookWasCalled = false;
 
-    public function Events3Test() {
+    public function Events3Test()
+    {
         /* @var $Events3 Events3 */
         $Events3 = Events3::GetHandler();
-        $this->assert( is_object($Events3), 'Events3 Framework object kan niet worden geladen.');
-        
+        $this->assert(is_object($Events3), 'Events3 Framework object kan niet worden geladen.');
+
         /* @var  $oMvc mvc */
         $oMvc = $Events3->LoadModule('mvc');
-        $this->assert( is_object($oMvc), 'MVC module cannot be loaded.');
-
-        // Test if the right hook is called, default hook is: index
-        $this->bHookWasCalled = false;
-        $oMvc->Events3Run();
-        $this->assert( $this->bHookWasCalled);
-        
-        
+        $this->assert(is_object($oMvc), 'MVC module cannot be loaded.');
     }
-    
-    /**
-	* Event handler to test the MVC functionality
-	* 
-	* @return
-	*/
-    public function Events3mvcindex() {
-		$this->bHookWasCalled = true;
-	}
-
 }

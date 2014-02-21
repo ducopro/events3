@@ -73,7 +73,7 @@ class IdfixDefault extends Events3TestCase
         }
 
         $aSort = array();
-        foreach ($aFieldList as $cFieldName)
+        foreach ($aFieldList as $cFieldName => $aFieldConfig)
         {
             // Is this columns used?
             if (isset($aTableConfig['fields'][$cFieldName]))
@@ -223,7 +223,7 @@ class IdfixDefault extends Events3TestCase
                 "virtual" => true,
                 "title" => "Edit",
                 "icon" => "edit.png",
-                "action" => "idfix/edit/%_config%/{$cTableName}/%ParentID%/%MainID%",
+                "action" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '', 'edit'),
                 "_tablename" => $cTableName,
                 "_name" => '_edit',
                 );
@@ -234,7 +234,7 @@ class IdfixDefault extends Events3TestCase
                 "virtual" => true,
                 "title" => "Copy",
                 "icon" => "copy.png",
-                "action" => "idfix/copy/%_config%/%MainID%",
+                "action" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%','', 'copy'),
                 "_tablename" => $cTableName,
                 "_name" => '_copy',
                 );
@@ -253,6 +253,7 @@ class IdfixDefault extends Events3TestCase
                         "value" => "{$aChildConfig['title']}",
                         "icon" => $aChildConfig['icon'],
                         "action" => "idfix/list/%_config%/{$cChildName}/%MainID%",
+                        "action" => $this->oIdfix->GetUrl('%_config%', $cChildName , '', '','%MainID%', 'list'),
                         "destination" => false,
                         "_tablename" => $cTableName,
                         "_name" => '_' . $cChildName,
@@ -267,7 +268,7 @@ class IdfixDefault extends Events3TestCase
                 "confirm" => "Are you sure you want to delete this {$cTableName}?",
                 "title" => "Delete",
                 "icon" => "delete.png",
-                "action" => "idfix/delete/%_config%/%MainID%",
+                "action" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%','', 'delete'),
                 "_tablename" => $cTableName,
                 "_name" => '_delete',
                 );

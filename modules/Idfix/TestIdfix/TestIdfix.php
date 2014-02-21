@@ -14,7 +14,7 @@ class TestIdfix extends Events3TestCase
         $this->assert(is_string($out));
         // Ok, the eventhandling is working
         $this->assert(strpos($out, 'testconfig'));
-        $this->assert( $idfix->aConfig['name'] == 'IdFixTest');
+        $this->assert( $idfix->aConfig['title'] == 'IdFixTest');
         
         // Template system
         $cOut = $idfix->RenderTemplate('UnitTest');
@@ -32,9 +32,10 @@ class TestIdfix extends Events3TestCase
         if ($cConfigName == 'testconfig')
         {
             $idfix->aConfig = array(
-                'name' => 'IdFixTest',
+                'title' => 'IdFixTest',
                 'description' => 'Configuration test for the Idfix system',
                 'iconlib' => 'http://cdn.dustball.com/',
+                'tablespace' => 'testconfig',
                 // Table descriptions
                 'tables' => array(
                     // Todo list

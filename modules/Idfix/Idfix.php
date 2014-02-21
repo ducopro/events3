@@ -8,7 +8,7 @@
 class Idfix extends Events3Module
 {
     // Command line parameter values
-    public $aConfig, $cConfigName, $cTableName, $cFieldName, $iObject, $cAction;
+    public $aConfig, $cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction;
 
 
     /**
@@ -44,6 +44,7 @@ class Idfix extends Events3Module
         $cTableName = (string )array_shift($aInput);
         $cFieldName = (string )array_shift($aInput);
         $iObject = (integer)array_shift($aInput);
+        $iParent = (integer)array_shift($aInput);
         $cAction = (string )array_shift($aInput);
 
         echo $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $cAction);
@@ -125,13 +126,15 @@ class Idfix extends Events3Module
         return $oTemplate->Render($cTemplateFile, $aVars);
     }
 
-    public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $cAction = '') {
+    public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $iParent = null, $cAction = '')
+    {
         $cConfigName = $cConfigName ? $cConfigName : $this->cConfigName;
         $cTablename = $cTablename ? $cTablename : $this->cTableName;
         $cFieldName = $cFieldName ? $cFieldName : $this->cFieldName;
-        $iObject = is_numeric($iObject) ? $iObject : $this->iObject;
+        $iObject = !is_null($iObject) ? $iObject : $this->iObject;
+        $iParent = !is_null($iParent) ? $iParent : $this->iParent;
         $cAction = $cAction ? $cAction : $this->cAction;
-        return "index.php?idfix={$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$cAction}";
+        return "index.php?idfix={$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$iParent}/{$cAction}";
     }
     public function ValidIdentifier($key)
     {
@@ -146,6 +149,18 @@ class Idfix extends Events3Module
             $key = '_' . $key;
         }
         return $key;
+    }
+    
+    /**
+     * Cleanup any string for output
+     * 
+     * 
+     * @param mixed $cText
+     * @return
+     */
+    public function CleanOutputString($cText)
+    {
+        return htmlspecialchars($cText, ENT_QUOTES, 'UTF-8');
     }
 
     /**

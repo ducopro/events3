@@ -152,6 +152,44 @@ class Idfix extends Events3Module
     }
     
     /**
+     * Check if there is access to this field of the configuration
+     * @todo
+     * 
+     * @param string $cConfigName
+     * @param string $cTableName
+     * @param string $cFieldName
+     * @param string $cOp Allowed values: view, edit, add, delete
+     * @return
+     */
+    public function FieldAccess($cConfigName,$cTableName, $cFieldName, $cOp ) {
+        //$args = func_get_args();
+        $bAccess = false;
+        // Put all the values in the array
+        $aPack = Get_defined_vars();
+        // And send them to the event handler
+        $this->Event('Access', $aPack);
+        // Now only extract the access value
+        $bAccess = (boolean) $aPack['bAccess'];
+        return $bAccess;
+    }
+    /**
+     * Stub for the access handling.
+     * Access is always allowed.
+     * @see also the IdfixUser module which imnplements access handling
+     * 
+     * @param bollean reference $bAccess
+     * @param string $cConfigName
+     * @param string $cTableName
+     * @param string $cFieldName
+     * @param string $cOp
+     * @return void
+     */
+    public function Events3IdfixAccess(&$aPack) {
+        //print_r($aPack);
+        $aPack['bAccess'] = true;
+    }
+    
+    /**
      * Cleanup any string for output
      * 
      * 

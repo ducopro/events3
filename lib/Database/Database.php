@@ -34,6 +34,7 @@ class Database extends Events3Module
         try {
             // Create a persistent connection
             $this->pdo = new PDO($connect, $user, $pass, array(PDO::ATTR_PERSISTENT => true));
+            $this->pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
         } catch (exception $e) {
             echo 'PDO EXTENSION PROBABLY NOT AVAILABLE';
         }

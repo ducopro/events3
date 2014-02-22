@@ -56,7 +56,7 @@ class Events3
     // Filecache for the modulelist
     public $bEventFileCache = false;
 
-    public function __construct( $bUnitTestMode = FALSE )
+    public function __construct($bUnitTestMode = false)
     {
         $this->bTest = $bUnitTestMode;
         $this->ConfigFile = dirname(__file__) . '/config/config.ini';
@@ -131,12 +131,15 @@ class Events3
         // element by reference and the optional rest by value
 
         // Now create an array with the modules
-        $aModuleList = (array )@$this->_aEventList[$sEvent];
-        $sEventName = 'Events3' . $sEvent;
-        foreach ($aModuleList as $cModulePath)
+        if (isset($this->_aEventList[$sEvent]))
         {
-            $oModule = $this->LoadModule($cModulePath);
-            call_user_func_array(array($oModule, $sEventName), $aNewParams);
+            $aModuleList = $this->_aEventList[$sEvent];
+            $sEventName = 'Events3' . $sEvent;
+            foreach ($aModuleList as $cModulePath)
+            {
+                $oModule = $this->LoadModule($cModulePath);
+                call_user_func_array(array($oModule, $sEventName), $aNewParams);
+            }
         }
     }
 
@@ -183,13 +186,13 @@ class Events3
      */
     private function BuildModuleList()
     {
+        // Regenerate cache every minute
+        $iTimeStamp = (integer)(time() / 60);
+        $sFileName = sys_get_temp_dir() . '/Events3EventCache.' . $iTimeStamp . '.tmp';
 
         // Implement file caching
         if ($this->bEventFileCache)
         {
-            // Regenerate cache every minute
-            $iTimeStamp = (integer)(time() / 60);
-            $sFileName = sys_get_temp_dir() . '/Events3EventCache.' . $iTimeStamp . '.tmp';
             if (is_readable($sFileName))
             {
                 $aCache = (array )unserialize(file_get_contents($sFileName));
@@ -253,10 +256,11 @@ class Events3
         {
             // Check if we need to scan the unittest modules
             $cModName = basename($sPath);
-            if( !$this->bTest AND (substr($cModName,0,4)=='Test')) {
+            if (!$this->bTest and (substr($cModName, 0, 4) == 'Test'))
+            {
                 continue;
             }
-            
+
             $this->_aModuleList[$cModName] = $sPath;
             $this->_getModuleListRecursive($sPath);
         }
@@ -276,11 +280,11 @@ class Events3
      *
      * @return instance of Events3
      */
-    static function GetHandler( $bUnitTestMode = FALSE )
+    static function GetHandler($bUnitTestMode = false)
     {
         if (is_null(self::$_oInstance))
         {
-            self::$_oInstance = new Events3( $bUnitTestMode );
+            self::$_oInstance = new Events3($bUnitTestMode);
         }
         return self::$_oInstance;
     }
@@ -421,6 +425,3 @@ class Events3TestCase extends Events3Module
     }
 
 }
-
-
-;

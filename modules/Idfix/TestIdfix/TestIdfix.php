@@ -20,7 +20,20 @@ class TestIdfix extends Events3TestCase
         $cOut = $idfix->RenderTemplate('UnitTest');
         $this->assert( strpos($cOut, 'Hello Idfix'));
         
+        // Access system
+        $bAccess = $idfix->FieldAccess('TestIdfixConfig','TestIdfixTable','field','view');
+        $this->assert(!$bAccess);
         
+        
+    }
+    
+    public function Events3IdfixAccess(&$aData) {
+      //print_r($aData);
+       if (isset($aData['cConfigName']) AND $aData['cConfigName'] == 'TestIdfixConfig') {
+        $this->assert(isset($aData['cTableName']));
+        $this->assert( $aData['cTableName'] == 'TestIdfixTable');
+        $aData['bAccess'] = false;
+       }
     }
 
     public function Events3IdfixGetConfig()

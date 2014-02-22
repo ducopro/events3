@@ -5,5 +5,4 @@
  */ 
 ?>
 
-<h1><?php print $cTitle;?></h1>
-<p><?php print $cDescription;?></p>
+<h1><?php print $cTitle;?>&nbsp;<small><?php print $cDescription;?></small></h1>

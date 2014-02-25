@@ -7,6 +7,10 @@ class TestIdfixList extends Events3TestCase
     {
         $oIdfixList = $this->load('IdfixList');
         
+        $cOutput = '';
+        $oIdfixList->Events3IdfixActionList( $cOutput );
+        $this->assert( strpos($cOutput, '<table'));
+        
         $aPager = array();
         $oIdfixList->Events3IdfixActionListPager( $aPager );
         $this->assert( isset($aPager['iPageTotal'] ));

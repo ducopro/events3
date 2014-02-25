@@ -73,7 +73,7 @@ class IdfixStorage extends Events3Module
     {
         $aReturn = array();
         $cTableSpace = $this->GetTableSpaceName();
-        $cSql = "SELECT * FROM {{$cTableSpace}}";
+        $cSql = "SELECT * FROM {$cTableSpace}";
 
         // Build dynamic where clauses
         if (is_string($iParentId) and $iParentId)
@@ -113,7 +113,8 @@ class IdfixStorage extends Events3Module
             $iMainId = $aRow['MainID'];
             $aReturn[$iMainId] = $this->LoadPostProcess($aRow);
         }
-
+        //echo $cSql;
+        return $aReturn;
     }
 
     /**

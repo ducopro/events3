@@ -47,7 +47,10 @@ class Idfix extends Events3Module
         $iParent = (integer)array_shift($aInput);
         $cAction = (string )array_shift($aInput);
 
-        echo $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $cAction);
+        $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction);
+        // And wrap them in the body HTML
+        echo $this->RenderTemplate('idfix', array('content' => $content));
+
     }
 
     /**
@@ -63,13 +66,14 @@ class Idfix extends Events3Module
      * @param char $cAction
      *   Action to perform
      */
-    public function Render($cConfigName, $cTableName, $cFieldName, $iObject, $cAction)
+    public function Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction)
     {
         $this->cConfigName = $this->ValidIdentifier($cConfigName);
         $this->cTableName = $this->ValidIdentifier($cTableName);
         $this->cFieldName = $this->ValidIdentifier($cFieldName);
         $this->cAction = ucfirst($this->ValidIdentifier($cAction));
         $this->iObject = intval($iObject);
+        $this->iParent = intval($iParent);
 
         // Create an empty configuration array
         $this->aConfig = array();
@@ -150,7 +154,7 @@ class Idfix extends Events3Module
         }
         return $key;
     }
-    
+
     /**
      * Check if there is access to this field of the configuration
      * @todo
@@ -161,7 +165,8 @@ class Idfix extends Events3Module
      * @param string $cOp Allowed values: view, edit, add, delete
      * @return
      */
-    public function FieldAccess($cConfigName,$cTableName, $cFieldName, $cOp ) {
+    public function FieldAccess($cConfigName, $cTableName, $cFieldName, $cOp)
+    {
         //$args = func_get_args();
         $bAccess = false;
         // Put all the values in the array
@@ -169,7 +174,7 @@ class Idfix extends Events3Module
         // And send them to the event handler
         $this->Event('Access', $aPack);
         // Now only extract the access value
-        $bAccess = (boolean) $aPack['bAccess'];
+        $bAccess = (boolean)$aPack['bAccess'];
         return $bAccess;
     }
     /**
@@ -184,11 +189,12 @@ class Idfix extends Events3Module
      * @param string $cOp
      * @return void
      */
-    public function Events3IdfixAccess(&$aPack) {
+    public function Events3IdfixAccess(&$aPack)
+    {
         //print_r($aPack);
         $aPack['bAccess'] = true;
     }
-    
+
     /**
      * Cleanup any string for output
      * 

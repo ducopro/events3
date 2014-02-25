@@ -24,6 +24,11 @@ class TestEvents3 extends Events3TestCase {
         //print_r($parameter);
         $this->assert( array_pop($parameter) == $value );
         
+        // get a reference to the base class and test module loading
+        $oModule = new Events3Module();
+        $this->assert( is_object( $oModule->load('session')) );
+        $this->assert( is_object( $oModule->session ) );
+        
     }
 
     public function Events3TestEvents3Raise( &$param, $extra = 'wim' ) {

@@ -47,11 +47,22 @@ class IdfixList extends Events3Module
     }
 
 
+    /**
+     * Title and description for this specific table
+     * 
+     * @param array $aTitle termplate variables
+     * @return void
+     */
     public function Events3IdfixActionListTitle(&$aTitle)
     {
-        $aTitle['cTitle'] = $this->oIdfix->CleanOutputString($this->oIdfix->aConfig['title']);
-        $aTitle['cDescription'] = $this->oIdfix->CleanOutputString($this->oIdfix->aConfig['description']);
+        $aConfig = $this->oIdfix->aConfig;
+        $cTable = $this->oIdfix->cTableName;
+        $aTableConfig = $aConfig['tables'][$cTable];
+
+        $aTitle['cTitle'] = $aTableConfig['title'];
+        $aTitle['cDescription'] = $aTableConfig['description'];
     }
+
 
     public function Events3IdfixActionListBreadcrumb(&$aData)
     {
@@ -81,7 +92,7 @@ class IdfixList extends Events3Module
         $aDataSet = $this->GetRawDataset();
         // Than postprocess this dataset to provide the
         // exact HTML for display purposes
-        $aDisplayDataset = $this->GetDisplayDataset($aDataSet, $aColumns, $aTableConfig );
+        $aDisplayDataset = $this->GetDisplayDataset($aDataSet, $aColumns, $aTableConfig);
         // Now build the template variables
         $aData['aHead'] = $aColumns;
         $aData['aBody'] = $aDisplayDataset;
@@ -186,9 +197,10 @@ class IdfixList extends Events3Module
                 $aColumns[$cFieldName] = $cColumnName;
             }
         }
+        $this->oIdfix->Event('ListColumns', $aColumns);
         return $aColumns;
     }
-    
+
     /**
      * Postp[roces the array of headers.
      * Trigger an event so we cab change the headers
@@ -200,11 +212,11 @@ class IdfixList extends Events3Module
      */
     private function GetColumnsHeader($aColumns)
     {
-      $aHeader = $aColumns;
-      $this->oIdfix->Event('ListHeader', $aHeader);
-      return $aHeader;
+        $aHeader = $aColumns;
+        $this->oIdfix->Event('ListHeader', $aHeader);
+        return $aHeader;
     }
-    
+
     /**
      * Return the full datset from the idfix table.
      * - Construct the right parameters for the
@@ -218,43 +230,44 @@ class IdfixList extends Events3Module
         $cTable = $this->oIdfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
         /* Build TypeID */
-        $iTypeID = (integer) $aTableConfig['id'];
+        $iTypeID = (integer)$aTableConfig['id'];
         /* Build ParentID */
         $iParentID = $this->oIdfix->iParent;
         /* Build a default Order
-           @TODO read the default sort order from the config
-         */
+        @TODO read the default sort order from the config
+        */
         $cOrder = 'Weight';
         /* Build the default where clauses*/
         $aWhere = array();
         /* Build the limit clause as an array for convenience
-           of the event handler, remember limit is 0-based*/
+        of the event handler, remember limit is 0-based*/
         $iPage = $this->oIdfix->iObject;
-        $iRecsPerPage = $aTableConfig['pager']; 
-        $iStart = ( ($iPage-1)* $iRecsPerPage);
-        $aLimit = array( $iStart, $iRecsPerPage);   
-        
+        $iRecsPerPage = $aTableConfig['pager'];
+        $iStart = (($iPage - 1) * $iRecsPerPage);
+        $aLimit = array($iStart, $iRecsPerPage);
+
         // Create a PACKAGE for the eventhandler
         $aPack = array(
-          'type'=> $iTypeID ,
-          'parent'=> $iParentID ,
-          'order'=> $cOrder ,
-          'where'=> $aWhere ,
-          'limit'=> $aLimit ,
-        );
-        $this->oIdfix->Event( 'ListDataSet', $aPack);
-        
+            'type' => $iTypeID,
+            'parent' => $iParentID,
+            'order' => $cOrder,
+            'where' => $aWhere,
+            'limit' => $aLimit,
+            );
+        $this->oIdfix->Event('ListDataSet', $aPack);
+
         /* Now get all the values back in variables */
         $iTypeID = $aPack['type'];
         $iParentID = $aPack['parent'];
         $cOrder = $aPack['order'];
         $aWhere = $aPack['where'];
-        $cLimit = implode(',',  $aPack['limit']);
-        
-        $aRawDataSet = $this->oIdfixStorage->LoadAllRecords( $iTypeID, $iParentID, $cOrder, $aWhere, $cLimit );        
-        return array();
+        $cLimit = implode(',', $aPack['limit']);
+
+
+        $aRawDataSet = $this->oIdfixStorage->LoadAllRecords($iTypeID, $iParentID, $cOrder, $aWhere, $cLimit);
+        return $aRawDataSet;
     }
-    
+
     /**
      * Postprocess every row in the raw dataset and extract
      * only the fields we need.
@@ -264,24 +277,32 @@ class IdfixList extends Events3Module
      * @param mixed $aColumns
      * @return
      */
-    private function GetDisplayDataSet( $aRawSet, $aColumns, $aTableConfig )
+    private function GetDisplayDataSet($aRawSet, $aColumns, $aTableConfig)
     {
         $aDisplaySet = array();
-        foreach($aRawSet as $aRawRow ) {
+        foreach ($aRawSet as $aRawRow)
+        {
             $aDisplayRow = array();
-            foreach( $aColumns as $cFieldName => $cColumnName ) {
+            foreach ($aColumns as $cFieldName => $cColumnName)
+            {
                 // What is the value we need displayed
-                $xFieldData = $aRawRow[ $cFieldName ];
+                $xFieldData = '';
+                if (isset($aRawRow[$cFieldName]))
+                {
+                    $xFieldData = @$aRawRow[$cFieldName];
+                }
+
                 // And the matching field configuration?
                 $aFieldConfig = $aTableConfig['fields'][$cFieldName];
                 // Now it's the time to get the visual
-                $aDisplayRow[] = $this->GetDisplayDataCell( $xFieldData, $aFieldConfig);
+                $aDisplayRow[] = $this->GetDisplayDataCell($xFieldData, $aFieldConfig);
             }
             $aDisplaySet[] = $aDisplayRow;
         }
+        //print_r($aDisplaySet);
         return $aDisplaySet;
     }
-    
+
     /**
      * Given a fieldconfiguration and a value
      * return the display
@@ -292,10 +313,11 @@ class IdfixList extends Events3Module
      * @param mixed $aFieldConfig
      * @return void
      */
-    private function GetDisplayDataCell( $xFieldData, $aFieldConfig) {
+    private function GetDisplayDataCell($xFieldData, $aFieldConfig)
+    {
         $aFieldConfig['__RawValue'] = $xFieldData;
         $this->oIdfix->Event('DisplayField', $aFieldConfig);
-        return $aFieldConfig['__RawValue'];
+        return $aFieldConfig['__DisplayValue'];
     }
 
 }

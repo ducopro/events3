@@ -12,17 +12,9 @@
 */
 
 error_reporting(E_ALL);
-function Events3Shutdown()
-{
-    $aErrors = error_get_last();
-    if (is_array($aErrors))
-    {
-        echo "<h2>PHP ERROR</h2>-- Error: {$aErrors['type']}\n<br />-- Message: {$aErrors['message']}\n<br />-- File:  {$aErrors['file']}\n<br />-- Line:  {$aErrors['line']}\n<br />";
-    }
-}
-register_shutdown_function('Events3Shutdown');
 
 require_once 'events3.php';
+register_shutdown_function('Events3Shutdown');
 
 /* @var $Events3 Events3*/
 $Events3 = Events3::GetHandler(true); // Run in UnitTestMode

@@ -1,6 +1,6 @@
 <?php
 
-class IdfixDefault extends Events3TestCase
+class IdfixDefault extends Events3Module
 {
 
     private $oIdfix, $oDatabase;
@@ -30,10 +30,10 @@ class IdfixDefault extends Events3TestCase
         $this->SetDefaultValue($aConfig, 'description', 'Description for this untitled configuration');
         $this->SetDefaultValue($aConfig, 'icon', 'application.png ');
         $this->SetDefaultValue($aConfig, '_name', $cConfigName);
-        $this->SetDefaultValue($aConfig, 'iconlib', "http://cdn.dustball.com");
+        $this->SetDefaultValue($aConfig, 'iconlib', "bootstrap");
 
         // Create a default tablespace
-        $cTableSpace =  $this->oIdfix->ValidIdentifier( 'idfix_' . trim($cConfigName));
+        $cTableSpace = $this->oIdfix->ValidIdentifier('idfix_' . trim($cConfigName));
         $this->SetDefaultValue($aConfig, 'tablespace', $cTableSpace);
 
         if (isset($aConfig['tables']))
@@ -220,10 +220,11 @@ class IdfixDefault extends Events3TestCase
 
             // Edit button
             $aButton = array(
-                "virtual" => true,
+                "type" => "virtual",
                 "title" => "Edit",
-                "icon" => "edit.png",
-                "action" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '', 'edit'),
+                "icon" => "edit",
+                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '', 'edit'),
+                "class" => "btn btn-default",
                 "_tablename" => $cTableName,
                 "_name" => '_edit',
                 );
@@ -231,10 +232,11 @@ class IdfixDefault extends Events3TestCase
 
             // Copy button
             $aButton = array(
-                "virtual" => true,
+                "type" => "virtual",
                 "title" => "Copy",
-                "icon" => "copy.png",
-                "action" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%','', 'copy'),
+                "icon" => "camera",
+                "href" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%', '', 'copy'),
+                "class" => "btn btn-default",
                 "_tablename" => $cTableName,
                 "_name" => '_copy',
                 );
@@ -248,12 +250,13 @@ class IdfixDefault extends Events3TestCase
                 {
                     $aChildConfig = $aFullConfig['tables'][$cChildName];
                     $aButton = array(
-                        "virtual" => true,
+                        "type" => "virtual",
                         "title" => "{$aChildConfig['title']}",
                         "value" => "{$aChildConfig['title']}",
                         "icon" => $aChildConfig['icon'],
-                        "action" => "idfix/list/%_config%/{$cChildName}/%MainID%",
-                        "action" => $this->oIdfix->GetUrl('%_config%', $cChildName , '', '','%MainID%', 'list'),
+                        "href" => "idfix/list/%_config%/{$cChildName}/%MainID%",
+                        "href" => $this->oIdfix->GetUrl('%_config%', $cChildName, '', '', '%MainID%', 'list'),
+                        "class" => "btn btn-primary",
                         "destination" => false,
                         "_tablename" => $cTableName,
                         "_name" => '_' . $cChildName,
@@ -264,11 +267,12 @@ class IdfixDefault extends Events3TestCase
 
             // Delete button
             $aButton = array(
-                "virtual" => true,
+                "type" => "virtual",
                 "confirm" => "Are you sure you want to delete this {$cTableName}?",
                 "title" => "Delete",
-                "icon" => "delete.png",
-                "action" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%','', 'delete'),
+                "icon" => "remove",
+                "href" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%', '', 'delete'),
+                "class" => "btn btn-danger",
                 "_tablename" => $cTableName,
                 "_name" => '_delete',
                 );
@@ -306,7 +310,7 @@ class IdfixDefault extends Events3TestCase
      */
     private function AlterField($cTableName, $cFieldName, &$aFieldConfig)
     {
-        $this->SetDefaultValue($aFieldConfig, 'type', 'textfield');
+        $this->SetDefaultValue($aFieldConfig, 'type', 'text');
         $this->SetDefaultValue($aFieldConfig, 'title', $cFieldName);
         if ($aFieldConfig['type'] == 'file')
         {

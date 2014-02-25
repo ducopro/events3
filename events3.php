@@ -76,6 +76,7 @@ class Events3
         if ($this->bDebug)
         {
             error_reporting(E_ALL);
+            register_shutdown_function('Events3Shutdown');
         }
         // Initialize modules
         $this->Raise('PreRun');
@@ -220,19 +221,17 @@ class Events3
             $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
             // Create the entry in the main modulelist
             $this->_aModuleList[$cModuleName] = $cModulePath;
-            if (is_readable($cModuleFile))
+            include_once $cModuleFile;
+            $aMethods = (array) get_class_methods($cModuleName);
+            foreach ($aMethods as $cMethodName)
             {
-                include_once $cModuleFile;
-                $aMethods = get_class_methods($cModuleName);
-                foreach ($aMethods as $cMethodName)
+                if (strpos($cMethodName, 'Events3') === 0)
                 {
-                    if (strpos($cMethodName, 'Events3') === 0)
-                    {
-                        $cEventName = substr($cMethodName, 7);
-                        $this->_aEventList[$cEventName][] = $cModulePath;
-                    }
+                    $cEventName = substr($cMethodName, 7);
+                    $this->_aEventList[$cEventName][] = $cModulePath;
                 }
             }
+
         }
 
         // Write file cache
@@ -260,8 +259,12 @@ class Events3
             {
                 continue;
             }
+            // It is only a module if there is a specific file
+            if (is_readable($sPath . '/' . $cModName . '.php'))
+            {
+                $this->_aModuleList[$cModName] = $sPath;
+            }
 
-            $this->_aModuleList[$cModName] = $sPath;
             $this->_getModuleListRecursive($sPath);
         }
     }
@@ -306,6 +309,21 @@ class Events3Module
     {
         $ev3 = Events3::GetHandler();
         return $ev3->LoadModule($cMod);
+    }
+    
+    /**
+     * By way of this magic method we can get
+     * to the module instance just bij accessing
+     * it as a property.
+     * 
+     * @example $this->Template->Render()
+     * where Template is the module name 
+     * 
+     * @param mixed $cModuleName
+     * @return
+     */
+    public function __get( $cModuleName ) {
+        return $this->load($cModuleName);
     }
 
 }
@@ -390,7 +408,6 @@ class Events3TestCase extends Events3Module
     public function __destruct()
     {
         static $bRunOnce = false;
-
         // We only need to display output one time
         if ($bRunOnce)
         {
@@ -424,4 +441,13 @@ class Events3TestCase extends Events3Module
         }
     }
 
+}
+
+function Events3Shutdown()
+{
+    $aErrors = error_get_last();
+    if (is_array($aErrors))
+    {
+        echo "<h2>PHP ERROR</h2>-- Error: {$aErrors['type']}\n<br />-- Message: {$aErrors['message']}\n<br />-- File:  {$aErrors['file']}\n<br />-- Line:  {$aErrors['line']}\n<br />";
+    }
 }

@@ -11,31 +11,32 @@ $aPager['iSetStart'] = $iStartSet;
 $aPager['iSetStop'] = $iStopSet;
 */
 
-function _ActionListPagerRenderLi($iPageCurrent, $iPage, $cIcon = '')
-{
-    $ev3 = Events3::GetHandler();
-    $oIdfix = $ev3->LoadModule('Idfix');
-    $cClass = '';
-    $cHref = $oIdfix->GetUrl('', '', '', $iPage, '', 'list');
-    // Check the current page
-    if($iPage == $iPageCurrent) {
-       $cClass = 'active disabled';
-       $cHref = '#';
-    }
-    
-    $cRetval = "<li class=\"{$cClass}\"><a href=\"{$cHref}\">";
-    if ($cIcon)
+if (!function_exists('_ActionListPagerRenderLi')) {
+    function _ActionListPagerRenderLi($iPageCurrent, $iPage, $cIcon = '')
     {
-        $cRetval .= "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>&nbsp;<span>$iPage</span>";
-    } else
-    {
-        $cRetval .= "<span>$iPage</span>";
+        $ev3 = Events3::GetHandler();
+        $oIdfix = $ev3->LoadModule('Idfix');
+        $cClass = '';
+        $cHref = $oIdfix->GetUrl('', '', '', $iPage, '', 'list');
+        // Check the current page
+        if($iPage == $iPageCurrent) {
+           $cClass = 'active disabled';
+           $cHref = '#';
+        }
+        
+        $cRetval = "<li class=\"{$cClass}\"><a href=\"{$cHref}\">";
+        if ($cIcon)
+        {
+            $cRetval .= "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>&nbsp;<span>$iPage</span>";
+        } else
+        {
+            $cRetval .= "<span>$iPage</span>";
+        }
+        $cRetval .= "</a></li>";
+        
+        return $cRetval;
     }
-    $cRetval .= "</a></li>";
-    
-    return $cRetval;
 }
-
 ?>
 
 <div id="idfix-pager">

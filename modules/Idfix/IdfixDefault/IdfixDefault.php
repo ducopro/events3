@@ -339,6 +339,8 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aGroupConfig, 'title', $cGroupName);
         $this->SetDefaultValue($aGroupConfig, 'collapsible', 1);
         $this->SetDefaultValue($aGroupConfig, 'collapsed', 0);
+        $this->SetDefaultValue($aGroupConfig, 'description', '');
+        $this->SetDefaultValue($aGroupConfig, 'icon', 'pushpin');
     }
 
     /**

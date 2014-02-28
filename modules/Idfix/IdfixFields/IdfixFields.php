@@ -133,7 +133,7 @@ class IdfixFieldsBase
             '_tablename',
             '_name',
             'confirm',
-            'value',
+            //'value',
             '__RawValue',
             '__DisplayValue');
         foreach ($aBlackList as $cBlackKey)

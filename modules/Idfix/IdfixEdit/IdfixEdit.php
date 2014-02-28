@@ -6,10 +6,9 @@
  */
 class IdfixEdit extends Events3Module
 {
+    private $cCheckSum;
 
-    public $oIdfix, $oIdfixStorage;
-
-    public function Events3IdfixActionEdit()
+    public function Events3IdfixActionEdit(&$output)
     {
         // Id of the record we need to edit
         $iMainID = $this->Idfix->iObject;
@@ -19,17 +18,33 @@ class IdfixEdit extends Events3Module
         $cConfigName = $this->Idfix->cConfigName;
         $cTableName = $this->Idfix->cTableName;
         $aTableConfig = $this->Idfix->aConfig['tables'][$cTableName];
+        // Create key to check if we are validating the correct form
+        $this->cCheckSum = md5($cConfigName . $cTableName . $iMainID);
 
         $cHtmlInputForm = $this->GetHtmlForForm($aTableConfig, $aDataRowFromDisk);
+        $cExtraHtml = $this->GetHtmlHiddenFields( $aTableConfig, $aDataRowFromDisk );
 
         // Now wrap the raw html in it's form tag and add some hidden fields
         $aTemplate = array(
-          'iMainID' => $iMainID,
-        );
+            'iMainID' => $iMainID,
+            'cInput' => $cHtmlInputForm,
+            'cHidden' => $cExtraHtml,
+            'cTitle' =>$aTableConfig['title'],
+            'cDescription' =>$aTableConfig['description'],
+            'cIcon' => $this->Idfix->GetIconHTML( $aTableConfig['icon'] ),
+            );
 
-        echo $cHtmlInputForm;
+        $output = $this->Idfix->RenderTemplate('EditForm', $aTemplate);
     }
 
+    /**
+     * Get the full HTML representation of the form.
+     * Take into account that we may need to group the fields 
+     * 
+     * @param array $aTableConfig
+     * @param array $aDataRowFromDisk
+     * @return string HTML
+     */
     private function GetHtmlForForm($aTableConfig, $aDataRowFromDisk)
     {
         $cReturn = '';
@@ -40,12 +55,12 @@ class IdfixEdit extends Events3Module
                 // Build the template variables
                 $aTemplate = array(
                     'cElements' => $this->GetHtmlForInputElements($aTableConfig['fields'], $aDataRowFromDisk, $cGroupId),
-                    'cId' => $this->Idfix->ValidIdentifier($cId),
+                    'cId' => $this->Idfix->ValidIdentifier($cGroupId),
                     'cTitle' => $aGroupConfig['title'],
                     'cDescription' => $aGroupConfig['description'],
-                    'cIcon' => $aGroupConfig['icon'],
+                    'cIcon' => $this->Idfix->GetIconHTML( $aGroupConfig['icon'] ),
                     );
-                $cReturn .= $this->idfix->RenderTemplate('FormGroup', $aTemplate);
+                $cReturn .= $this->Idfix->RenderTemplate('EditFormGroup', $aTemplate);
             }
         } else
         {
@@ -53,6 +68,15 @@ class IdfixEdit extends Events3Module
         }
         return $cReturn;
     }
+
+    /**
+     * Create HTML representation for an input element
+     * 
+     * @param array $aFieldList Field configuration from the tableconfig
+     * @param array $aDataRowFromDisk Loaded values from the datatable
+     * @param string $cGroup Name of the group if we need te return the HTML only for this group
+     * @return string HTML
+     */
     private function GetHtmlForInputElements($aFieldList, $aDataRowFromDisk, $cGroup = '')
     {
         $cReturn = '';
@@ -75,11 +99,31 @@ class IdfixEdit extends Events3Module
                 continue;
             }
 
-            $aFieldConfig['__RawValue'] = $aDataRowFromDisk[$cFieldName];
+            // Value from the table
+            $xRawValue = (isset($aDataRowFromDisk[$cFieldName]) ? $aDataRowFromDisk[$cFieldName] : '');
+            $xRawPostValue = (isset($_POST[$cFieldName]) ? $_POST[$cFieldName] : '');
+            $aFieldConfig['__RawValue'] = $xRawValue;
+            $aFieldConfig['__RawPostValue'] = $xRawPostValue;
             $this->Idfix->Event('EditField', $aFieldConfig);
             $cInput = $aFieldConfig['__DisplayValue'];
             $cReturn .= $cInput;
         }
         return $cReturn;
+    }
+    
+    private function GetHtmlHiddenFields( $aTableConfig, $aDataRowFromDisk ){
+        $cReturn = '';
+        $cReturn .= $this->GetHiddenField( '_checksum', $this->cCheckSum );
+        $cReturn .= $this->GetHiddenField( '_tablename', $aTableConfig['_name'] );
+        $cReturn .= $this->GetHiddenField( '_configname', $this->Idfix->cConfigName );
+        $cReturn .= $this->GetHiddenField( '_return', $_SERVER['HTTP_REFERER'] );
+        $cReturn .= "<button class=\"btn btn-primary\" type=\"submit\" value=\"Save\" name=\"_idfix_save_button\">Save</button>&nbsp;";
+        $cReturn .= "<button class=\"btn btn-success\" type=\"submit\" value=\"Cancel\" name=\"_idfix_cancel_button\">Cancel</button>";
+        return $cReturn;
+    }
+    private function GetHiddenField( $cName, $cValue) {
+        $cName = $this->Idfix->ValidIdentifier($cName);
+        $cValue = $this->Idfix->ValidIdentifier($cValue);
+        return "<input type=\"hidden\" name=\"{$cName}\" value=\"{$cValue}\">";
     }
 }

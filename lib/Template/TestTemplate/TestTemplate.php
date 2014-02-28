@@ -10,7 +10,7 @@ class TestTemplate extends Events3TestCase{
 		$this->assert(is_a( $oTemplate, 'Events3Module'));
 		
 		// Test if there is a template file ready for us
-		$cTemplateFile = dirname(__FILE__) . '\TestTemplate.html';
+		$cTemplateFile = dirname(__FILE__) . '/TestTemplate.html';
 		$this->assert( is_readable($cTemplateFile));
 		
 		// Test if the template is rendered without variables

@@ -20,9 +20,9 @@ class Idfix extends Events3Module
      */
     public function Events3ConfigInit(&$aConfig)
     {
-        $key = 'IdfixConfigProfiler';
-        $aConfig[$key] = isset($aConfig[$key]) ? $aConfig[$key] : 'off';
-        $this->$key = $aConfig[$key];
+        $cKey = 'IdfixConfigProfiler';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 'off';
+        $this->$cKey = $aConfig[$cKey];
     }
 
     /**
@@ -49,7 +49,7 @@ class Idfix extends Events3Module
 
         $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction);
         // And wrap them in the body HTML
-        echo $this->RenderTemplate('idfix', array('content' => $content));
+        echo $this->RenderTemplate('Idfix', array('content' => $content));
 
     }
 
@@ -140,19 +140,19 @@ class Idfix extends Events3Module
         $cAction = $cAction ? $cAction : $this->cAction;
         return "index.php?idfix={$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$iParent}/{$cAction}";
     }
-    public function ValidIdentifier($key)
+    public function ValidIdentifier($cKey)
     {
-        $key = strtolower($key);
-        $blacklist = str_replace(str_split('abcdefghijklmnopqrstuvwxyz_1234567890'), '', $key);
+        $cKey = strtolower($cKey);
+        $blacklist = str_replace(str_split('abcdefghijklmnopqrstuvwxyz_1234567890'), '', $cKey);
         if ($blacklist)
         {
-            $key = str_replace(str_split($blacklist), '_', $key);
+            $cKey = str_replace(str_split($blacklist), '_', $cKey);
         }
-        if (is_numeric(substr($key, 0, 1)))
+        if (is_numeric(substr($cKey, 0, 1)))
         {
-            $key = '_' . $key;
+            $cKey = '_' . $cKey;
         }
-        return $key;
+        return $cKey;
     }
 
     /**
@@ -205,6 +205,102 @@ class Idfix extends Events3Module
     public function CleanOutputString($cText)
     {
         return htmlspecialchars($cText, ENT_QUOTES, 'UTF-8');
+    }
+
+    public function GetIconHTML($cIcon)
+    {
+        if (strtolower($this->aConfig['iconlib']) == 'bootstrap')
+        {
+            return "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>&nbsp;";
+        } else
+        {
+            $cIcon = $this->aConfig['iconlib'] . '/' . $cIcon;
+            return "<img align=\"absmiddle\" height=\"16\" width=\"16\" src=\"{$cIcon}\">&nbsp;";
+        }
+    }
+
+    /**
+     * PostprocesConfig()
+
+     * Postprocess a (part of a) configuration array for dynamic values
+     *
+     * Check for:
+     * 1. Callbacks (with optional parameters)
+     * 2. variables
+     *
+     * Variables are names surrounded by an % like '%ParenID%'
+     * These are substituted with the values from the second
+     * parameter to this function: $aRecord
+     *
+     * @param
+     *   mixed $aConfig
+     * @param
+     *   mixed $aRecord
+     * @return
+     *   Processed configuration
+     */
+    public function PostprocesConfig($aConfig, $aRecord = array())
+    {
+        if (is_array($aConfig))
+        {
+            foreach ($aConfig as &$aConfig_element)
+            {
+                // 1. Callback without parameters
+                if (is_string($aConfig_element) and (substr($aConfig_element, 0, 1) == '@') and function_exists(substr($aConfig_element, 1)))
+                {
+                    $aConfig_element = call_user_func(substr($aConfig_element, 1));
+
+                }
+                // 2. Callback with parameters
+                elseif (isset($aConfig_element[0]) and (substr($aConfig_element[0], 0, 1) == '@') and function_exists(substr($aConfig_element[0], 1)))
+                {
+                    // Get the function
+                    $cFunctionName = substr(array_shift($aConfig_element), 1);
+                    // Now postprocess the parameters for dynamic values
+                    $aParameters = $this->PostprocesConfig($aConfig_element, $aRecord);
+                    $aConfig_element = call_user_func_array($cFunctionName, $aParameters);
+
+                }
+                // 3. Dynamic values to parse?
+                elseif (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false))
+                {
+                    $aConfig_element = $this->DynamicValues($aConfig_element, $aRecord);
+                }
+
+                // 4. Plain array? Recursive action
+                elseif (is_array($aConfig_element))
+                {
+                    $aConfig_element = $this->PostprocesConfig($aConfig_element, $aRecord);
+                }
+            }
+        }
+        return $aConfig;
+    }
+
+    /**
+     * $this->DynamicValues()
+     *
+     * @param
+     *   mixed $aHaystack
+     * @param
+     *   mixed $aValues
+     * @return
+     *   Processed data structure
+     */
+    private function DynamicValues($aHaystack, $aValues)
+    {
+        if (is_array($aValues))
+        {
+            foreach ($aValues as $cKey => $xValue)
+            {
+                $search = '%' . $cKey . '%';
+                if (strpos($aHaystack, $search) !== false)
+                {
+                    $aHaystack = str_replace($search, $xValue, $aHaystack);
+                }
+            }
+        }
+        return $aHaystack;
     }
 
     /**

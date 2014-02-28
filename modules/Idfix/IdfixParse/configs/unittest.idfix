@@ -4,19 +4,98 @@
 
 #tables
 
-    //Todo List
-    #todo
+    //Element demo
+    #elements
         -id=1
-        -name=ToDo
-        -description=List of things to bedone
+        -name=Form Elements
+        -description=List of the most HTML elements
         -icon=euro
         -pager=10
+        #groups
+            #date
+                -title=Date & Time
+                -description=All elements that have something to do with time
+                -icon=time
+            #option
+                -title=Multiple options possible
+                -icon=tags
+            #number
+                -title=Numeric values
+                -icon=phone
+            #internet
+                -title=Internet related
+                -icon=globe
+            #form
+                -title=Internal Form Elements
+                -icon=list-alt
+            #text
+                -title=Text related
+                -icon=align-left
         #fields
-            #SubTypeID
-                -type=select
-                #options
-                    -todo
-                    -working
-                    -done
-            #Name
-                -description=What needs to be done    
+            #button
+                -type=button
+                -value=Click me
+                -group=form
+            #text
+                -type=text
+                -description=Description for textfield
+                -group=text
+            #checkbox
+                -type=checkbox
+                -group=option
+            #color
+                -type=color
+                -group=form
+            #date
+                -type=date
+                -group=date
+            #datetime
+                -type=datetime
+                -group=date
+            #email
+                -type=email
+                -group=internet     
+            #file
+                -type=file
+                -group=form
+            #hidden
+                -type=hidden
+                -group=form
+            #image  
+                -type=image
+                -group=form
+            #month
+                -type=month
+                -group=date
+            #number
+                -type=number
+                -min=20
+                -max=30
+                -step=2
+                -value=25
+                -description=Geldig nummer tuussen de 20 en de 30 met stap 2
+                -group=number
+            #password
+                -type=password
+                -group=text
+            #radio
+                -type=radio
+                -group=option
+            #range
+                -type=range
+                -min=10
+                -max=20
+                -group=number
+            #tel
+                -type=tel    
+                -group=number                                                  
+            #time
+                -type=time
+                -group=date
+            #url
+                -type=url
+                -group=internet
+            #week
+                -type=week    
+                -group=date
+                

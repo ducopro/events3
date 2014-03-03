@@ -7,6 +7,7 @@ class IdfixList extends Events3Module
 
     public function Events3IdfixActionList(&$output)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         /* @var $this->oIdfix Idfix*/
         $this->oIdfix = $this->load('Idfix');
         /* @var $this->oIdfixStorage IdfixStorage*/
@@ -44,6 +45,7 @@ class IdfixList extends Events3Module
 
         // Put them in the template
         $output = $this->oIdfix->RenderTemplate('ActionList', $aTemplateVars);
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
 
 

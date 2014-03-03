@@ -1,0 +1,17 @@
+-name=Editform test
+-description=Configuration for testing the editform
+// URL: 
+
+#tables
+
+    //Element demo
+    #editform
+        -id=1
+        -name=Editform test
+        -description=Only a couple of textfields for testing
+        -icon=euro
+        -pager=10
+        #fields
+            #Name
+            #Description
+            #Adress

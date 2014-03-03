@@ -19,6 +19,7 @@ class IdfixDefault extends Events3Module
      */
     public function Events3IdfixGetConfigAfter()
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         // Load modules we need
         $this->oIdfix = $this->load('Idfix');
         $this->oDatabase = $this->load('Database');
@@ -46,7 +47,7 @@ class IdfixDefault extends Events3Module
                 $this->AlterSort($cConfigName, $cTableName, $aTableConfig, $aConfig);
             }
         }
-
+       $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
 
     /**

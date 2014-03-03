@@ -33,6 +33,14 @@ class Idfix extends Events3Module
      */
     public function Events3Run()
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
+        // Quick check ...
+        if (!isset($_GET['idfix']))
+        {
+            return;
+        }
+        //print_r(get_defined_vars());
+
         // Default values from the url
         $cCommand = urldecode((string )@$_GET['idfix']);
         // What do we need to do?
@@ -49,6 +57,7 @@ class Idfix extends Events3Module
 
         $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction);
         // And wrap them in the body HTML
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         echo $this->RenderTemplate('Idfix', array('content' => $content));
 
     }
@@ -75,6 +84,7 @@ class Idfix extends Events3Module
         $this->iObject = intval($iObject);
         $this->iParent = intval($iParent);
 
+
         // Create an empty configuration array
         $this->aConfig = array();
 
@@ -82,7 +92,7 @@ class Idfix extends Events3Module
         $this->Event('GetConfig');
 
         // Check if datatables are present
-        $this->CheckEnvironment();
+        $this->IdfixStorage->check();
 
         // Create the output variable
         $output = '';
@@ -96,6 +106,7 @@ class Idfix extends Events3Module
 
     public function Event($cEventName, &$xValue = '')
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         /* @var $events3 Events3 */
         $ev3 = Events3::GetHandler();
 
@@ -105,6 +116,7 @@ class Idfix extends Events3Module
         $ev3->Raise($cEventName . 'Before', $xValue);
         $ev3->Raise($cEventName, $xValue);
         $ev3->Raise($cEventName . 'After', $xValue);
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
 
@@ -122,12 +134,16 @@ class Idfix extends Events3Module
      */
     public function RenderTemplate($cTemplateName, $aVars = array())
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         // Add reference to idfix to the template
         $aVars['oIdfix'] = &$this;
         /* @var $oTemplate Template*/
         $oTemplate = $this->load('Template');
         $cTemplateFile = dirname(__file__) . "/templates/{$cTemplateName}.php";
-        return $oTemplate->Render($cTemplateFile, $aVars);
+
+        $return = $oTemplate->Render($cTemplateFile, $aVars);
+        $this->IdfixDebug->Profiler(__method__, 'stop');
+        return $return;
     }
 
     public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $iParent = null, $cAction = '')
@@ -142,6 +158,7 @@ class Idfix extends Events3Module
     }
     public function ValidIdentifier($cKey)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $cKey = strtolower($cKey);
         $blacklist = str_replace(str_split('abcdefghijklmnopqrstuvwxyz_1234567890'), '', $cKey);
         if ($blacklist)
@@ -152,6 +169,7 @@ class Idfix extends Events3Module
         {
             $cKey = '_' . $cKey;
         }
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $cKey;
     }
 
@@ -167,6 +185,7 @@ class Idfix extends Events3Module
      */
     public function FieldAccess($cConfigName, $cTableName, $cFieldName, $cOp)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         //$args = func_get_args();
         $bAccess = false;
         // Put all the values in the array
@@ -175,6 +194,7 @@ class Idfix extends Events3Module
         $this->Event('Access', $aPack);
         // Now only extract the access value
         $bAccess = (boolean)$aPack['bAccess'];
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $bAccess;
     }
     /**
@@ -241,6 +261,7 @@ class Idfix extends Events3Module
      */
     public function PostprocesConfig($aConfig, $aRecord = array())
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         if (is_array($aConfig))
         {
             foreach ($aConfig as &$aConfig_element)
@@ -274,6 +295,7 @@ class Idfix extends Events3Module
                 }
             }
         }
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aConfig;
     }
 
@@ -301,18 +323,6 @@ class Idfix extends Events3Module
             }
         }
         return $aHaystack;
-    }
-
-    /**
-     * Private support functions
-     * 
-     */
-
-
-    private function CheckEnvironment()
-    {
-        $db = $this->load('IdfixStorage');
-        $db->Check();
     }
 
 

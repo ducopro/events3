@@ -24,53 +24,65 @@ class IdfixStorage extends Events3Module
      */
     public function SaveRecord($aFields)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $cTableSpace = $this->GetTableSpaceName();
         $aFields['UidChange'] = 0;
         $aFields['TSChange'] = time();
+        // Store all the NON-sql columns in the data field
+        $aFields = $this->SavePostProcess($aFields);
+
+        // Trigger the correcte event
+        $this->Idfix->Event('SaveRecord', $aFields);
 
         if (isset($aFields['MainID']) and $aFields['MainID'])
         {
             $iRetval = (integer)$aFields['MainID'];
             unset($aFields['MainID']);
-            $aFields = $this->SavePostProcess($aFields);
+
             $this->oDb->Update($cTableSpace, $aFields, 'MainID', $iRetval);
 
         } else
         {
             $aFields['TSCreate'] = time();
             $aFields['UidCreate'] = 0;
-            $aFields = $this->SavePostProcess($aFields);
             $iRetval = $this->oDb->Insert($cTableSpace, $aFields);
-
         }
-
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $iRetval;
 
     }
     public function LoadRecord($iMainId, $bCache = true)
     {
+
         $cConfigName = $this->oIdfix->cConfigName;
 
         // Static caching
         static $aStaticCache = array();
-        if ( $bCache AND isset($aStaticCache[$cConfigName][$iMainId]))
+        if ($bCache and isset($aStaticCache[$cConfigName][$iMainId]))
         {
             return $aStaticCache[$cConfigName][$iMainId];
         }
+
+        $this->IdfixDebug->Profiler(__method__, 'start');
 
         // Get tablespace and fetch data
         $cTableSpace = $this->GetTableSpaceName();
         $sql = "SELECT * FROM {$cTableSpace} WHERE MainID = " . intval($iMainId);
         $aDataRow = $this->oDb->DataQuerySingleRow($sql);
         $aDataRow = $this->LoadPostProcess($aDataRow);
+
+        // Change it through the event system
+        $this->Idfix->Event('LoadRecord', $aDataRow);
+
         // Store static cached data
         $aStaticCache[$cConfigName][$iMainId] = $aDataRow;
-
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aDataRow;
 
     }
     public function LoadAllRecords($iTypeId = null, $iParentId = 0, $cOrder = 'Weight', $aWhere = array(), $cLimit = '')
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $aReturn = array();
         $cTableSpace = $this->GetTableSpaceName();
         $cSql = "SELECT * FROM {$cTableSpace}";
@@ -113,7 +125,7 @@ class IdfixStorage extends Events3Module
             $iMainId = $aRow['MainID'];
             $aReturn[$iMainId] = $this->LoadPostProcess($aRow);
         }
-        //echo $cSql;
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
         return $aReturn;
     }
 
@@ -124,6 +136,7 @@ class IdfixStorage extends Events3Module
      */
     public function check()
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         // Check the base ifdfix table
         $bIdFixIsThere = (count($this->oDb->ShowTables('idfix')) == 1);
         if (!$bIdFixIsThere)
@@ -140,6 +153,7 @@ class IdfixStorage extends Events3Module
         {
             $this->oDb->Query("CREATE TABLE {$cTable} LIKE idfix");
         }
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
 
 
@@ -201,9 +215,11 @@ class IdfixStorage extends Events3Module
      */
     private function LoadPostProcess($aRow)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $aProps = (array )unserialize($aRow['data']);
         $aRow += $aProps;
         unset($aRow['data']);
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
         return $aRow;
     }
 
@@ -217,6 +233,7 @@ class IdfixStorage extends Events3Module
      */
     private function SavePostProcess($aRow)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $cTableSpace = $this->GetTableSpaceName();
         $aFieldList = $this->oDb->ShowColumns($cTableSpace);
         $aProps = array();
@@ -235,6 +252,7 @@ class IdfixStorage extends Events3Module
         }
         // Now store the serialized version in the data element
         $aRow['data'] = serialize($aProps);
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
         return $aRow;
     }
 }

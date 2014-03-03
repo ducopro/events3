@@ -6,6 +6,7 @@
  */
 
 ?>
+ <?php //print_r(get_defined_vars()); ?>
  
  <table class="table table-striped table-hover">
      <thead><tr>

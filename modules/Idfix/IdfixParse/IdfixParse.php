@@ -8,12 +8,14 @@ class IdfixParse extends Events3Module
 {
     
     public function Events3IdfixGetConfig() {
+       $this->IdfixDebug->Profiler( __METHOD__, 'start');
        $oIdfix = $this->load('Idfix');
        $cConfigName = $oIdfix->cConfigName;
        $cFileName = dirname(__FILE__) . '/configs/' . $cConfigName . '.idfix';
        if (file_exists($cFileName) and is_readable($cFileName)) {
         $oIdfix->aConfig = $this->Parse($cFileName);
        }
+       $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
     
    

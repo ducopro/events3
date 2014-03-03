@@ -31,6 +31,7 @@ class IdfixFields extends Events3Module
 
     private function _factory($cType, $cAction, &$aData)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $cDefaultClass = 'IdfixFieldsInput';
 
         // Let's see if we have a specific implementation
@@ -61,7 +62,7 @@ class IdfixFields extends Events3Module
         $oField->$cMethod();
         // And return the modified datastructure
         $aData = $oField->GetData();
-
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
 
 }

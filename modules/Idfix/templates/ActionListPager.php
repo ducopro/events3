@@ -17,7 +17,7 @@ if (!function_exists('_ActionListPagerRenderLi')) {
         $ev3 = Events3::GetHandler();
         $oIdfix = $ev3->LoadModule('Idfix');
         $cClass = '';
-        $cHref = $oIdfix->GetUrl('', '', '', $iPage, '', 'list');
+        $cHref = $oIdfix->GetUrl('', '', '', $iPage, null, 'list');
         // Check the current page
         if($iPage == $iPageCurrent) {
            $cClass = 'active disabled';

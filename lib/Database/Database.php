@@ -142,8 +142,11 @@ class Database extends Events3Module
       */
      private function _dataquery( $cSql, $aParams = array() ) {
        if ($this->pdo) {
+           $this->ProfileQuery();
            $stmt = $this->pdo->prepare( $cSql );
            $stmt->execute( array_values( $aParams ) );
+           $this->ProfileQuery( $stmt->queryString);
+           //$this->IdfixDebug->Debug(__METHOD__, $stmt);
            return $stmt; 
        }
        return null;
@@ -158,9 +161,45 @@ class Database extends Events3Module
       */
      private function _query( $cSql ) {
        if ($this->pdo) {
-         return $this->pdo->exec( $cSql ); 
+         
+         $this->ProfileQuery();
+         $return = $this->pdo->exec( $cSql );
+         $this->ProfileQuery($cSql);
+         
+         return $return; 
        }
        return null;
+     }
+     
+     /**
+      * Sometimes we just want to know how many queries we send
+      * to the database and how much time it took.
+      * This function collects all the data and fires the right event.
+      * 
+      * 
+      * @param string $cOp Start or Stop
+      * @param string $cSql The SQL we send to the data engine
+      * @return void
+      */
+     private function ProfileQuery( $cSql = '') {
+        static $iStart = 0;
+        static $iCum = 0;
+        if ( !$cSql ) {
+            $iStart = (float) microtime(true);
+        }
+        else {
+            $iStop = (float) microtime(true);
+            $iThroughPut = (float) round( ($iStop-$iStart)*1000,2);
+            $iCum += $iThroughPut;
+            // Create Package
+            $aPack = array(
+              'time' => $iThroughPut,
+              'total' => $iCum,
+              'sql' => $cSql,
+            );
+            $ev3 = Events3::GetHandler();
+            $ev3->Raise('ProfileQuery', $aPack );
+        }
      }
 
 

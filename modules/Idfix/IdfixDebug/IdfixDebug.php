@@ -16,6 +16,25 @@ class IdfixDebug extends Events3Module
     }
 
     /**
+     * Configuration settings that can be overruled
+     * in the configurationfile
+     * 
+     * @param array &$aConfig Reference to the configuration array
+     * @return void
+     */
+    public function Events3ConfigInit(&$aConfig)
+    {
+        $cKey = 'IdfixDebugShowDebugInfo';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : '0';
+        $this->$cKey = $aConfig[$cKey];
+
+        $cKey = 'IdfixDebugShowProfiler';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : '0';
+        $this->$cKey = $aConfig[$cKey];
+
+    }
+
+    /**
      * $this->Debug()
      *
      * @param $message
@@ -29,6 +48,11 @@ class IdfixDebug extends Events3Module
      */
     function Debug($message = null, $vars = null, $type = 1)
     {
+        if (!$this->IdfixDebugShowDebugInfo)
+        {
+            return;
+        }
+
         $this->Profiler(__method__, 'start');
 
         if (is_null($message))
@@ -67,6 +91,11 @@ class IdfixDebug extends Events3Module
      */
     function Events3PostRun()
     {
+        if (!$this->IdfixDebugShowProfiler and !$this->IdfixDebugShowDebugInfo)
+        {
+            return '';
+        }
+
         $this->Debug(__method__, null);
 
         $header = array(
@@ -79,9 +108,17 @@ class IdfixDebug extends Events3Module
         $retval = '<br /><hr>';
         if (is_array($info) and count($info) > 0)
         {
-            $retval .= $this->ThemeTable($header, $info);
+            if ($this->IdfixDebugShowDebugInfo)
+            {
+                $retval .= $this->ThemeTable($header, $info);
+            }
         }
-        $retval .= $this->Profiler('', 'render');
+        if ($this->IdfixDebugShowProfiler)
+        {
+            $retval .= $this->Profiler('', 'render');
+        }
+
+        $retval .= '<br /><hr>';
 
         echo $retval;
         //return $retval;
@@ -99,6 +136,11 @@ class IdfixDebug extends Events3Module
      */
     function Profiler($name = '', $op = 'start')
     {
+        if (!$this->IdfixDebugShowProfiler)
+        {
+            return '';
+        }
+
         static $timers = array();
         if ($op == 'start')
         {

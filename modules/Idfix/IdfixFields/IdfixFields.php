@@ -22,13 +22,6 @@ class IdfixFields extends Events3Module
         $this->_factory($cType, $cAction, $aData);
     }
 
-    public function Events3IdfixValidateField(&$aData)
-    {
-        $cType = $aData['type'];
-        $cAction = 'Validate';
-        $this->_factory($cType, $cAction, $aData);
-    }
-
     private function _factory($cType, $cAction, &$aData)
     {
         $this->IdfixDebug->Profiler( __METHOD__, 'start');
@@ -108,9 +101,6 @@ class IdfixFieldsBase
     public function GetEdit()
     {
     }
-    public function GetValidate()
-    {
-    }
 
     /**
      * Cleanup any string for output
@@ -176,7 +166,8 @@ class IdfixFieldsBase
      */
     public function GetName()
     {
-        return $this->oIdfix->ValidIdentifier($this->aData['_tablename'] . '-' . $this->aData['_name']);
+        return $this->aData['_name'];
+        //return $this->oIdfix->ValidIdentifier($this->aData['_tablename'] . '-' . $this->aData['_name']);
     }
 
     protected function RenderEditElement($cRawInput, $cId)
@@ -225,6 +216,12 @@ class IdfixFieldsInput extends IdfixFieldsBase
         $cAttr = $this->GetAttributes($aData);
         $cInput = "<input {$cAttr}>";
         $this->aData['__DisplayValue'] = $this->RenderEditElement($cInput, $cId);
+        
+        // Is there any value posted??????
+        if (!is_null( $this->aData['__RawPostValue'])) {
+            // For input fields, all is allowed
+            $this->aData['__SaveValue'] = $this->aData['__RawPostValue'];
+        }
     }
 
 

@@ -3,7 +3,7 @@
 class IdfixDefault extends Events3Module
 {
 
-    private $oIdfix, $oDatabase;
+    private $oIdfix;
 
     /**
      * 
@@ -22,7 +22,6 @@ class IdfixDefault extends Events3Module
         $this->IdfixDebug->Profiler( __METHOD__, 'start');
         // Load modules we need
         $this->oIdfix = $this->load('Idfix');
-        $this->oDatabase = $this->load('Database');
         // Get Options from the idfix module
         $aConfig = &$this->oIdfix->aConfig;
         $cConfigName = $this->oIdfix->cConfigName;
@@ -64,8 +63,7 @@ class IdfixDefault extends Events3Module
      */
     private function AlterSort($cConfigName, $cTableName, &$aTableConfig, $aConfig)
     {
-        $aFieldList = $this->oDatabase->ShowColumns('idfix');
-
+        $aFieldList = $this->IdfixStorage->GetIdfixColumns();
         // If there's a sort array, ok, otherwise build a default on all
         // the available system fields
         if (isset($aTableConfig['sort']) and is_array($aTableConfig['sort']))
@@ -152,7 +150,7 @@ class IdfixDefault extends Events3Module
             // virtual column
             // This way we can implement basic searching and avoiding most
             // SQl errors
-            $aFields = $this->oDatabase->ShowColumns('idfix');
+            $aFields = $this->IdfixStorage->GetIdfixColumns();
             if (isset($aFields[$cFieldName]))
             {
                 $this->SetDefaultValue($aSearchConfig, 'sql', "{$cFieldName} = '%value'");
@@ -188,7 +186,7 @@ class IdfixDefault extends Events3Module
 
         // Standard properties
         $this->SetDefaultValue($aConfig, 'title', $cTableName);
-
+        $this->SetDefaultValue($aConfig, 'icon', 'list');
         $this->SetDefaultValue($aConfig, 'pager', 20);
 
         // Default ID
@@ -224,7 +222,7 @@ class IdfixDefault extends Events3Module
                 "type" => "virtual",
                 "title" => "Edit",
                 "icon" => "edit",
-                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '', 'edit'),
+                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '%ParentID%', 'edit'),
                 "class" => "btn btn-default",
                 "_tablename" => $cTableName,
                 "_name" => '_edit',
@@ -236,7 +234,7 @@ class IdfixDefault extends Events3Module
                 "type" => "virtual",
                 "title" => "Copy",
                 "icon" => "camera",
-                "href" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%', '', 'copy'),
+                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%','%ParentID%', 'copy'),
                 "class" => "btn btn-default",
                 "_tablename" => $cTableName,
                 "_name" => '_copy',
@@ -256,7 +254,7 @@ class IdfixDefault extends Events3Module
                         "value" => "{$aChildConfig['title']}",
                         "icon" => $aChildConfig['icon'],
                         "href" => "idfix/list/%_config%/{$cChildName}/%MainID%",
-                        "href" => $this->oIdfix->GetUrl('%_config%', $cChildName, '', '', '%MainID%', 'list'),
+                        "href" => $this->oIdfix->GetUrl('%_config%', $cChildName, '', 1, '%MainID%', 'list'),
                         "class" => "btn btn-primary",
                         "destination" => false,
                         "_tablename" => $cTableName,
@@ -272,7 +270,7 @@ class IdfixDefault extends Events3Module
                 "confirm" => "Are you sure you want to delete this {$cTableName}?",
                 "title" => "Delete",
                 "icon" => "remove",
-                "href" => $this->oIdfix->GetUrl('%_config%', '', '', '%MainID%', '', 'delete'),
+                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '%ParentID%', 'delete'),
                 "class" => "btn btn-danger",
                 "_tablename" => $cTableName,
                 "_name" => '_delete',

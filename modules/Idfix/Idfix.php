@@ -20,8 +20,8 @@ class Idfix extends Events3Module
      */
     public function Events3ConfigInit(&$aConfig)
     {
-        $cKey = 'IdfixConfigProfiler';
-        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 'off';
+        $cKey = 'IdfixSalt';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : md5(time());
         $this->$cKey = $aConfig[$cKey];
     }
 
@@ -56,10 +56,11 @@ class Idfix extends Events3Module
         $cAction = (string )array_shift($aInput);
 
         $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction);
+        $navbar = $this->RenderTemplate('IdfixNavbar', array( 'Idfix' => $this) );
         // And wrap them in the body HTML
+        $cBodyContent = $this->RenderTemplate('Idfix', array('content' => $content, 'navbar' => $navbar));
+        echo $cBodyContent;
         $this->IdfixDebug->Profiler(__method__, 'stop');
-        echo $this->RenderTemplate('Idfix', array('content' => $content));
-
     }
 
     /**
@@ -297,6 +298,39 @@ class Idfix extends Events3Module
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aConfig;
+    }
+
+    /**
+     * Sometimes we just need to know what was the last page showed
+     * in the list.
+     * Fort example if we start editing a value. After that we need to go to the 
+     * correct page.
+     * This is a helper function for that sitaution
+     * Call it without parameters to store the last active page.
+     * Give it a tablename and it returns the last known page.
+     * 
+     * @param string $cTableName
+     * @return integer PageNumber for the specified table. defaults to 1.
+     */
+    public function GetSetLastListPage($cTableName = '')
+    {
+        $iReturn = 1;
+        $cSessionKey = '__Idfix__LastListPage';
+        // Set Value
+        if (!$cTableName)
+        {
+            $cTableName = $this->cTableName;
+            $_SESSION[$cSessionKey][$cTableName] = $this->iObject;
+        }
+        // Get value
+        else
+        {
+            if (isset($_SESSION[$cSessionKey][$cTableName]))
+            {
+                $iReturn = (integer)$_SESSION[$cSessionKey][$cTableName];
+            }
+        }
+        return $iReturn;
     }
 
     /**

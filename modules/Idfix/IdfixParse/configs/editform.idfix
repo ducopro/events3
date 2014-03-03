@@ -1,4 +1,4 @@
--name=Editform test
+-title=Editform Test
 -description=Configuration for testing the editform
 // URL: 
 
@@ -7,9 +7,9 @@
     //Element demo
     #editform
         -id=1
-        -name=Editform test
+        -title=Editform Test
         -description=Only a couple of textfields for testing
-        -icon=euro
+        //-icon=euro
         -pager=10
         #fields
             #Name

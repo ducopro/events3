@@ -3,48 +3,43 @@
 class IdfixList extends Events3Module
 {
 
-    private $oIdfix, $oIdfixStorage, $oDatabase;
 
     public function Events3IdfixActionList(&$output)
     {
         $this->IdfixDebug->Profiler( __METHOD__, 'start');
-        /* @var $this->oIdfix Idfix*/
-        $this->oIdfix = $this->load('Idfix');
-        /* @var $this->oIdfixStorage IdfixStorage*/
-        $this->oIdfixStorage = $this->load('IdfixStorage');
-        /* @var $this->oIdfixDatabase IdfixDatabase*/
-        $this->oDatabase = $this->load('Database');
-
+        // Store the last known page
+        $this->Idfix->GetSetLastListPage();
+        
         $aTemplateVars = array();
 
         // Get the title
         $cHook = 'ActionListTitle';
         $aData = array();
-        $this->oIdfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->oIdfix->RenderTemplate($cHook, $aData);
+        $this->Idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
         // Get the Breadcrumb trail
         $cHook = 'ActionListBreadcrumb';
         $aData = array();
-        $this->oIdfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->oIdfix->RenderTemplate($cHook, $aData);
+        $this->Idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
         // Get the buttonbar
         $cHook = 'ActionListButtonbar';
         $aData = array();
-        $this->oIdfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->oIdfix->RenderTemplate($cHook, $aData);
+        $this->Idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
         // Get the grid
         $cHook = 'ActionListMain';
         $aData = array();
-        $this->oIdfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->oIdfix->RenderTemplate($cHook, $aData);
+        $this->Idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
         // Get the pager
         $cHook = 'ActionListPager';
         $aData = array();
-        $this->oIdfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->oIdfix->RenderTemplate($cHook, $aData);
+        $this->Idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
 
         // Put them in the template
-        $output = $this->oIdfix->RenderTemplate('ActionList', $aTemplateVars);
+        $output = $this->Idfix->RenderTemplate('ActionList', $aTemplateVars);
         $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
 
@@ -57,8 +52,8 @@ class IdfixList extends Events3Module
      */
     public function Events3IdfixActionListTitle(&$aTitle)
     {
-        $aConfig = $this->oIdfix->aConfig;
-        $cTable = $this->oIdfix->cTableName;
+        $aConfig = $this->Idfix->aConfig;
+        $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
 
         $aTitle['cTitle'] = $aTableConfig['title'];
@@ -69,19 +64,19 @@ class IdfixList extends Events3Module
     public function Events3IdfixActionListBreadcrumb(&$aData)
     {
         $aData['aBreadcrumb'] = array( //
-            'Home' => $this->oIdfix->GetUrl($this->oIdfix->cConfigName), //
-            'Level 1' => $this->oIdfix->GetUrl($this->oIdfix->cConfigName), //
-            'Level 2' => $this->oIdfix->GetUrl($this->oIdfix->cConfigName), //
-            'Level 3' => $this->oIdfix->GetUrl($this->oIdfix->cConfigName), //
-            'Level 4' => $this->oIdfix->GetUrl($this->oIdfix->cConfigName), //
+            'Home' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
+            'Level 1' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
+            'Level 2' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
+            'Level 3' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
+            'Level 4' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
             );
     }
     public function Events3IdfixActionListMain(&$aData)
     {
         // let's grab the configuration settings and get only the part
         // we need now, the specifics for this table
-        $aConfig = $this->oIdfix->aConfig;
-        $cTable = $this->oIdfix->cTableName;
+        $aConfig = $this->Idfix->aConfig;
+        $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
         // Retrieve a list of columns we need to show
         // Access to each field is checked so we can be sure these
@@ -102,15 +97,15 @@ class IdfixList extends Events3Module
 
     public function Events3IdfixActionListButtonbar(&$aData)
     {
-        $aConfig = $this->oIdfix->aConfig;
-        $cTable = $this->oIdfix->cTableName;
+        $aConfig = $this->Idfix->aConfig;
+        $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
         $cTableNameUser = $aTableConfig['title'];
         // Default button for returning to the list
         $aData['aButtonbar']['list'] = array(
             'title' => 'List ' . $cTableNameUser,
             'description' => "View a listing of records in the {$cTableNameUser}.",
-            'href' => $this->oIdfix->GetUrl(null, null, null, null, null, 'list'),
+            'href' => $this->Idfix->GetUrl(null, null, null, null, null, 'list'),
             'class' => 'active',
             );
 
@@ -118,23 +113,21 @@ class IdfixList extends Events3Module
         $aData['aButtonbar']['new'] = array(
             'title' => 'New ' . $cTableNameUser,
             'description' => "Add a new record to the {$cTableNameUser} and edit it.",
-            'href' => $this->oIdfix->GetUrl(null, null, null, null, null, 'edit'),
+            'href' => $this->Idfix->GetUrl(null, null, null, 0, null, 'edit'),
             'class' => '',
             );
     }
 
     public function Events3IdfixActionListPager(&$aPager)
     {
-        // What is the total number of records???
-        $cTableSpace = $this->oIdfixStorage->GetTableSpaceName();
-        $iRecordsTotal = $this->oDatabase->CountRecords($cTableSpace);
-
         // What is the number of records on the page
-        $aConfig = $this->oIdfix->aConfig;
-        $cTable = $this->oIdfix->cTableName;
+        $aConfig = $this->Idfix->aConfig;
+        $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
         $iRecordsByPage = (integer)$aTableConfig['pager'];
-
+        // What is the total number of records???
+        $iRecordsTotal = $this->IdfixStorage->CountRecords( $aTableConfig['id'], $this->Idfix->iParent);
+        
         // What is the total number of pages
         $iPages = 1;
         if ($iRecordsTotal > $iRecordsByPage and $iRecordsTotal and $iRecordsByPage)
@@ -143,7 +136,10 @@ class IdfixList extends Events3Module
         }
 
         // What is the current page?
-        $iPageCurrent = $this->oIdfix->iObject;
+        $iPageCurrent = $this->Idfix->iObject;
+        // Check the current page requested. Maybe it is out of bounds??
+        $iPageCurrent = ($iPageCurrent>$iPages) ? $iPages :$iPageCurrent;
+        $iPageCurrent = ($iPageCurrent < 1) ? 1 : $iPageCurrent;
         // What is the next page
         $iPageNext = min($iPageCurrent + 1, $iPages);
         // What is the previous page
@@ -163,13 +159,15 @@ class IdfixList extends Events3Module
         $aPager['iPagePrev'] = $iPagePrevious;
         $aPager['iSetStart'] = $iStartSet;
         $aPager['iSetStop'] = $iStopSet;
+        
+        $this->IdfixDebug->Debug(__METHOD__, $aPager);
 
     }
 
     /* Private section for rendering the main list */
     private function GetColumns($aTableConfig)
     {
-        $cConfigName = $this->oIdfix->cConfigName;
+        $cConfigName = $this->Idfix->cConfigName;
         // initialize Output array
         $aColumns = array();
         // Callback processing
@@ -186,7 +184,7 @@ class IdfixList extends Events3Module
                     $cColumnName = (string )@$aTableConfig['fields'][$cFieldName]['title'];
                 }
                 // If there are field level permissions, check them and act accordingly
-                if (!$this->oIdfix->FieldAccess($cConfigName, $aTableConfig['_name'], $cFieldName, 'view'))
+                if (!$this->Idfix->FieldAccess($cConfigName, $aTableConfig['_name'], $cFieldName, 'view'))
                 {
                     continue;
                 }
@@ -199,7 +197,7 @@ class IdfixList extends Events3Module
                 $aColumns[$cFieldName] = $cColumnName;
             }
         }
-        $this->oIdfix->Event('ListColumns', $aColumns);
+        $this->Idfix->Event('ListColumns', $aColumns);
         return $aColumns;
     }
 
@@ -215,7 +213,7 @@ class IdfixList extends Events3Module
     private function GetColumnsHeader($aColumns)
     {
         $aHeader = $aColumns;
-        $this->oIdfix->Event('ListHeader', $aHeader);
+        $this->Idfix->Event('ListHeader', $aHeader);
         return $aHeader;
     }
 
@@ -228,13 +226,13 @@ class IdfixList extends Events3Module
      */
     private function GetRawDataset()
     {
-        $aConfig = $this->oIdfix->aConfig;
-        $cTable = $this->oIdfix->cTableName;
+        $aConfig = $this->Idfix->aConfig;
+        $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
         /* Build TypeID */
         $iTypeID = (integer)$aTableConfig['id'];
         /* Build ParentID */
-        $iParentID = $this->oIdfix->iParent;
+        $iParentID = $this->Idfix->iParent;
         /* Build a default Order
         @TODO read the default sort order from the config
         */
@@ -243,7 +241,7 @@ class IdfixList extends Events3Module
         $aWhere = array();
         /* Build the limit clause as an array for convenience
         of the event handler, remember limit is 0-based*/
-        $iPage = $this->oIdfix->iObject;
+        $iPage = $this->Idfix->iObject;
         $iRecsPerPage = $aTableConfig['pager'];
         $iStart = (($iPage - 1) * $iRecsPerPage);
         $aLimit = array($iStart, $iRecsPerPage);
@@ -256,7 +254,7 @@ class IdfixList extends Events3Module
             'where' => $aWhere,
             'limit' => $aLimit,
             );
-        $this->oIdfix->Event('ListDataSet', $aPack);
+        $this->Idfix->Event('ListDataSet', $aPack);
 
         /* Now get all the values back in variables */
         $iTypeID = $aPack['type'];
@@ -266,7 +264,7 @@ class IdfixList extends Events3Module
         $cLimit = implode(',', $aPack['limit']);
 
 
-        $aRawDataSet = $this->oIdfixStorage->LoadAllRecords($iTypeID, $iParentID, $cOrder, $aWhere, $cLimit);
+        $aRawDataSet = $this->IdfixStorage->LoadAllRecords($iTypeID, $iParentID, $cOrder, $aWhere, $cLimit);
         return $aRawDataSet;
     }
 
@@ -296,6 +294,8 @@ class IdfixList extends Events3Module
 
                 // And the matching field configuration?
                 $aFieldConfig = $aTableConfig['fields'][$cFieldName];
+                // Postprocess the configuration
+                $aFieldConfig = $this->Idfix->PostprocesConfig( $aFieldConfig, $aRawRow);
                 // Now it's the time to get the visual
                 $aDisplayRow[] = $this->GetDisplayDataCell($xFieldData, $aFieldConfig);
             }
@@ -318,7 +318,7 @@ class IdfixList extends Events3Module
     private function GetDisplayDataCell($xFieldData, $aFieldConfig)
     {
         $aFieldConfig['__RawValue'] = $xFieldData;
-        $this->oIdfix->Event('DisplayField', $aFieldConfig);
+        $this->Idfix->Event('DisplayField', $aFieldConfig);
         return $aFieldConfig['__DisplayValue'];
     }
 

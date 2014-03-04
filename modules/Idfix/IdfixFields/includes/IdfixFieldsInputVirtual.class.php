@@ -13,43 +13,26 @@ class IdfixFieldsInputVirtual extends IdfixFieldsInput
             $cValue = $this->aData['value'];
         }
 
-        // Do we need an optional icopn???
-        $cIconLib = $this->oIdfix->aConfig['iconlib'];
-        $cIcon = $this->GetIcon($cIconLib);
-        if ($cIcon) {
-            $cValue = $cIcon . '&nbsp' . $cValue;
+        // Do we need an optional icon???
+        if(isset($this->aData['icon']) and $this->aData['icon'] ) {
+          $cIconHtml = $this->Idfix->GetIconHTML($this->aData['icon']);
+          $cValue = $cIconHtml . '&nbsp' . $cValue;    
         }
 
+        // Do we need conformation??
+        if(isset($this->aData['confirm']) and $this->aData['confirm'] ) {
+            $cConfirm = $this->aData['confirm'];
+            $this->aData['onclick'] = "return confirm('{$cConfirm}')";
+        }
         // Get all the attributes
-        $aAttr = $this->aData;
-        $aAttr['role'] = 'button';
         $cAttr = $this->GetAttributes($this->aData);
         
 
-        $cClass = $cReturn = "<a {$cAttr}>{$cValue}</a>";
+        $cReturn = "<a {$cAttr}>{$cValue}</a>";
         
         $this->aData['__DisplayValue'] = $cReturn;
     }
 
 
-    /**
-     * Return the correct html for the image icon
-     * 
-     * @param mixed $cIconLib
-     * @return
-     */
-    private function GetIcon($cIconLib)
-    {
-        $cReturn = '';
-        $cIcon = $this->aData['icon'];
-        if ($cIconLib == 'bootstrap' and $cIcon)
-        {
-            $cReturn = "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>";
-        } elseif ($cIconLib and $cIcon)
-        {
-            $src = $cIconLib . '/' . $cIcon;
-            $cReturn = "<img align=\"absmiddle\" height=\"16\" width=\"16\" src=\"{$src}\" />";
-        }
-        return $cReturn;
-    }
+   
 }

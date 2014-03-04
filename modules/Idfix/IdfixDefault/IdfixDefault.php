@@ -311,6 +311,8 @@ class IdfixDefault extends Events3Module
     {
         $this->SetDefaultValue($aFieldConfig, 'type', 'text');
         $this->SetDefaultValue($aFieldConfig, 'title', $cFieldName);
+        $this->SetDefaultValue($aFieldConfig, 'description', '');
+        $this->SetDefaultValue($aFieldConfig, 'class', 'form-control');
         if ($aFieldConfig['type'] == 'file')
         {
             $this->SetDefaultValue($aFieldConfig, 'icon', 'download.png');

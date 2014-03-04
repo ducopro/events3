@@ -10,6 +10,13 @@ class Idfix extends Events3Module
     // Command line parameter values
     public $aConfig, $cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction;
 
+    // Stubs for the configuration properties
+    // Main purpose for this declaration is code completion.
+    public $IdfixConfigSalt, $IdfixConfigCache;
+
+    // Entry in $_SESSION array for caching
+    const CACHE_KEY = '__idfix_cache__';
+
 
     /**
      * Configuration settings that can be overruled
@@ -20,8 +27,12 @@ class Idfix extends Events3Module
      */
     public function Events3ConfigInit(&$aConfig)
     {
-        $cKey = 'IdfixSalt';
+        $cKey = 'IdfixConfigSalt';
         $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : md5(time());
+        $this->$cKey = $aConfig[$cKey];
+
+        $cKey = 'IdfixConfigCache';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 1;
         $this->$cKey = $aConfig[$cKey];
     }
 
@@ -56,7 +67,7 @@ class Idfix extends Events3Module
         $cAction = (string )array_shift($aInput);
 
         $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction);
-        $navbar = $this->RenderTemplate('IdfixNavbar', array( 'Idfix' => $this) );
+        $navbar = $this->RenderTemplate('IdfixNavbar', array('Idfix' => $this));
         // And wrap them in the body HTML
         $cBodyContent = $this->RenderTemplate('Idfix', array('content' => $content, 'navbar' => $navbar));
         echo $cBodyContent;
@@ -86,14 +97,20 @@ class Idfix extends Events3Module
         $this->iParent = intval($iParent);
 
 
-        // Create an empty configuration array
-        $this->aConfig = array();
-
-        // Fill the config array
-        $this->Event('GetConfig');
-
-        // Check if datatables are present
-        $this->IdfixStorage->check();
+        // Try to create the configuration from cache
+        $cConfigCacheKey = 'GetCachedConfig';
+        $this->aConfig = $this->GetSetCache($cConfigCacheKey);
+        // Check if we got one...
+        if (!is_array($this->aConfig))
+        {
+            // Ok, we need to create it from scratch ....
+            $this->Event('GetConfig');
+            // Time to to some checking for the correct tables
+            // Do it here because we only need to to it once
+            $this->IdfixStorage->check();
+            // And do not forget to store evertything in cache
+            $this->GetSetCache($cConfigCacheKey, $this->aConfig);
+        }
 
         // Create the output variable
         $output = '';
@@ -105,6 +122,15 @@ class Idfix extends Events3Module
         return $output;
     }
 
+    /**
+     * Main event handling system of Idfix
+     * Every events results in 3 events raised on the
+     * framework level
+     * 
+     * @param string $cEventName
+     * @param mixed &$xValue Most of the time a data strtucture
+     * @return void The datastructure can be manipulated
+     */
     public function Event($cEventName, &$xValue = '')
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
@@ -147,6 +173,17 @@ class Idfix extends Events3Module
         return $return;
     }
 
+    /**
+     * Give us a url to a Idfix page and use some intelligent default values
+     * 
+     * @param string $cConfigName
+     * @param string $cTablename
+     * @param string $cFieldName
+     * @param integer $iObject
+     * @param integer $iParent
+     * @param string $cAction
+     * @return
+     */
     public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $iParent = null, $cAction = '')
     {
         $cConfigName = $cConfigName ? $cConfigName : $this->cConfigName;
@@ -157,6 +194,18 @@ class Idfix extends Events3Module
         $cAction = $cAction ? $cAction : $this->cAction;
         return "index.php?idfix={$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$iParent}/{$cAction}";
     }
+
+    /**
+     * Create a nice identifier that's stripped from all
+     * of the bad characters and leaves us only with
+     * - lowercase
+     * - digits
+     * - alpha
+     * - underscore
+     * 
+     * @param string $cKey
+     * @return string Cleaned op $cKey
+     */
     public function ValidIdentifier($cKey)
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
@@ -176,7 +225,7 @@ class Idfix extends Events3Module
 
     /**
      * Check if there is access to this field of the configuration
-     * @todo
+     * This is the main method for checking permissions
      * 
      * @param string $cConfigName
      * @param string $cTableName
@@ -198,21 +247,24 @@ class Idfix extends Events3Module
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $bAccess;
     }
+
     /**
-     * Stub for the access handling.
-     * Access is always allowed.
+     * Stub for the access handling. Access is always allowed.
+     * This stub is implemented as a BEFORE handler, so it is mneant to
+     * be a default value.
+     * Other modules could ovberride it in the NORMAL or AFTER handler
+     * 
      * @see also the IdfixUser module which imnplements access handling
      * 
-     * @param bollean reference $bAccess
+     * @param boolean reference $bAccess
      * @param string $cConfigName
      * @param string $cTableName
      * @param string $cFieldName
      * @param string $cOp
      * @return void
      */
-    public function Events3IdfixAccess(&$aPack)
+    public function Events3IdfixAccessBefore(&$aPack)
     {
-        //print_r($aPack);
         $aPack['bAccess'] = true;
     }
 
@@ -228,6 +280,18 @@ class Idfix extends Events3Module
         return htmlspecialchars($cText, ENT_QUOTES, 'UTF-8');
     }
 
+
+    /**
+     * Idfix::GetIconHTML()
+     * This method is nessecary because we can have different types of
+     * iconlibs.
+     * 1. Built in bootstrap icons
+     * 2. A remote library
+     * 3. Local file library
+     * 
+     * @param mixed $cIcon Name of the icon
+     * @return string Full HTML for display purposes
+     */
     public function GetIconHTML($cIcon)
     {
         if (strtolower($this->aConfig['iconlib']) == 'bootstrap')
@@ -301,6 +365,33 @@ class Idfix extends Events3Module
     }
 
     /**
+     * $this->DynamicValues()
+     * Only called once from the above method :-)
+     *
+     * @param
+     *   mixed $aHaystack
+     * @param
+     *   mixed $aValues
+     * @return
+     *   Processed data structure
+     */
+    private function DynamicValues($aHaystack, $aValues)
+    {
+        if (is_array($aValues))
+        {
+            foreach ($aValues as $cKey => $xValue)
+            {
+                $search = '%' . $cKey . '%';
+                if (strpos($aHaystack, $search) !== false)
+                {
+                    $aHaystack = str_replace($search, $xValue, $aHaystack);
+                }
+            }
+        }
+        return $aHaystack;
+    }
+
+    /**
      * Sometimes we just need to know what was the last page showed
      * in the list.
      * Fort example if we start editing a value. After that we need to go to the 
@@ -334,29 +425,71 @@ class Idfix extends Events3Module
     }
 
     /**
-     * $this->DynamicValues()
-     *
-     * @param
-     *   mixed $aHaystack
-     * @param
-     *   mixed $aValues
-     * @return
-     *   Processed data structure
+     * Workhorse function for caching all kind of things.
+     * 
+     * We are using session based caching because:
+     * 1. It is as fast as static caching
+     * 2. Storing and retrieving is done just once when the session
+     *   is started and when the the PHP system is closed down
+     * 3. By default we have file based sessions and they are read
+     *    by PHP itself (C-code) and operating system, mostly LINUX.
+     *    Bottomline: as fast as possible
+     * 4. We can skip a lot of expensive MySql queries that are normally
+     *    done every call to the server.
+     * 
+     * I know that we are impacting performance by putting the profiler
+     * statements in here. But we really want to know the impact on perfomance
+     * this cache has. So it is a bit of a tradeoff.
+     * 
+     * But note that if the profiling system is shut down, there is only a function
+     * call performed with no code whatsoever.
+     * 
+     * @param string $cKey
+     * @param mixed $xValue
+     * @return mixed Cached $xValue
      */
-    private function DynamicValues($aHaystack, $aValues)
+    public function GetSetCache($cKey = null, $xValue = null)
     {
-        if (is_array($aValues))
+        // Start profiling
+        $this->IdfixDebug->Profiler(__method__, 'start');
+
+        // Only use the cache if it is configurated
+        if ($this->IdfixConfigCache)
         {
-            foreach ($aValues as $cKey => $xValue)
+            // Reset the cache
+            if (is_null($cKey))
             {
-                $search = '%' . $cKey . '%';
-                if (strpos($aHaystack, $search) !== false)
+                unset($_SESSION[self::CACHE_KEY]);
+            }
+            // Try to get a value from the cache
+            elseif (is_null($xValue))
+            {
+                // Check if there is a value
+                if (isset($_SESSION[self::CACHE_KEY][$cKey]))
                 {
-                    $aHaystack = str_replace($search, $xValue, $aHaystack);
+                    // Than set the return value
+                    $xValue = unserialize($_SESSION[self::CACHE_KEY][$cKey]);
                 }
             }
+            // OK, we must set the cache
+            else
+            {
+                $_SESSION[self::CACHE_KEY][$cKey] = serialize($xValue);
+            }
+        } else
+        {
+            // Well, no need for caching, so we can just as well clean it up
+            // and save some space and memory
+            if (isset($_SESSION[self::CACHE_KEY]))
+            {
+                unset($_SESSION[self::CACHE_KEY]);
+            }
+            
         }
-        return $aHaystack;
+        // Stop profiling
+        $this->IdfixDebug->Profiler(__method__, 'stop');
+
+        return $xValue;
     }
 
 

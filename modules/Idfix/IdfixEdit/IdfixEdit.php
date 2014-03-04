@@ -31,7 +31,7 @@ class IdfixEdit extends Events3Module
         // Trigger procedure and search and replace field values
         $aTableConfig = $this->Idfix->PostprocesConfig($aTableConfig, $this->aDataRow);
         // Create key to check if we are validating the correct form (SALTED!)
-        $this->cCheckSum = md5($cConfigName . $cTableName . $iMainID . $this->Idfix->IdfixSalt);
+        $this->cCheckSum = md5($cConfigName . $cTableName . $iMainID . $this->Idfix->IdfixConfigSalt);
         // Check if we pressed the SAVE button, if not, no need to validate... right??
         $bSavePressed = (isset($_POST['_idfix_save_button']));
         $bCancelPressed = (isset($_POST['_idfix_cancel_button']));
@@ -57,7 +57,7 @@ class IdfixEdit extends Events3Module
         // Do we have a push on the cancel button?
         // or did we push the save button and there are no errors?
         // if there are errors we should show the form again!!
-        if ($bCancelPressed OR ($bSavePressed AND !$this->bErrorsDetected))
+        if ($bCancelPressed or ($bSavePressed and !$this->bErrorsDetected))
         {
             // Than return to the list
             $iLastPage = $this->Idfix->GetSetLastListPage($cTableName);
@@ -169,7 +169,12 @@ class IdfixEdit extends Events3Module
             {
                 $this->Idfix->Event('EditField', $aFieldConfig);
                 // If there is a value to save, we need to keep it....
-                $this->aDataRow[$cFieldName] = $aFieldConfig['__SaveValue'];
+                // But only in validationmode
+                if ($this->bValidationMode)
+                {
+                    $this->aDataRow[$cFieldName] = $aFieldConfig['__SaveValue'];
+                }
+
             } elseif ($bAllowView)
             {
                 $this->Idfix->Event('DisplayField', $aFieldConfig);
@@ -192,11 +197,11 @@ class IdfixEdit extends Events3Module
     {
         $cReturn = '';
         $cReturn .= $this->GetHiddenField('_checksum', $this->cCheckSum);
-        $cReturn .= $this->GetHiddenField('_tablename', $aTableConfig['_name']);
-        $cReturn .= $this->GetHiddenField('_configname', $this->Idfix->cConfigName);
+        //$cReturn .= $this->GetHiddenField('_tablename', $aTableConfig['_name']);
+        //$cReturn .= $this->GetHiddenField('_configname', $this->Idfix->cConfigName);
         //$cReturn .= $this->GetHiddenField('_return', $_SERVER['HTTP_REFERER']);
-        $cReturn .= "<button class=\"btn btn-primary\" type=\"submit\" value=\"Save\" name=\"_idfix_save_button\">Save</button>&nbsp;";
-        $cReturn .= "<button class=\"btn btn-success\" type=\"submit\" value=\"Cancel\" name=\"_idfix_cancel_button\">Cancel</button>";
+        $cReturn .= "<button  formnovalidate=\"formnovalidate\" class=\"btn btn-primary\" type=\"submit\" value=\"Save\" name=\"_idfix_save_button\">Save</button>&nbsp;";
+        $cReturn .= "<button  formnovalidate=\"formnovalidate\" class=\"btn btn-success\" type=\"submit\" value=\"Cancel\" name=\"_idfix_cancel_button\">Cancel</button>";
         return $cReturn;
     }
     private function GetHiddenField($cName, $cValue)

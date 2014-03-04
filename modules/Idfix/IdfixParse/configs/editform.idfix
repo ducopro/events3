@@ -1,5 +1,5 @@
--title=Editform Test
--description=Configuration for testing the editform
+-title=Text Element
+-description=Configuration for testing the <em>text</em> element
 // URL: 
 
 #tables
@@ -7,11 +7,38 @@
     //Element demo
     #editform
         -id=1
-        -title=Editform Test
-        -description=Only a couple of textfields for testing
-        //-icon=euro
+        -title=Text Editform
+        -description=Variations of the <em>text</em> element
+        //-icon=text
+        -icon=euro
         -pager=10
         #fields
             #Name
-            #Description
-            #Adress
+                -type=text
+                -title=Standard
+                -description=Text element without any form of validation but with a default value
+                -value=Hello world
+                -placeholder=Here used to be the hello world text
+            #Char_1
+                -type=text
+                -title=Required element
+                -description=Standard text element thats required.   
+                -required=Please leave us your feedback. 
+            #Char_2
+                -type=text
+                -title=Element with icon
+                -description=Standard text element with an icon in front   
+                -icon=euro
+                -autocomplete=on
+            #Char_3
+                -title=Disabled form control
+                -placeholder=Nothing at all except a placeholder :-)
+                -disabled=1
+            #test
+                -type=date    
+                -required=This field is required
+                -icon=align-left
+                -placeholder=Dthos e asdk djkl
+                -value=now
+                -format=d-m-Y
+                        

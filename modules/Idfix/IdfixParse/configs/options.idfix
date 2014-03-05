@@ -1,0 +1,68 @@
+-title=Options
+-description=Test <em>checkbox/radios/select</em> in single/multiple states.
+#tables
+    #optiontest
+        -title=Options
+        -description=Table for all different options
+        -icon=list-alt
+        -pager=10
+        #fields
+            #SubTypeID
+                -type=checkbox
+                -description=Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut turpis est. Suspendisse auctor aliquet mi, sed scelerisque lorem consequat lacinia. Nunc malesuada sem non magna rhoncus fringilla. 
+                -title=Single Checkbox (default=ON)
+                -value=1
+            #SubTypeID2
+                -type=checkbox
+                -description=Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut turpis est. Suspendisse auctor aliquet mi, sed scelerisque lorem consequat lacinia. Nunc malesuada sem non magna rhoncus fringilla. 
+                -title=I agree with this solution
+                -required=Please agree with the above statement
+                #options
+                    -0=No, Never!
+                    -1=I Agree
+            #Name
+                -type=checkboxes
+                -title=Multiple Checkboxes
+                -description=Select an animal
+                -required=At least one checkbox must be selected!
+                -inline=1
+                #options
+                    -11=Horse
+                    -12=Pony
+                    -23=Dog
+                    -45=Cat
+            #select
+                -type=select
+                -title=Select single value
+                -description=Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut turpis est. Suspendisse auctor aliquet mi, sed scelerisque lorem consequat lacinia. Nunc malesuada sem non magna rhoncus fringilla.
+                -value=d
+                #options
+                    -1=Horse
+                    -Pony
+                    -d=Dog
+                    -Cat
+            #multiselect
+                -type=select
+                -title=Select multiple values
+                -description=Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut turpis est. Suspendisse auctor aliquet mi, sed scelerisque lorem consequat lacinia. Nunc malesuada sem non magna rhoncus fringilla.
+                -multiple=1
+                -size=6
+                -value=p
+                -required=Chose 1 of the options
+                #options
+                    -h=Horse
+                    -p=Pony
+                    -d=Dog
+                    -c=Cat
+            #radios
+                -type=radios
+                -title=Select one value from the set
+                -description=Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent ut turpis est. Suspendisse auctor aliquet mi, sed scelerisque lorem consequat lacinia. Nunc malesuada sem non magna rhoncus fringilla.
+                -inline=1
+                -value=26
+                #options
+                    -23=Horse
+                    -24=Pony
+                    -25=Dog
+                    -26=Cat
+                        

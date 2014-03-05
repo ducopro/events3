@@ -19,7 +19,7 @@ class IdfixDefault extends Events3Module
      */
     public function Events3IdfixGetConfigAfter()
     {
-        $this->IdfixDebug->Profiler( __METHOD__, 'start');
+        $this->IdfixDebug->Profiler(__method__, 'start');
         // Load modules we need
         $this->oIdfix = $this->load('Idfix');
         // Get Options from the idfix module
@@ -46,7 +46,7 @@ class IdfixDefault extends Events3Module
                 $this->AlterSort($cConfigName, $cTableName, $aTableConfig, $aConfig);
             }
         }
-       $this->IdfixDebug->Profiler( __METHOD__, 'stop');
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
     /**
@@ -223,7 +223,7 @@ class IdfixDefault extends Events3Module
                 "title" => "Edit",
                 "icon" => "edit",
                 "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '%ParentID%', 'edit'),
-                "class" => "btn btn-default",
+                "class" => "btn btn-xs btn-default",
                 "_tablename" => $cTableName,
                 "_name" => '_edit',
                 );
@@ -234,8 +234,8 @@ class IdfixDefault extends Events3Module
                 "type" => "virtual",
                 "title" => "Copy",
                 "icon" => "camera",
-                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%','%ParentID%', 'copy'),
-                "class" => "btn btn-default",
+                "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '%ParentID%', 'copy'),
+                "class" => "btn btn-xs btn-default",
                 "_tablename" => $cTableName,
                 "_name" => '_copy',
                 );
@@ -271,7 +271,7 @@ class IdfixDefault extends Events3Module
                 "title" => "Delete",
                 "icon" => "remove",
                 "href" => $this->oIdfix->GetUrl('%_config%', $cTableName, '', '%MainID%', '%ParentID%', 'delete'),
-                "class" => "btn btn-danger",
+                "class" => "btn btn-xs btn-danger",
                 "_tablename" => $cTableName,
                 "_name" => '_delete',
                 );
@@ -316,6 +316,10 @@ class IdfixDefault extends Events3Module
         if ($aFieldConfig['type'] == 'file')
         {
             $this->SetDefaultValue($aFieldConfig, 'icon', 'download.png');
+        }
+        if ($aFieldConfig['type'] == 'checkbox')
+        {
+            $this->SetDefaultValue($aFieldConfig, 'options', array(0 => 'No', 1 => 'Yes'));
         }
     }
 

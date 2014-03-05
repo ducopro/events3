@@ -42,9 +42,9 @@ class IdfixEdit extends Events3Module
         $cHtmlInputForm = $this->GetHtmlForForm($aTableConfig);
 
 
-        $this->IdfixDebug->Debug(__method__ . '-> Save pressed', $bSavePressed);
-        $this->IdfixDebug->Debug(__method__ . '-> Valideren', $this->bValidationMode);
-        $this->IdfixDebug->Debug(__method__ . '-> Errors', $this->bErrorsDetected);
+        //$this->IdfixDebug->Debug(__method__ . '-> Save pressed', $bSavePressed);
+        //$this->IdfixDebug->Debug(__method__ . '-> Valideren', $this->bValidationMode);
+        //$this->IdfixDebug->Debug(__method__ . '-> Errors', $this->bErrorsDetected);
         $this->IdfixDebug->Debug(__method__ . '-> POST', $_POST);
         $this->IdfixDebug->Debug(__method__ . '-> Datarow', $this->aDataRow);
 
@@ -161,6 +161,14 @@ class IdfixEdit extends Events3Module
             $xRawValue = (isset($this->aDataRow[$cFieldName]) ? $this->aDataRow[$cFieldName] : null);
             // Optional value from POST
             $xRawPostValue = (isset($_POST[$cFieldName]) ? $_POST[$cFieldName] : null);
+            
+            // Special case for checkboxes. They do not appear in post!!!!
+            // So if there are values posted but this field is not in it
+            // set some intelligent default. By now that is a numeric zero
+            if(is_null($xRawPostValue) AND count($_POST)>0) {
+                $xRawPostValue = 0;
+            }
+            
             $aFieldConfig['__RawValue'] = $xRawValue;
             $aFieldConfig['__RawPostValue'] = $xRawPostValue;
 

@@ -28,7 +28,7 @@ class IdfixFields extends Events3Module
         // saves us about 10 m.s.
         // And maybe a lot more with bigger lists :-)
         static $aFileList = array();
-        
+
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cDefaultClass = 'IdfixFieldsInput';
         $cOverride = $cDefaultClass . ucfirst($cType);
@@ -131,11 +131,12 @@ class IdfixFieldsBase extends Events3Module
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cReturn = '';
-        $aBlackList = array(
+        static $aBlackList = array(
             'title',
             'icon',
             'action',
             'required',
+            'inline',
             '_tablename',
             '_name',
             'confirm',
@@ -148,14 +149,28 @@ class IdfixFieldsBase extends Events3Module
         {
             unset($aData[$cBlackKey]);
         }
+
+        // Ok, now set the description as a title for the tooltips
+        if (isset($aData['description']) and $aData['description'])
+        {
+            $aData['title'] = $aData['description'];
+            unset($aData['description']);
+            $aData['data-toggle'] = 'tooltip';
+        }
+
         foreach ($aData as $cKey => $cValue)
         {
-            if (!is_array($cValue))
+            if (!is_array($cValue) and $cValue)
             {
-                $cReturn .= $this->Idfix->ValidIdentifier($cKey) . '="' . str_replace('"', "'", (string )$cValue) . '" ';
+                if(strpos($cValue,'"')) {
+                    $cValue = str_replace('"', "'", $cValue);
+                }
+                $cReturn .= $cKey . '="' . $cValue . '" ';
             }
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
+        //$this->IdfixDebug->Debug(__method__, get_defined_vars());
+        $this->IdfixDebug->Debug(__method__, $cReturn);
         return $cReturn;
     }
 
@@ -267,7 +282,7 @@ class IdfixFieldsInput extends IdfixFieldsBase
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
-    private function Validate()
+    protected function Validate()
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cError = '';
@@ -287,7 +302,7 @@ class IdfixFieldsInput extends IdfixFieldsBase
         return $cError;
     }
 
-    private function ValidateRequired()
+    protected function ValidateRequired()
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cError = '';
@@ -336,12 +351,12 @@ class IdfixFieldsInput extends IdfixFieldsBase
      * 
      * @return string
      */
-    private function GetValue()
+    protected function GetValue()
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cValue = '';
         // Precedence for the post value
-        if (!is_null($this->aData['__RawPostValue']))
+        if ( isset($this->aData['__RawPostValue']) and !is_null($this->aData['__RawPostValue']))
         {
             $cValue = $this->aData['__RawPostValue'];
 
@@ -356,7 +371,16 @@ class IdfixFieldsInput extends IdfixFieldsBase
         {
             $cValue = $this->aData['value'];
         }
+
+        // If the value is an array implode it to a comma separated value
+        // for use in multi select elements
+        if (is_array($cValue))
+        {
+            $cValue = implode(',', $cValue);
+        }
+
         $this->IdfixDebug->Profiler(__method__, 'stop');
+        //$this->IdfixDebug->Debug(__method__, $this->aData);
         return $this->Clean($cValue);
     }
 

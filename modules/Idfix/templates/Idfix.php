@@ -15,8 +15,15 @@
   </head>
   <body>
     
-    <?php echo $navbar; ?></div>
-    <?php echo $content; ?></div>
+    <?php echo $navbar; ?>
+    
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg-10 col-lg-offset-1">
+           <?php echo $content; ?>
+        </div>
+      </div>
+    </div>    
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) http://code.jquery.com/ui/1.10.4/jquery-ui.min.js -->
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>

@@ -40,7 +40,7 @@ if (!function_exists('_ActionListPagerRenderLi')) {
 ?>
 
 <div id="idfix-pager">
-<ul class="pagination">
+<ul class="pagination pull-right" style="--margin-top: 0px;">
   <?php
     print _ActionListPagerRenderLi($iPageCurrent,1,'step-backward');
     print _ActionListPagerRenderLi($iPageCurrent,$iPagePrev,'backward');

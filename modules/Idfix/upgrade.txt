@@ -1,0 +1,25 @@
+This little document describes which properties should be adapted when upgrading from asterix to Idfix
+
+-iconlib=bootstrap
+-iconlib=http://cdn.dustball.com/
+Asterix shipped with a standard iconlib. This is now deprecated.
+Use the bootstrap glyphicons or the icons from the dustball cdn.
+This way no files need to be loaded from your server.
+bootstrap is the default iconlib and virtual columns use these icons by default
+
+-icon=flag
+When you want to use glyphicon glyphicon-flag
+@see http://getbootstrap.com/components/#glyphicons
+Use bootstrap icons this way. 
+
+-icon=flag_blue.png
+@see http://www.dustball.com/icons/
+uses http://cdn.dustball.com/flag_blue.png
+
+-type=virtual
+Columns in asterix were specified using virtual=1
+This is deprecated. Use type=virtual instead.
+
+NEW -href=
+OLD -action=
+On virtual columns the action attribute defined a url, that's now standardized to href.

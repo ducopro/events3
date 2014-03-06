@@ -12,6 +12,7 @@ class IdfixDebug extends Events3Module
      */
     public function __construct()
     {
+        parent::__construct();
         $this->fStart = (float)microtime(true);
     }
 
@@ -105,7 +106,7 @@ class IdfixDebug extends Events3Module
             'parameters',
             );
         $info = $this->Debug(null, null);
-        $retval = '<br /><hr>';
+        $retval = '';
         if (is_array($info) and count($info) > 0)
         {
             if ($this->IdfixDebugShowDebugInfo)
@@ -118,9 +119,10 @@ class IdfixDebug extends Events3Module
             $retval .= $this->Profiler('', 'render');
         }
 
-        $retval .= '<br /><hr>';
+        //$retval .= '<br /><hr>';
 
-        echo $retval;
+        //echo $retval;
+        echo $this->Idfix->RenderTemplate('IdfixDebug', array('content'=>$retval));
         //return $retval;
     }
 
@@ -163,9 +165,9 @@ class IdfixDebug extends Events3Module
         } elseif ($op == 'render')
         {
             $header = array(
-                'name',
-                'count',
-                'time',
+                'Name',
+                'Count',
+                'Time',
                 );
             $data = array();
             foreach ($timers as $timer_name => $timer_data)

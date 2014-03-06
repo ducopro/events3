@@ -186,6 +186,7 @@ class IdfixDefault extends Events3Module
 
         // Standard properties
         $this->SetDefaultValue($aConfig, 'title', $cTableName);
+        $this->SetDefaultValue($aConfig, 'description', '');
         $this->SetDefaultValue($aConfig, 'icon', 'list');
         $this->SetDefaultValue($aConfig, 'pager', 20);
 
@@ -255,7 +256,7 @@ class IdfixDefault extends Events3Module
                         "icon" => $aChildConfig['icon'],
                         "href" => "idfix/list/%_config%/{$cChildName}/%MainID%",
                         "href" => $this->oIdfix->GetUrl('%_config%', $cChildName, '', 1, '%MainID%', 'list'),
-                        "class" => "btn btn-primary",
+                        "class" => "btn btn-xs btn-primary",
                         "destination" => false,
                         "_tablename" => $cTableName,
                         "_name" => '_' . $cChildName,
@@ -312,14 +313,27 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aFieldConfig, 'type', 'text');
         $this->SetDefaultValue($aFieldConfig, 'title', $cFieldName);
         $this->SetDefaultValue($aFieldConfig, 'description', '');
-        $this->SetDefaultValue($aFieldConfig, 'class', 'form-control');
+
+
         if ($aFieldConfig['type'] == 'file')
         {
             $this->SetDefaultValue($aFieldConfig, 'icon', 'download.png');
         }
+
         if ($aFieldConfig['type'] == 'checkbox')
         {
             $this->SetDefaultValue($aFieldConfig, 'options', array(0 => 'No', 1 => 'Yes'));
+        }
+
+        if ($aFieldConfig['type'] == 'virtual')
+        {
+            $this->SetDefaultValue($aFieldConfig, 'class', 'btn btn-xs btn-info');
+            $this->SetDefaultValue($aFieldConfig, 'href', '#');
+            $this->SetDefaultValue($aFieldConfig, 'value', $aFieldConfig['title']);
+            $this->SetDefaultValue($aFieldConfig, 'icon', 'play');
+        } else
+        {
+            $this->SetDefaultValue($aFieldConfig, 'class', 'form-control');
         }
     }
 

@@ -1,3 +1,4 @@
+<div id="idfix-breadcrumb">
 <ol class="breadcrumb">
 
 <?php
@@ -10,3 +11,4 @@ foreach ($aBreadcrumb as $cTitle => $cHref)
 ?>
 
 </ol>
+</div>

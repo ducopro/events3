@@ -12,6 +12,7 @@ class IdfixFields extends Events3Module
         //print_r($aData);
         $cType = $aData['type'];
         $cAction = 'Display';
+        $this->IdfixDebug->Debug(__method__, $aData);
         $this->_factory($cType, $cAction, $aData);
     }
 

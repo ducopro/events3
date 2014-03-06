@@ -23,4 +23,4 @@ $Events3->Run();
 
 // Temporary Developement 
 
-echo '<br /><br /><hr />Page build in: ' . round((microtime(true) - $iStart) * 1000, 2) . ' m.s.';
+echo '<div class="container">Page build in: ' . round((microtime(true) - $iStart) * 1000, 2) . ' m.s.</div>';

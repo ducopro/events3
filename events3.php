@@ -222,7 +222,7 @@ class Events3
             // Create the entry in the main modulelist
             $this->_aModuleList[$cModuleName] = $cModulePath;
             include_once $cModuleFile;
-            $aMethods = (array) get_class_methods($cModuleName);
+            $aMethods = (array )get_class_methods($cModuleName);
             foreach ($aMethods as $cMethodName)
             {
                 if (strpos($cMethodName, 'Events3') === 0)
@@ -300,6 +300,13 @@ class Events3
 class Events3Module
 {
 
+    // Reference to the framework
+    protected $ev3;
+
+    public function __construct()
+    {
+        $this->ev3 = Events3::GetHandler();
+    }
     /**
      * Simple function to load and return a module instance
      * @param string $cMod Name of the module
@@ -307,10 +314,10 @@ class Events3Module
      */
     public function load($cMod)
     {
-        $ev3 = Events3::GetHandler();
-        return $ev3->LoadModule($cMod);
+        //$ev3 = Events3::GetHandler();
+        return $this->ev3->LoadModule($cMod);
     }
-    
+
     /**
      * By way of this magic method we can get
      * to the module instance just bij accessing
@@ -322,7 +329,8 @@ class Events3Module
      * @param mixed $cModuleName
      * @return
      */
-    public function __get( $cModuleName ) {
+    public function __get($cModuleName)
+    {
         return $this->load($cModuleName);
     }
 

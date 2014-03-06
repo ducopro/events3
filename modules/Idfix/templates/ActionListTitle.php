@@ -2,7 +2,8 @@
 /**
  * $cTitle
  * $cDescription 
+ * $cIcon
  */ 
 ?>
 
-<h1><?php print $cTitle;?>&nbsp;<small><?php print $cDescription;?></small></h1>
+<h3><?php print $cIcon;?><?php print $cTitle;?>&nbsp;<small><?php print $cDescription;?></small></h3>

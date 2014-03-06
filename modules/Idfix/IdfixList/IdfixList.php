@@ -6,10 +6,10 @@ class IdfixList extends Events3Module
 
     public function Events3IdfixActionList(&$output)
     {
-        $this->IdfixDebug->Profiler( __METHOD__, 'start');
+        $this->IdfixDebug->Profiler(__method__, 'start');
         // Store the last known page
         $this->Idfix->GetSetLastListPage();
-        
+
         $aTemplateVars = array();
 
         // Get the title
@@ -19,11 +19,6 @@ class IdfixList extends Events3Module
         $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
         // Get the Breadcrumb trail
         $cHook = 'ActionListBreadcrumb';
-        $aData = array();
-        $this->Idfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
-        // Get the buttonbar
-        $cHook = 'ActionListButtonbar';
         $aData = array();
         $this->Idfix->Event($cHook, $aData);
         $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
@@ -40,7 +35,7 @@ class IdfixList extends Events3Module
 
         // Put them in the template
         $output = $this->Idfix->RenderTemplate('ActionList', $aTemplateVars);
-        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
 
@@ -52,17 +47,21 @@ class IdfixList extends Events3Module
      */
     public function Events3IdfixActionListTitle(&$aTitle)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $aConfig = $this->Idfix->aConfig;
         $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
 
         $aTitle['cTitle'] = $aTableConfig['title'];
         $aTitle['cDescription'] = $aTableConfig['description'];
+        $aTitle['cIcon'] = $this->Idfix->GetIconHTML($aTableConfig['icon']);
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
 
     public function Events3IdfixActionListBreadcrumb(&$aData)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $aData['aBreadcrumb'] = array( //
             'Home' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
             'Level 1' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
@@ -70,9 +69,12 @@ class IdfixList extends Events3Module
             'Level 3' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
             'Level 4' => $this->Idfix->GetUrl($this->Idfix->cConfigName), //
             );
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
+    
     public function Events3IdfixActionListMain(&$aData)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         // let's grab the configuration settings and get only the part
         // we need now, the specifics for this table
         $aConfig = $this->Idfix->aConfig;
@@ -93,41 +95,21 @@ class IdfixList extends Events3Module
         // Now build the template variables
         $aData['aHead'] = $aColumns;
         $aData['aBody'] = $aDisplayDataset;
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
 
-    public function Events3IdfixActionListButtonbar(&$aData)
-    {
-        $aConfig = $this->Idfix->aConfig;
-        $cTable = $this->Idfix->cTableName;
-        $aTableConfig = $aConfig['tables'][$cTable];
-        $cTableNameUser = $aTableConfig['title'];
-        // Default button for returning to the list
-        $aData['aButtonbar']['list'] = array(
-            'title' => 'List ' . $cTableNameUser,
-            'description' => "View a listing of records in the {$cTableNameUser}.",
-            'href' => $this->Idfix->GetUrl(null, null, null, null, null, 'list'),
-            'class' => 'active',
-            );
-
-        // Default button for a new record
-        $aData['aButtonbar']['new'] = array(
-            'title' => 'New ' . $cTableNameUser,
-            'description' => "Add a new record to the {$cTableNameUser} and edit it.",
-            'href' => $this->Idfix->GetUrl(null, null, null, 0, null, 'edit'),
-            'class' => '',
-            );
-    }
 
     public function Events3IdfixActionListPager(&$aPager)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         // What is the number of records on the page
         $aConfig = $this->Idfix->aConfig;
         $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
         $iRecordsByPage = (integer)$aTableConfig['pager'];
         // What is the total number of records???
-        $iRecordsTotal = $this->IdfixStorage->CountRecords( $aTableConfig['id'], $this->Idfix->iParent);
-        
+        $iRecordsTotal = $this->IdfixStorage->CountRecords($aTableConfig['id'], $this->Idfix->iParent);
+
         // What is the total number of pages
         $iPages = 1;
         if ($iRecordsTotal > $iRecordsByPage and $iRecordsTotal and $iRecordsByPage)
@@ -138,7 +120,7 @@ class IdfixList extends Events3Module
         // What is the current page?
         $iPageCurrent = $this->Idfix->iObject;
         // Check the current page requested. Maybe it is out of bounds??
-        $iPageCurrent = ($iPageCurrent>$iPages) ? $iPages :$iPageCurrent;
+        $iPageCurrent = ($iPageCurrent > $iPages) ? $iPages : $iPageCurrent;
         $iPageCurrent = ($iPageCurrent < 1) ? 1 : $iPageCurrent;
         // What is the next page
         $iPageNext = min($iPageCurrent + 1, $iPages);
@@ -159,14 +141,16 @@ class IdfixList extends Events3Module
         $aPager['iPagePrev'] = $iPagePrevious;
         $aPager['iSetStart'] = $iStartSet;
         $aPager['iSetStop'] = $iStopSet;
-        
-        $this->IdfixDebug->Debug(__METHOD__, $aPager);
+
+        //$this->IdfixDebug->Debug(__method__, $aPager);
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
 
     }
 
     /* Private section for rendering the main list */
     private function GetColumns($aTableConfig)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $cConfigName = $this->Idfix->cConfigName;
         // initialize Output array
         $aColumns = array();
@@ -198,12 +182,13 @@ class IdfixList extends Events3Module
             }
         }
         $this->Idfix->Event('ListColumns', $aColumns);
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
         return $aColumns;
     }
 
     /**
      * Postp[roces the array of headers.
-     * Trigger an event so we cab change the headers
+     * Trigger an event so we can change the headers
      * For example if we need sorting. We can make the headers
      * clickable and add an icon for showing the sort order.
      * 
@@ -212,8 +197,10 @@ class IdfixList extends Events3Module
      */
     private function GetColumnsHeader($aColumns)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $aHeader = $aColumns;
         $this->Idfix->Event('ListHeader', $aHeader);
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
         return $aHeader;
     }
 
@@ -226,6 +213,7 @@ class IdfixList extends Events3Module
      */
     private function GetRawDataset()
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $aConfig = $this->Idfix->aConfig;
         $cTable = $this->Idfix->cTableName;
         $aTableConfig = $aConfig['tables'][$cTable];
@@ -263,8 +251,11 @@ class IdfixList extends Events3Module
         $aWhere = $aPack['where'];
         $cLimit = implode(',', $aPack['limit']);
 
-
+        $this->IdfixDebug->Profiler( __METHOD__ . '::LoadAllRecords', 'start');
         $aRawDataSet = $this->IdfixStorage->LoadAllRecords($iTypeID, $iParentID, $cOrder, $aWhere, $cLimit);
+        $this->IdfixDebug->Profiler( __METHOD__ . '::LoadAllRecords', 'stop');
+        
+        $this->IdfixDebug->Profiler( __METHOD__, 'stop');
         return $aRawDataSet;
     }
 
@@ -279,9 +270,12 @@ class IdfixList extends Events3Module
      */
     private function GetDisplayDataSet($aRawSet, $aColumns, $aTableConfig)
     {
+        $this->IdfixDebug->Profiler( __METHOD__, 'start');
         $aDisplaySet = array();
+
         foreach ($aRawSet as $aRawRow)
         {
+            $aProcessedTableConfig = $this->Idfix->PostprocesConfig($aTableConfig, $aRawRow);
             $aDisplayRow = array();
             foreach ($aColumns as $cFieldName => $cColumnName)
             {
@@ -289,19 +283,20 @@ class IdfixList extends Events3Module
                 $xFieldData = '';
                 if (isset($aRawRow[$cFieldName]))
                 {
-                    $xFieldData = @$aRawRow[$cFieldName];
+                    $xFieldData = $aRawRow[$cFieldName];
                 }
 
                 // And the matching field configuration?
-                $aFieldConfig = $aTableConfig['fields'][$cFieldName];
+                $aFieldConfig = $aProcessedTableConfig['fields'][$cFieldName];
                 // Postprocess the configuration
-                $aFieldConfig = $this->Idfix->PostprocesConfig( $aFieldConfig, $aRawRow);
+                // $aFieldConfig = $this->Idfix->PostprocesConfig( $aFieldConfig, $aRawRow);
                 // Now it's the time to get the visual
                 $aDisplayRow[] = $this->GetDisplayDataCell($xFieldData, $aFieldConfig);
             }
             $aDisplaySet[] = $aDisplayRow;
         }
         //print_r($aDisplaySet);
+        $this->IdfixDebug->Profiler( __METHOD__ , 'stop');
         return $aDisplaySet;
     }
 
@@ -317,8 +312,10 @@ class IdfixList extends Events3Module
      */
     private function GetDisplayDataCell($xFieldData, $aFieldConfig)
     {
+        $this->IdfixDebug->Profiler( __METHOD__ , 'start');
         $aFieldConfig['__RawValue'] = $xFieldData;
         $this->Idfix->Event('DisplayField', $aFieldConfig);
+        $this->IdfixDebug->Profiler( __METHOD__ , 'stop');
         return $aFieldConfig['__DisplayValue'];
     }
 

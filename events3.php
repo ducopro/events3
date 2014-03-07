@@ -314,8 +314,8 @@ class Events3Module
      */
     public function load($cMod)
     {
-        //$ev3 = Events3::GetHandler();
-        return $this->ev3->LoadModule($cMod);
+        $ev3 = Events3::GetHandler();
+        return $ev3->LoadModule($cMod);
     }
 
     /**
@@ -359,6 +359,7 @@ class Events3TestCase extends Events3Module
 
     public function __construct()
     {
+        parent::__construct();
         if (is_null(self::$iStartTime))
         {
             self::$iStartTime = microtime(true);

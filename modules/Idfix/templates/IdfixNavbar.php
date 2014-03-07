@@ -21,7 +21,9 @@
             $cReturn .= "<li class=\"dropdown-header\">{$aDD['icon']}&nbsp;{$aDD['title']}</li>";
         }
         else {
-            $cReturn .= "<li><a href=\"{$aDD['href']}\" data-toggle=\"tooltip\" title=\"{$aDD['tooltip']}\">{$aDD['icon']}&nbsp;{$aDD['title']}</a></li>";
+            // Is this an active item??
+            $cActive = (isset($aDD['active']) and $aDD['active']) ? 'active' : '';
+            $cReturn .= "<li class=\"{$cActive}\"><a href=\"{$aDD['href']}\" data-toggle=\"tooltip\" title=\"{$aDD['tooltip']}\">{$aDD['icon']}&nbsp;{$aDD['title']}</a></li>";
         }
       }
       $cReturn .= '</ul>';    

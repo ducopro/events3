@@ -169,7 +169,7 @@ class Idfix extends Events3Module
             $data['left'][''] = array(
                 'title' => 'New ' . $this->aConfig['tables'][$this->cTableName]['title'],
                 'tooltip' => $this->aConfig['tables'][$this->cTableName]['description'],
-                'href' => $this->GetUrl($this->cConfigName, $this->cTableName, '', 0, 0, 'edit'),
+                'href' => $this->GetUrl($this->cConfigName, $this->cTableName, '', 0, $this->iParent, 'edit'),
                 'icon' => $this->GetIconHTML('plus'),
                 );
         }
@@ -203,65 +203,6 @@ class Idfix extends Events3Module
             'icon' => $this->GetIconHTML('tasks'),
             );
 
-        // Create a dropdown structure for showing all the possible
-        // sort options
-        $aSortList = array();
-        $aFieldList = array();
-        if (isset($this->aConfig['tables'][$this->cTableName]['sort']))
-        {
-            $aSortList = $this->aConfig['tables'][$this->cTableName]['sort'];
-            $aFieldList = $this->aConfig['tables'][$this->cTableName]['fields'];
-        }
-        //print_r($aSortList);
-        $aDropdown = array();
-
-        // Ascending sorts
-        $aDropdown[] = array(
-            'type' => 'header',
-            'title' => 'Ascending',
-            'icon' => $this->GetIconHTML('sort-by-attributes'));
-        foreach ($aSortList as $cFieldName => $cSortInfo)
-        {
-            $cFieldName = (is_numeric($cFieldName)) ? $cSortInfo : $cFieldName;
-            $aDropdown[] = array(
-                'title' => isset($aFieldList[$cFieldName]['title']) ? $aFieldList[$cFieldName]['title'] : $cFieldName,
-                'href' => $this->GetUrl('', '', '', null, null, 'sort'), //
-                'tooltip' => isset($aFieldList[$cFieldName]['description']) ? $aFieldList[$cFieldName]['description'] : '',
-                'type' => 'normal',
-                'icon' => '',
-                );
-        }
-        // Descending sorts
-        $aDropdown[] = array('type' => 'divider');
-        $aDropdown[] = array(
-            'type' => 'header',
-            'title' => 'Descending',
-            'icon' => $this->GetIconHTML('sort-by-attributes-alt'));
-        foreach ($aSortList as $cFieldName => $cSortInfo)
-        {
-            $cFieldName = (is_numeric($cFieldName)) ? $cSortInfo : $cFieldName;
-            $aDropdown[] = array(
-                'title' => isset($aFieldList[$cFieldName]['title']) ? $aFieldList[$cFieldName]['title'] : $cFieldName,
-                'href' => $this->GetUrl('', '', '', null, null, 'sort'), //
-                'tooltip' => isset($aFieldList[$cFieldName]['description']) ? $aFieldList[$cFieldName]['description'] : '',
-                'type' => 'normal',
-                'icon' => '',
-                );
-        }
-
-        // List the sorting fields in the system
-        // but only in list mode
-        if ($this->cAction == 'List')
-        {
-            $data['left']['sort'] = array(
-                'title' => 'Sort',
-                'tooltip' => 'Sort on one of the system fields. Click here to reset the sorting to default.',
-                'href' => '#',
-                'dropdown' => $aDropdown,
-                'icon' => $this->GetIconHTML('sort'),
-                );
-
-        }
 
         // Powered By Idfix
         $data['right']['system'] = array(
@@ -362,9 +303,10 @@ class Idfix extends Events3Module
      * @param integer $iObject
      * @param integer $iParent
      * @param string $cAction
+     * @param string $cAttributes Optiobnal exctra info to append to the querystring
      * @return
      */
-    public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $iParent = null, $cAction = '')
+    public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $iParent = null, $cAction = '', $aAttributes = array())
     {
         $cConfigName = $cConfigName ? $cConfigName : $this->cConfigName;
         $cTablename = $cTablename ? $cTablename : $this->cTableName;
@@ -372,7 +314,20 @@ class Idfix extends Events3Module
         $iObject = !is_null($iObject) ? $iObject : $this->iObject;
         $iParent = !is_null($iParent) ? $iParent : $this->iParent;
         $cAction = $cAction ? $cAction : $this->cAction;
-        return "index.php?idfix={$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$iParent}/{$cAction}";
+
+        // Create an araay of querystring parameters
+        $aAttributes['idfix'] = "{$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$iParent}/{$cAction}";
+        // Now let other modules add default values to it if needed
+        // See the sort module for information
+        $this->Event('GetUrl', $aAttributes);
+        // Create the concatenated querystring
+        $cQueryString = http_build_query($aAttributes);
+        // But decode it, because there might be variables in there for postprocessing!!!
+        $cQueryString = urldecode($cQueryString);
+        //$cQueryString = implode('&',$aAttributes);
+        // Build the Url
+        $cUrl = "index.php?{$cQueryString}";
+        return $cUrl;
     }
 
     /**
@@ -510,27 +465,17 @@ class Idfix extends Events3Module
     public function PostprocesConfig($aConfig, $aRecord = array())
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
-        // The cache
-        static $aCache = array();
-        // Was the config processed in any way?
-        $bProcessed = false;
 
-        // First create a key for the cache array. It must be unique!!
-        // Build this way we know for sure that which part of the configuratiion we
-        // are processing, there is a unique identifier
-        $cCacheKey = '';
-        $cCacheKey .= (isset($aConfig['id']) ? $aConfig['id'] : '');
-        $cCacheKey .= (isset($aConfig['_name']) ? $aConfig['_name'] : '');
-        $cCacheKey .= (isset($aConfig['_tablename']) ? $aConfig['_tablename'] : '');
-        // Now check the cache and see if we really need postprocessing
-        if ($cCacheKey and isset($aCache[$cCacheKey]) and !$aCache[$cCacheKey])
+        // S H O R T C U T
+        // If it is a field, the configuration preprocessor already analyzed
+        // if this field needs postprocessing. In that case we can skip this
+        // expensive effort.....
+        if (isset($aConfig['_NoPP']) and $aConfig['_NoPP'])
         {
-            // if not, just return the unprocessed config
-            //echo $cCacheKey;
+            //echo 2;
             $this->IdfixDebug->Profiler(__method__, 'stop');
             return $aConfig;
         }
-
 
         if (is_array($aConfig))
         {
@@ -568,13 +513,6 @@ class Idfix extends Events3Module
                 }
             }
         }
-
-        // And store wether we did some processing
-        if ($cCacheKey)
-        {
-            $aCache[$cCacheKey] = $bProcessed;
-        }
-
 
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aConfig;
@@ -623,23 +561,23 @@ class Idfix extends Events3Module
      */
     public function GetSetLastListPage($cTableName = '')
     {
-        $iReturn = 1;
-        $cSessionKey = '__Idfix__LastListPage';
+        $cUrl ='';
+        $cSessionKey = '__Idfix__LastListPage_';
         // Set Value
-        if (!$cTableName)
+        if (!$cTableName and $this->cAction == 'List')
         {
-            $cTableName = $this->cTableName;
-            $_SESSION[$cSessionKey][$cTableName] = $this->iObject;
+            $cUrl = $this->GetUrl();
+            $_SESSION[$cSessionKey] = $cUrl;
         }
         // Get value
         else
         {
-            if (isset($_SESSION[$cSessionKey][$cTableName]))
-            {
-                $iReturn = (integer)$_SESSION[$cSessionKey][$cTableName];
+            if(isset($_SESSION[$cSessionKey])) {
+                $cUrl = $_SESSION[$cSessionKey];
             }
         }
-        return $iReturn;
+        
+        return $cUrl;
     }
 
     /**

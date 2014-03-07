@@ -27,12 +27,16 @@ class IdfixFieldsInputSelect extends IdfixFieldsInputOptionsBase
         // Create an array with all the selected values
         $aSelected = $this->GetValueAsArray();
 
-        foreach ($aData['options'] as $cOptionKey => $cOptionValue)
+        if (isset($aData['options']) and is_array($aData['options']))
         {
-            // Is this one checked???
-            $cSelect = (in_array($cOptionKey, $aSelected)) ? 'selected="selected"' : '';
-            $cInput .= "<option {$cSelect} value=\"{$cOptionKey}\">{$cOptionValue}</option>";
+            foreach ($aData['options'] as $cOptionKey => $cOptionValue)
+            {
+                // Is this one checked???
+                $cSelect = (in_array($cOptionKey, $aSelected)) ? 'selected="selected"' : '';
+                $cInput .= "<option {$cSelect} value=\"{$cOptionKey}\">{$cOptionValue}</option>";
+            }
         }
+
         $cInput .= '</select>';
 
         $cError = $this->Validate();

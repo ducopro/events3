@@ -27,8 +27,8 @@ class IdfixAction extends Events3Module
         //_asterix_runtime_copy_recurse($record, $record['ParentID'], $config_name);
 
         // Goto the last known page of the list
-        $iLastPage = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
-        $cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
+        $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
+        //$cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
         header('location: ' . $cUrl);
     }
 
@@ -66,8 +66,7 @@ class IdfixAction extends Events3Module
     {
         $this->DeleteRecurse($this->Idfix->iObject);
         // Goto the last known page of the list
-        $iLastPage = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
-        $cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
+        $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
         header('location: ' . $cUrl);
 
     }

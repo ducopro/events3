@@ -122,7 +122,7 @@ class IdfixDebug extends Events3Module
         //$retval .= '<br /><hr>';
 
         //echo $retval;
-        echo $this->Idfix->RenderTemplate('IdfixDebug', array('content'=>$retval));
+        echo $this->Idfix->RenderTemplate('IdfixDebug', array('content' => $retval));
         //return $retval;
     }
 
@@ -176,7 +176,12 @@ class IdfixDebug extends Events3Module
                     $timer_name,
                     $timer_data['count'],
                     round($timer_data['total'] * 1000, 1));
-                $data[] = $row;
+                // Special case
+                if (!($this->IdfixDebugShowProfiler == 2 and $timer_data['count'] == 1))
+                {
+                    $data[] = $row;
+                }
+
             }
             return $this->ThemeTable($header, $data);
 

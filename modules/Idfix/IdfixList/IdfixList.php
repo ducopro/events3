@@ -93,7 +93,7 @@ class IdfixList extends Events3Module
         // exact HTML for display purposes
         $aDisplayDataset = $this->GetDisplayDataset($aDataSet, $aColumns, $aTableConfig);
         // Now build the template variables
-        $aData['aHead'] = $aColumns;
+        $aData['aHead'] = $aHeader;
         $aData['aBody'] = $aDisplayDataset;
         $this->IdfixDebug->Profiler( __METHOD__, 'stop');
     }
@@ -198,10 +198,10 @@ class IdfixList extends Events3Module
     private function GetColumnsHeader($aColumns)
     {
         $this->IdfixDebug->Profiler( __METHOD__, 'start');
-        $aHeader = $aColumns;
-        $this->Idfix->Event('ListHeader', $aHeader);
+        //$aHeader = $aColumns;
+        $this->Idfix->Event('ListHeader', $aColumns);
         $this->IdfixDebug->Profiler( __METHOD__, 'stop');
-        return $aHeader;
+        return $aColumns;
     }
 
     /**
@@ -275,7 +275,6 @@ class IdfixList extends Events3Module
 
         foreach ($aRawSet as $aRawRow)
         {
-            $aProcessedTableConfig = $this->Idfix->PostprocesConfig($aTableConfig, $aRawRow);
             $aDisplayRow = array();
             foreach ($aColumns as $cFieldName => $cColumnName)
             {
@@ -287,9 +286,9 @@ class IdfixList extends Events3Module
                 }
 
                 // And the matching field configuration?
-                $aFieldConfig = $aProcessedTableConfig['fields'][$cFieldName];
+                $aFieldConfig = $aTableConfig['fields'][$cFieldName];
                 // Postprocess the configuration
-                // $aFieldConfig = $this->Idfix->PostprocesConfig( $aFieldConfig, $aRawRow);
+                $aFieldConfig = $this->Idfix->PostprocesConfig( $aFieldConfig, $aRawRow);
                 // Now it's the time to get the visual
                 $aDisplayRow[] = $this->GetDisplayDataCell($xFieldData, $aFieldConfig);
             }

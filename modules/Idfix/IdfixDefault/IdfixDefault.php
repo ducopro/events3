@@ -335,6 +335,49 @@ class IdfixDefault extends Events3Module
         {
             $this->SetDefaultValue($aFieldConfig, 'class', 'form-control');
         }
+
+        // Last but not least, see if this field is in need of any
+        // runtime postprocessing
+        if (!$this->CheckRecursiveFieldNeedsPostprocessing($aFieldConfig))
+        {
+            $aFieldConfig['_NoPP'] = 1;
+            //echo 1;
+        }
+
+    }
+
+    /**
+     * Give this method a configuration array and it will check if this
+     * configuration needs any postprocessing.
+     * 
+     * @param mixed $aConfig
+     * @return void
+     */
+    private function CheckRecursiveFieldNeedsPostprocessing($aConfig)
+    {
+        $bReturn = false;
+        foreach ($aConfig as $cConfigKey => $xConfigValue)
+        {
+            $bCheck = false;
+
+            if (is_array($xConfigValue))
+            {
+                $bCheck = $this->CheckRecursiveFieldNeedsPostprocessing($xConfigValue);
+            } else
+            {
+                $bCheck = (strpos($xConfigValue, '%') !== false or strpos($xConfigValue, '@') !== false);
+            }
+
+            if ($bCheck)
+            {
+                // This structure needs postprocessing
+                $bReturn = true;
+                // No need for futher checking, exit the loop
+                break;
+            }
+        }
+
+        return $bReturn;
     }
 
     /**

@@ -60,8 +60,8 @@ class IdfixEdit extends Events3Module
         if ($bCancelPressed or ($bSavePressed and !$this->bErrorsDetected))
         {
             // Than return to the list
-            $iLastPage = $this->Idfix->GetSetLastListPage($cTableName);
-            $cUrl = $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iLastPage, null, 'list');
+            $cUrl = $this->Idfix->GetSetLastListPage($cTableName);
+            //$cUrl = $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iLastPage, null, 'list');
             header('location: ' . $cUrl);
 
         }

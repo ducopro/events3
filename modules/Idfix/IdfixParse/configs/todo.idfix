@@ -1,38 +1,24 @@
--title=Todo List  
--description=Create items you want to do and mark them as completed on ...
+-title=Mitchell's Chocolade  
+-description=De allerlekkerste chocolade die ik ooit gegeten heb
+-icon=http://static.receptenhuis.nl/static/upload/thumbnails/ingredient/js083/5626-48x32.png
 
-#tables  
-    #todo  
-        -id=10  
-        -title=ToDo  
-        -description=Things to be done! Everything you always wanted to know and were afraid to ask for.... but now it is here! It is your favorite todo list system built with Idfix.  
-        #permissions  
-            -View Own Todo=UidCreate=%uid  
-        #sort  
-            -SubTypeID  
-        #fields  
-            #Char_1
-                -title=Tijdstip
-                -type=time  
-            #Name  
-            #SubTypeID  
-                -title=Progress  
-                -type=radios  
-                -default_value=0  
-                #options  
-                    -0=ToDo  
-                    -1=In Progress  
-                    -2=Done 
-                    
-    #users
-        -id=20
-        -title=Gebruiker
-        -description=Gebruikers van dit systeem
-        -icon=user
+#tables
+    #plaatsen
+        -id=11
+        -name=Plaats
+        -icon=camera
+        #search
+            -Land
         #fields
-            #MainID
-                -type=number
+            #merk
             #Name
-                -title=Username
-            #Role
-                -title=Role                    
+            #Land
+            #Date
+                -type=date
+            #Soort
+                -type=radios
+                #options
+                    -melk
+                    -puur
+                    -wit    
+                

@@ -46,8 +46,7 @@ class Idfix extends Events3Module
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         // Quick check ...
-        if (!isset($_GET['idfix']))
-        {
+        if (!isset($_GET['idfix'])) {
             return;
         }
         //print_r(get_defined_vars());
@@ -90,9 +89,9 @@ class Idfix extends Events3Module
      */
     public function Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction)
     {
-        $this->cConfigName = $this->ValidIdentifier($cConfigName);
-        $this->cTableName = $this->ValidIdentifier($cTableName);
-        $this->cFieldName = $this->ValidIdentifier($cFieldName);
+        $this->cConfigName = $cConfigName;
+        $this->cTableName = $cTableName;
+        $this->cFieldName = $cFieldName;
         $this->cAction = ucfirst($this->ValidIdentifier($cAction));
         $this->iObject = intval($iObject);
         $this->iParent = intval($iParent);
@@ -102,8 +101,7 @@ class Idfix extends Events3Module
         $cConfigCacheKey = 'GetCachedConfig_' . $this->cConfigName;
         $this->aConfig = $this->GetSetCache($cConfigCacheKey);
         // Check if we got one...
-        if (!is_array($this->aConfig))
-        {
+        if (!is_array($this->aConfig)) {
             // Ok, we need to create it from scratch ....
             $this->Event('GetConfig');
             // Time to to some checking for the correct tables
@@ -164,8 +162,7 @@ class Idfix extends Events3Module
         $data['brand']['icon'] = $this->GetIconHTML($this->aConfig['icon']);
 
         // Add a link for adding a new record
-        if ($this->cTableName and $this->cAction == 'List' and $this->FieldAccess($this->cConfigName, $this->cTableName, '', 'add'))
-        {
+        if ($this->cTableName and $this->cAction == 'List' and $this->FieldAccess($this->cConfigName, $this->cTableName, '', 'add')) {
             $data['left'][''] = array(
                 'title' => 'New ' . $this->aConfig['tables'][$this->cTableName]['title'],
                 'tooltip' => $this->aConfig['tables'][$this->cTableName]['description'],
@@ -178,11 +175,9 @@ class Idfix extends Events3Module
         // Create a dropdown structure for showing all the tables in the system
         // Temporary code shows ALL the tables, not only top level
         $aDropdown = array();
-        foreach ($this->aConfig['tables'] as $cTableName => $aTableConfig)
-        {
+        foreach ($this->aConfig['tables'] as $cTableName => $aTableConfig) {
             // Be sure we do not have child objects
-            if ($this->TableIsTopLevel($cTableName))
-            {
+            if ($this->TableIsTopLevel($cTableName)) {
                 $aDropdown[$cTableName] = array(
                     'title' => $aTableConfig['title'],
                     'href' => $this->GetUrl($this->cConfigName, $cTableName, '', 1, 0, 'list'), // top level list
@@ -223,18 +218,14 @@ class Idfix extends Events3Module
     {
         $bRetval = true;
 
-        if (is_array($this->aConfig['tables']))
-        {
-            foreach ($this->aConfig['tables'] as $table_sub_name => $table_config)
-            {
-                if (isset($table_config['childs']) and is_array($table_config['childs']))
-                {
+        if (is_array($this->aConfig['tables'])) {
+            foreach ($this->aConfig['tables'] as $table_sub_name => $table_config) {
+                if (isset($table_config['childs']) and is_array($table_config['childs'])) {
                     // Check if the tablename itself is in it's child list
                     // If that's the case we have inheritance and the table must
                     // be top level
                     $is_inherit = in_array($table_sub_name, $table_config['childs']);
-                    if (in_array($cTableName, $table_config['childs']) and !$is_inherit)
-                    {
+                    if (in_array($cTableName, $table_config['childs']) and !$is_inherit) {
                         $bRetval = false;
                         break;
                     }
@@ -346,12 +337,10 @@ class Idfix extends Events3Module
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cKey = strtolower($cKey);
         $blacklist = str_replace(str_split('abcdefghijklmnopqrstuvwxyz_1234567890'), '', $cKey);
-        if ($blacklist)
-        {
+        if ($blacklist) {
             $cKey = str_replace(str_split($blacklist), '_', $cKey);
         }
-        if (is_numeric(substr($cKey, 0, 1)))
-        {
+        if (is_numeric(substr($cKey, 0, 1))) {
             $cKey = '_' . $cKey;
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
@@ -429,14 +418,13 @@ class Idfix extends Events3Module
      */
     public function GetIconHTML($cIcon)
     {
-        if (substr($cIcon, 0, 4) == 'http')
-        {
+        if (substr($cIcon, 0, 4) == 'http') {
             return "<img align=\"absmiddle\" src=\"{$cIcon}\">&nbsp;";
-        } elseif (strtolower($this->aConfig['iconlib']) == 'bootstrap')
-        {
+        }
+        elseif (strtolower($this->aConfig['iconlib']) == 'bootstrap') {
             return "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>&nbsp;";
-        } else
-        {
+        }
+        else {
             $cIcon = $this->aConfig['iconlib'] . '/' . $cIcon;
             return "<img align=\"absmiddle\" height=\"16\" width=\"16\" src=\"{$cIcon}\">&nbsp;";
         }
@@ -470,27 +458,22 @@ class Idfix extends Events3Module
         // If it is a field, the configuration preprocessor already analyzed
         // if this field needs postprocessing. In that case we can skip this
         // expensive effort.....
-        if (isset($aConfig['_NoPP']) and $aConfig['_NoPP'])
-        {
+        if (isset($aConfig['_NoPP']) and $aConfig['_NoPP']) {
             //echo 2;
             $this->IdfixDebug->Profiler(__method__, 'stop');
             return $aConfig;
         }
 
-        if (is_array($aConfig))
-        {
-            foreach ($aConfig as &$aConfig_element)
-            {
+        if (is_array($aConfig)) {
+            foreach ($aConfig as &$aConfig_element) {
                 // 1. Callback without parameters
-                if (is_string($aConfig_element) and (substr($aConfig_element, 0, 1) == '@') and function_exists(substr($aConfig_element, 1)))
-                {
+                if (is_string($aConfig_element) and (substr($aConfig_element, 0, 1) == '@') and function_exists(substr($aConfig_element, 1))) {
                     $aConfig_element = call_user_func(substr($aConfig_element, 1));
                     $bProcessed = true;
 
                 }
                 // 2. Callback with parameters
-                elseif (isset($aConfig_element[0]) and (substr($aConfig_element[0], 0, 1) == '@') and function_exists(substr($aConfig_element[0], 1)))
-                {
+                elseif (isset($aConfig_element[0]) and (substr($aConfig_element[0], 0, 1) == '@') and function_exists(substr($aConfig_element[0], 1))) {
                     // Get the function
                     $cFunctionName = substr(array_shift($aConfig_element), 1);
                     // Now postprocess the parameters for dynamic values
@@ -500,15 +483,13 @@ class Idfix extends Events3Module
 
                 }
                 // 3. Dynamic values to parse?
-                elseif (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false))
-                {
+                elseif (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false)) {
                     $aConfig_element = $this->DynamicValues($aConfig_element, $aRecord);
                     $bProcessed = true;
                 }
 
                 // 4. Plain array? Recursive action
-                elseif (is_array($aConfig_element))
-                {
+                elseif (is_array($aConfig_element)) {
                     $aConfig_element = $this->PostprocesConfig($aConfig_element, $aRecord);
                 }
             }
@@ -532,13 +513,10 @@ class Idfix extends Events3Module
     private function DynamicValues($aHaystack, $aValues)
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
-        if (is_array($aValues))
-        {
-            foreach ($aValues as $cKey => $xValue)
-            {
+        if (is_array($aValues)) {
+            foreach ($aValues as $cKey => $xValue) {
                 $search = '%' . $cKey . '%';
-                if (strpos($aHaystack, $search) !== false)
-                {
+                if (strpos($aHaystack, $search) !== false) {
                     $aHaystack = str_replace($search, $xValue, $aHaystack);
                 }
             }
@@ -561,22 +539,20 @@ class Idfix extends Events3Module
      */
     public function GetSetLastListPage($cTableName = '')
     {
-        $cUrl ='';
+        $cUrl = '';
         $cSessionKey = '__Idfix__LastListPage_';
         // Set Value
-        if (!$cTableName and $this->cAction == 'List')
-        {
+        if (!$cTableName and $this->cAction == 'List') {
             $cUrl = $this->GetUrl();
             $_SESSION[$cSessionKey] = $cUrl;
         }
         // Get value
-        else
-        {
-            if(isset($_SESSION[$cSessionKey])) {
+        else {
+            if (isset($_SESSION[$cSessionKey])) {
                 $cUrl = $_SESSION[$cSessionKey];
             }
         }
-        
+
         return $cUrl;
     }
 
@@ -610,34 +586,28 @@ class Idfix extends Events3Module
         $this->IdfixDebug->Profiler(__method__, 'start');
 
         // Only use the cache if it is configurated
-        if ($this->IdfixConfigCache)
-        {
+        if ($this->IdfixConfigCache) {
             // Reset the cache
-            if (is_null($cKey))
-            {
+            if (is_null($cKey)) {
                 unset($_SESSION[self::CACHE_KEY]);
             }
             // Try to get a value from the cache
-            elseif (is_null($xValue))
-            {
+            elseif (is_null($xValue)) {
                 // Check if there is a value
-                if (isset($_SESSION[self::CACHE_KEY][$cKey]))
-                {
+                if (isset($_SESSION[self::CACHE_KEY][$cKey])) {
                     // Than set the return value
                     $xValue = unserialize($_SESSION[self::CACHE_KEY][$cKey]);
                 }
             }
             // OK, we must set the cache
-            else
-            {
+            else {
                 $_SESSION[self::CACHE_KEY][$cKey] = serialize($xValue);
             }
-        } else
-        {
+        }
+        else {
             // Well, no need for caching, so we can just as well clean it up
             // and save some space and memory
-            if (isset($_SESSION[self::CACHE_KEY]))
-            {
+            if (isset($_SESSION[self::CACHE_KEY])) {
                 unset($_SESSION[self::CACHE_KEY]);
             }
 

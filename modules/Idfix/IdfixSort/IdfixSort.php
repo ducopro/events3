@@ -23,17 +23,15 @@ class IdfixSort extends Events3Module
     public function Events3PreRun()
     {
         // Dow we have sorting information in the url???
-        if (isset($_GET[self::SORTKEY]))
-        {
+        if (isset($_GET[self::SORTKEY])) {
             $cMessage = urldecode($_GET[self::SORTKEY]);
-            if (strpos($cMessage, self::ASCENDING))
-            {
+            if (strpos($cMessage, self::ASCENDING)) {
                 // Set the direction
                 $this->cDirection = self::ASCENDING;
                 // and strip the info from the url
                 $cMessage = str_replace(self::ASCENDING, '', $cMessage);
-            } else
-            {
+            }
+            else {
                 $this->cDirection = self::DESCENDING;
                 $cMessage = str_replace(self::DESCENDING, '', $cMessage);
             }
@@ -51,26 +49,23 @@ class IdfixSort extends Events3Module
      */
     public function Events3IdfixListHeader(&$aHeader)
     {
-        if (is_array($aHeader))
-        {
-            foreach ($aHeader as $cFieldName => $cDisplayName)
-            {
+        if (is_array($aHeader)) {
+            foreach ($aHeader as $cFieldName => $cDisplayName) {
                 // Default sort order when clicked
                 $cClickSortOrder = 'a';
-                if ($cFieldName == $this->cFieldName)
-                {
+                if ($cFieldName == $this->cFieldName) {
                     $cClickSortOrder = ($this->cDirection == self::ASCENDING) ? 'd' : 'a';
                     $cIcon = ($this->cDirection == self::ASCENDING) ? 'sort-by-attributes' : 'sort-by-attributes-alt';
                     $cIconHtml = $this->Idfix->GetIconHTML($cIcon);
                     $aHeader[$cFieldName] = $cIconHtml . '&nbsp;' . $cDisplayName;
                 }
-                
+
                 // Is this a field we can sort on???
-                if( $this->CheckSortFieldname($cFieldName)) {
-                    $cUrl = $this->Idfix->GetUrl(null,null,null,null,null,null,array('sort'=>$this->CreateUrlAttribute($cFieldName,$cClickSortOrder)));
+                if ($this->CheckSortFieldname($cFieldName)) {
+                    $cUrl = $this->Idfix->GetUrl(null, null, null, null, null, null, array('sort' => $this->CreateUrlAttribute($cFieldName, $cClickSortOrder)));
                     $aHeader[$cFieldName] = "<a href=\"{$cUrl}\">{$aHeader[$cFieldName]}</a>";
                 }
-                
+
             }
         }
     }
@@ -84,9 +79,9 @@ class IdfixSort extends Events3Module
     public function Events3IdfixListDataSet(&$aParams)
     {
         // Do we have a correct SQL field?
-        if($this->CheckSortFieldname( $this->cFieldName)) {
-            
-            $cOrder = ($this->cDirection==self::ASCENDING) ? ' ASC' : ' DESC';
+        if ($this->CheckSortFieldname($this->cFieldName)) {
+
+            $cOrder = ($this->cDirection == self::ASCENDING) ? ' ASC' : ' DESC';
             $aParams['order'] = $this->cFieldName . $cOrder;
             //echo $aParams['sort'];
         }
@@ -105,20 +100,17 @@ class IdfixSort extends Events3Module
     private function CheckSortFieldname($cCheck)
     {
         $bReturn = false;
-        if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort']))
-        {
+        if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort'])) {
             $aSortConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort'];
-            foreach ($aSortConfig as $cFieldName => $cSortOrder)
-            {
-                if (is_numeric($cFieldName))
-                {
+            foreach ($aSortConfig as $cFieldName => $cSortOrder) {
+                if (is_numeric($cFieldName)) {
                     $cFieldName = $cSortOrder;
                 }
                 // If the fields match qwe can skip this loop, everything is ok.
-                if( $cFieldName == $cCheck) {
+                if ($cFieldName == $cCheck) {
                     return true;
                 }
-                
+
             }
         }
         return $bReturn;
@@ -133,22 +125,18 @@ class IdfixSort extends Events3Module
     public function Events3IdfixGetUrl(&$aParams)
     {
         // If we already specified a sortkey us that one
-        if (!isset($aParams[self::SORTKEY]))
-        {
-            if ($this->cFieldName)
-            {
+        if (!isset($aParams[self::SORTKEY])) {
+            if ($this->cFieldName) {
                 // Ok, there was a sort parameter in the calling url
                 // Add it again
                 $aParams[self::SORTKEY] = $this->CreateUrlAttribute();
-            } else
-            {
+            }
+            else {
                 // Maybe there is a default sort order set
                 // in the configuration? Use it.
-                if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort']))
-                {
+                if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort'])) {
                     $aSortConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort'];
-                    foreach ($aSortConfig as $cFieldName => $cSortOrder)
-                    {
+                    foreach ($aSortConfig as $cFieldName => $cSortOrder) {
                         /**
                          * #sort
                          *  -MainId
@@ -156,8 +144,7 @@ class IdfixSort extends Events3Module
                          * 
                          * So if no sort order is specified the key of the array will be numeric!
                          */
-                        if (!is_numeric($cFieldName))
-                        {
+                        if (!is_numeric($cFieldName)) {
                             $aParams[self::SORTKEY] = $this->CreateUrlAttribute($cFieldName, $cSortOrder);
                         }
                     }
@@ -175,8 +162,7 @@ class IdfixSort extends Events3Module
     public function Events3IdfixNavbar(&$data)
     {
         // Only create this structure when in list mode
-        if ($this->Idfix->cAction !== 'List')
-        {
+        if ($this->Idfix->cAction !== 'List') {
             return;
         }
 
@@ -185,8 +171,7 @@ class IdfixSort extends Events3Module
         // sort options
         $aSortList = array();
         $aFieldList = array();
-        if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort']))
-        {
+        if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort'])) {
             $aSortList = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['sort'];
             $aFieldList = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['fields'];
         }
@@ -198,8 +183,7 @@ class IdfixSort extends Events3Module
             'type' => 'header',
             'title' => 'Ascending',
             'icon' => $this->Idfix->GetIconHTML('sort-by-attributes'));
-        foreach ($aSortList as $cFieldName => $cSortInfo)
-        {
+        foreach ($aSortList as $cFieldName => $cSortInfo) {
             // First let's get the correct fieldname
             $cFieldName = (is_numeric($cFieldName)) ? $cSortInfo : $cFieldName;
             // Than create the sort attributes for the url
@@ -223,8 +207,7 @@ class IdfixSort extends Events3Module
             'title' => 'Descending',
             'icon' => $this->Idfix->GetIconHTML('sort-by-attributes-alt'));
 
-        foreach ($aSortList as $cFieldName => $cSortInfo)
-        {
+        foreach ($aSortList as $cFieldName => $cSortInfo) {
             // First let's get the correct fieldname
             $cFieldName = (is_numeric($cFieldName)) ? $cSortInfo : $cFieldName;
             // Than create the sort attributes for the url

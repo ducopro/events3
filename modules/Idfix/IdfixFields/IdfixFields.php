@@ -36,23 +36,20 @@ class IdfixFields extends Events3Module
 
         // Checking for- and including files is time consuming.
         // Let's just do it once......
-        if (!isset($aFileList[$cOverride]))
-        {
+        if (!isset($aFileList[$cOverride])) {
             // Let's see if we have a specific implementation
             $cOverrideFile = dirname(__file__) . '/includes/' . $cOverride . '.class.php';
-            if (file_exists($cOverrideFile))
-            {
+            if (file_exists($cOverrideFile)) {
                 include_once $cOverrideFile;
             }
             $aFileList[$cOverride] = true;
         }
 
         // Get a reference to the right object
-        if (class_exists($cOverride))
-        {
+        if (class_exists($cOverride)) {
             $oField = $cOverride::GetInstance();
-        } else
-        {
+        }
+        else {
             $oField = $cDefaultClass::GetInstance();
         }
 
@@ -87,8 +84,7 @@ class IdfixFieldsBase extends Events3Module
     static function GetInstance()
     {
         $class = get_called_class();
-        if (!isset(self::$aInstances[$class]))
-        {
+        if (!isset(self::$aInstances[$class])) {
             self::$aInstances[$class] = new $class;
         }
         return self::$aInstances[$class];
@@ -141,29 +137,32 @@ class IdfixFieldsBase extends Events3Module
             '_tablename',
             '_name',
             'confirm',
+            'group',
+            'permissions',
+            '_NoPP',
+            'sql',
             '__RawValue',
             '__RawPostValue',
             '__SaveValue',
             '__DisplayValue',
             );
-        foreach ($aBlackList as $cBlackKey)
-        {
+        foreach ($aBlackList as $cBlackKey) {
             unset($aData[$cBlackKey]);
         }
 
         // Ok, now set the description as a title for the tooltips
-        if (isset($aData['description']) and $aData['description'])
-        {
+        if (isset($aData['description']) and $aData['description']) {
             $aData['title'] = $aData['description'];
             unset($aData['description']);
             $aData['data-toggle'] = 'tooltip';
         }
 
-        foreach ($aData as $cKey => $cValue)
-        {
-            if (!is_array($cValue) and $cValue)
-            {
-                if(strpos($cValue,'"')) {
+        foreach ($aData as $cKey => $cValue) {
+            if (is_numeric($cKey)) {
+                //continue;
+            }
+            if (!is_array($cValue) and $cValue) {
+                if (strpos($cValue, '"')) {
                     $cValue = str_replace('"', "'", $cValue);
                 }
                 $cReturn .= $cKey . '="' . $cValue . '" ';
@@ -184,19 +183,17 @@ class IdfixFieldsBase extends Events3Module
      */
     public function SetDataElement($cElementName, $cElementValue)
     {
-        if (isset($this->aData[$cElementName]))
-        {
+        if (isset($this->aData[$cElementName])) {
             $this->aData[$cElementName] .= ' ' . trim($cElementValue);
-        } else
-        {
+        }
+        else {
             $this->aData[$cElementName] = $cElementValue;
         }
     }
 
     public function SetCssClass($cClass)
     {
-        if (strpos($this->aData['class'], $cClass) === false)
-        {
+        if (strpos($this->aData['class'], $cClass) === false) {
             $this->aData['class'] .= ' ' . $cClass;
         }
     }
@@ -287,15 +284,13 @@ class IdfixFieldsInput extends IdfixFieldsBase
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cError = '';
-        if (!is_null($this->aData['__RawPostValue']))
-        {
+        if (!is_null($this->aData['__RawPostValue'])) {
             $cError = $this->ValidateRequired();
 
-            if ($cError)
-            {
+            if ($cError) {
                 $this->aData['__ValidationError'] = 1;
-            } else
-            {
+            }
+            else {
                 $this->aData['__SaveValue'] = $this->aData['__RawPostValue'];
             }
         }
@@ -307,8 +302,7 @@ class IdfixFieldsInput extends IdfixFieldsBase
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cError = '';
-        if (isset($this->aData['required']) and $this->aData['required'] and !$this->aData['__RawPostValue'])
-        {
+        if (isset($this->aData['required']) and $this->aData['required'] and !$this->aData['__RawPostValue']) {
             $cError = $this->aData['required'];
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
@@ -326,20 +320,17 @@ class IdfixFieldsInput extends IdfixFieldsBase
         $this->IdfixDebug->Profiler(__method__, 'start');
         // If we have an icon wrap it also ......
         $cIcon = '';
-        if (isset($this->aData['icon']) and $this->aData['icon'])
-        {
+        if (isset($this->aData['icon']) and $this->aData['icon']) {
             $cIcon = $this->Idfix->GetIconHTML($this->aData['icon']);
             $cIcon = "<span class=\"input-group-addon\">{$cIcon}</span>";
         }
 
         $cRequired = '';
-        if (isset($this->aData['required']) and $this->aData['required'])
-        {
+        if (isset($this->aData['required']) and $this->aData['required']) {
             $cRequired = "<span class=\"input-group-addon\">*</span>";
         }
 
-        if ($cIcon or $cRequired)
-        {
+        if ($cIcon or $cRequired) {
             $cInput = "<div class=\"input-group\">{$cIcon}{$cInput}{$cRequired}</div>";
         }
 
@@ -357,26 +348,22 @@ class IdfixFieldsInput extends IdfixFieldsBase
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cValue = '';
         // Precedence for the post value
-        if ( isset($this->aData['__RawPostValue']) and !is_null($this->aData['__RawPostValue']))
-        {
+        if (isset($this->aData['__RawPostValue']) and !is_null($this->aData['__RawPostValue'])) {
             $cValue = $this->aData['__RawPostValue'];
 
         }
         // Second is the value from the record
-        elseif (!is_null($this->aData['__RawValue']))
-        {
+        elseif (!is_null($this->aData['__RawValue'])) {
             $cValue = $this->aData['__RawValue'];
         }
         // Third is the optional default value
-        elseif (isset($this->aData['value']))
-        {
+        elseif (isset($this->aData['value'])) {
             $cValue = $this->aData['value'];
         }
 
         // If the value is an array implode it to a comma separated value
         // for use in multi select elements
-        if (is_array($cValue))
-        {
+        if (is_array($cValue)) {
             $cValue = implode(',', $cValue);
         }
 

@@ -36,10 +36,8 @@ class IdfixDefault extends Events3Module
         $cTableSpace = $this->oIdfix->ValidIdentifier('idfix_' . trim($cConfigName));
         $this->SetDefaultValue($aConfig, 'tablespace', $cTableSpace);
 
-        if (isset($aConfig['tables']))
-        {
-            foreach ($aConfig['tables'] as $cTableName => &$aTableConfig)
-            {
+        if (isset($aConfig['tables'])) {
+            foreach ($aConfig['tables'] as $cTableName => &$aTableConfig) {
                 $aTableConfig['_name'] = $cTableName;
                 $this->AlterTable($cConfigName, $cTableName, $aTableConfig, $aConfig);
                 $this->AlterSearch($cConfigName, $cTableName, $aTableConfig, $aConfig);
@@ -66,21 +64,17 @@ class IdfixDefault extends Events3Module
         $aFieldList = $this->IdfixStorage->GetIdfixColumns();
         // If there's a sort array, ok, otherwise build a default on all
         // the available system fields
-        if (isset($aTableConfig['sort']) and is_array($aTableConfig['sort']))
-        {
+        if (isset($aTableConfig['sort']) and is_array($aTableConfig['sort'])) {
             return;
         }
 
         $aSort = array();
-        foreach ($aFieldList as $cFieldName => $aFieldConfig)
-        {
+        foreach ($aFieldList as $cFieldName => $aFieldConfig) {
             // Is this columns used?
-            if (isset($aTableConfig['fields'][$cFieldName]))
-            {
+            if (isset($aTableConfig['fields'][$cFieldName])) {
                 $aSort[$cFieldName] = '';
                 // Special case!!
-                if ($cFieldName == 'Weight')
-                {
+                if ($cFieldName == 'Weight') {
                     $aSort[$cFieldName] = 'asc';
                 }
             }
@@ -108,12 +102,10 @@ class IdfixDefault extends Events3Module
     {
 
         // Set default to an empty array
-        if (!array_key_exists('search', $aConfig))
-        {
+        if (!array_key_exists('search', $aConfig)) {
             $aConfig['search'] = array();
         }
-        if (!is_array($aConfig['search']))
-        {
+        if (!is_array($aConfig['search'])) {
             $aConfig['search'] = array();
         }
 
@@ -121,26 +113,22 @@ class IdfixDefault extends Events3Module
         // In that case the search element is defined as a simple list
         // We need to correct that
         $new_list = array();
-        foreach ($aConfig['search'] as $index => $cFieldName)
-        {
-            if (is_numeric($index) or !is_array($cFieldName))
-            {
+        foreach ($aConfig['search'] as $index => $cFieldName) {
+            if (is_numeric($index) or !is_array($cFieldName)) {
                 $cFieldName = (string )$cFieldName;
                 $new_list[$cFieldName] = array();
-            } else
-            {
+            }
+            else {
                 $new_list[$index] = $cFieldName;
             }
         }
         $aConfig['search'] = $new_list;
 
         // Now process all the searchfields
-        foreach ($aConfig['search'] as $cFieldName => &$aSearchConfig)
-        {
+        foreach ($aConfig['search'] as $cFieldName => &$aSearchConfig) {
             // Get the defaults from the field
             $aFieldConfig = array();
-            if (is_array($aConfig['fields'][$cFieldName]))
-            {
+            if (is_array($aConfig['fields'][$cFieldName])) {
                 $aFieldConfig = $aConfig['fields'][$cFieldName];
             }
             // .. and merge them with the existing search fields
@@ -151,16 +139,16 @@ class IdfixDefault extends Events3Module
             // This way we can implement basic searching and avoiding most
             // SQl errors
             $aFields = $this->IdfixStorage->GetIdfixColumns();
-            if (isset($aFields[$cFieldName]))
-            {
+            if (isset($aFields[$cFieldName])) {
                 $this->SetDefaultValue($aSearchConfig, 'sql', "{$cFieldName} = '%value'");
-            } else
-            {
+            }
+            else {
                 $this->SetDefaultValue($aSearchConfig, 'sql', "data LIKE '%%value%'");
             }
 
 
         }
+        //print_r($aConfig['search']);
     }
 
     /**
@@ -193,24 +181,19 @@ class IdfixDefault extends Events3Module
         // Default ID
         static $id_counter = 500;
         $id_counter += 10;
-        if (!array_key_exists('id', $aConfig))
-        {
+        if (!array_key_exists('id', $aConfig)) {
             $this->SetDefaultValue($aConfig, 'id', $id_counter);
         }
 
-        if (isset($aConfig['groups']))
-        {
-            foreach ($aConfig['groups'] as $cGroupName => &$aGroupConfig)
-            {
+        if (isset($aConfig['groups'])) {
+            foreach ($aConfig['groups'] as $cGroupName => &$aGroupConfig) {
                 $this->AlterGroup($cTableName, $cGroupName, $aGroupConfig);
             }
         }
 
         // Set default values for all fields
-        if (isset($aConfig['fields']))
-        {
-            foreach ($aConfig['fields'] as $cFieldName => &$aFieldConfig)
-            {
+        if (isset($aConfig['fields'])) {
+            foreach ($aConfig['fields'] as $cFieldName => &$aFieldConfig) {
                 $aFieldConfig['_tablename'] = $cTableName;
                 $aFieldConfig['_name'] = $cFieldName;
                 $this->AlterField($cTableName, $cFieldName, $aFieldConfig);
@@ -244,10 +227,8 @@ class IdfixDefault extends Events3Module
 
 
             // Set a default edit button for all of the childs
-            if (isset($aConfig['childs']) and is_array($aConfig['childs']))
-            {
-                foreach ($aConfig['childs'] as $cChildName)
-                {
+            if (isset($aConfig['childs']) and is_array($aConfig['childs'])) {
+                foreach ($aConfig['childs'] as $cChildName) {
                     $aChildConfig = $aFullConfig['tables'][$cChildName];
                     $aButton = array(
                         "type" => "virtual",
@@ -280,8 +261,7 @@ class IdfixDefault extends Events3Module
 
 
             // What fields to display in the list if not defined
-            if (!isset($aConfig['list']))
-            {
+            if (!isset($aConfig['list'])) {
                 $aList = array_keys($aConfig['fields']);
                 // Edit and copy up front
                 unset($aList['_copy']);
@@ -315,31 +295,27 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aFieldConfig, 'description', '');
 
 
-        if ($aFieldConfig['type'] == 'file')
-        {
+        if ($aFieldConfig['type'] == 'file') {
             $this->SetDefaultValue($aFieldConfig, 'icon', 'download.png');
         }
 
-        if ($aFieldConfig['type'] == 'checkbox')
-        {
+        if ($aFieldConfig['type'] == 'checkbox') {
             $this->SetDefaultValue($aFieldConfig, 'options', array(0 => 'No', 1 => 'Yes'));
         }
 
-        if ($aFieldConfig['type'] == 'virtual')
-        {
+        if ($aFieldConfig['type'] == 'virtual') {
             $this->SetDefaultValue($aFieldConfig, 'class', 'btn btn-xs btn-info');
             $this->SetDefaultValue($aFieldConfig, 'href', '#');
             $this->SetDefaultValue($aFieldConfig, 'value', $aFieldConfig['title']);
             $this->SetDefaultValue($aFieldConfig, 'icon', 'play');
-        } else
-        {
+        }
+        else {
             $this->SetDefaultValue($aFieldConfig, 'class', 'form-control');
         }
 
         // Last but not least, see if this field is in need of any
         // runtime postprocessing
-        if (!$this->CheckRecursiveFieldNeedsPostprocessing($aFieldConfig))
-        {
+        if (!$this->CheckRecursiveFieldNeedsPostprocessing($aFieldConfig)) {
             $aFieldConfig['_NoPP'] = 1;
             //echo 1;
         }
@@ -356,20 +332,17 @@ class IdfixDefault extends Events3Module
     private function CheckRecursiveFieldNeedsPostprocessing($aConfig)
     {
         $bReturn = false;
-        foreach ($aConfig as $cConfigKey => $xConfigValue)
-        {
+        foreach ($aConfig as $cConfigKey => $xConfigValue) {
             $bCheck = false;
 
-            if (is_array($xConfigValue))
-            {
+            if (is_array($xConfigValue)) {
                 $bCheck = $this->CheckRecursiveFieldNeedsPostprocessing($xConfigValue);
-            } else
-            {
+            }
+            else {
                 $bCheck = (strpos($xConfigValue, '%') !== false or strpos($xConfigValue, '@') !== false);
             }
 
-            if ($bCheck)
-            {
+            if ($bCheck) {
                 // This structure needs postprocessing
                 $bReturn = true;
                 // No need for futher checking, exit the loop
@@ -426,17 +399,14 @@ class IdfixDefault extends Events3Module
     {
 
         // Multiple config values to check
-        if (is_array($xValue))
-        {
-            foreach ($xValue as $check_key => $set_value)
-            {
-                if (!isset($aConfig[$key][$check_key]))
-                {
+        if (is_array($xValue)) {
+            foreach ($xValue as $check_key => $set_value) {
+                if (!isset($aConfig[$key][$check_key])) {
                     $aConfig[$key][$check_key] = $set_value;
                 }
             }
-        } elseif (!isset($aConfig[$key]))
-        {
+        }
+        elseif (!isset($aConfig[$key])) {
             $aConfig[$key] = $xValue;
         }
 

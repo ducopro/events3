@@ -49,16 +49,14 @@ class IdfixEdit extends Events3Module
         $this->IdfixDebug->Debug(__method__ . '-> Datarow', $this->aDataRow);
 
         // By now we know if there were no errors and we can save the values
-        if ($this->bValidationMode and !$this->bErrorsDetected)
-        {
+        if ($this->bValidationMode and !$this->bErrorsDetected) {
             // Save
             $this->IdfixStorage->SaveRecord($this->aDataRow);
         }
         // Do we have a push on the cancel button?
         // or did we push the save button and there are no errors?
         // if there are errors we should show the form again!!
-        if ($bCancelPressed or ($bSavePressed and !$this->bErrorsDetected))
-        {
+        if ($bCancelPressed or ($bSavePressed and !$this->bErrorsDetected)) {
             // Than return to the list
             $cUrl = $this->Idfix->GetSetLastListPage($cTableName);
             //$cUrl = $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iLastPage, null, 'list');
@@ -92,10 +90,8 @@ class IdfixEdit extends Events3Module
     private function GetHtmlForForm($aTableConfig)
     {
         $cReturn = '';
-        if (isset($aTableConfig['groups']) and is_array($aTableConfig['groups']))
-        {
-            foreach ($aTableConfig['groups'] as $cGroupId => $aGroupConfig)
-            {
+        if (isset($aTableConfig['groups']) and is_array($aTableConfig['groups'])) {
+            foreach ($aTableConfig['groups'] as $cGroupId => $aGroupConfig) {
                 // Build the template variables
                 $aTemplate = array(
                     'cElements' => $this->GetHtmlForInputElements($aTableConfig['fields'], $cGroupId),
@@ -106,8 +102,8 @@ class IdfixEdit extends Events3Module
                     );
                 $cReturn .= $this->Idfix->RenderTemplate('EditFormGroup', $aTemplate);
             }
-        } else
-        {
+        }
+        else {
             $cReturn .= $this->GetHtmlForInputElements($aTableConfig['fields']);
         }
         return $cReturn;
@@ -125,35 +121,29 @@ class IdfixEdit extends Events3Module
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cReturn = '';
-        foreach ($aFieldList as $cFieldName => $aFieldConfig)
-        {
+        foreach ($aFieldList as $cFieldName => $aFieldConfig) {
             $cInput = '';
             // Skip virtual fields
-            if ($aFieldConfig['type'] == 'virtual')
-            {
+            if ($aFieldConfig['type'] == 'virtual') {
                 continue;
             }
 
             // If a group is set, and there is no match, we skip this field
-            if (isset($aFieldConfig['group']) and $aFieldConfig['group'] != $cGroup)
-            {
+            if (isset($aFieldConfig['group']) and $aFieldConfig['group'] != $cGroup) {
                 continue;
             }
             // If no group is set, and we need to get items for a group, skip it also
-            if (!isset($aFieldConfig['group']) and $cGroup)
-            {
+            if (!isset($aFieldConfig['group']) and $cGroup) {
                 continue;
             }
             // Check if we have the correct rights to show or edit the field
             $bAllowEdit = $this->Idfix->FieldAccess($this->Idfix->cConfigName, $aFieldConfig['_tablename'], $cFieldName, 'edit');
             $bAllowView = true;
-            if (!$bAllowEdit)
-            {
+            if (!$bAllowEdit) {
                 $bAllowView = $this->Idfix->FieldAccess($this->Idfix->cConfigName, $aFieldConfig['_tablename'], $cFieldName, 'view');
             }
             // No need to go on if we do not have at least VIEW rights
-            if (!$bAllowView)
-            {
+            if (!$bAllowView) {
                 continue;
             }
 
@@ -161,36 +151,33 @@ class IdfixEdit extends Events3Module
             $xRawValue = (isset($this->aDataRow[$cFieldName]) ? $this->aDataRow[$cFieldName] : null);
             // Optional value from POST
             $xRawPostValue = (isset($_POST[$cFieldName]) ? $_POST[$cFieldName] : null);
-            
+
             // Special case for checkboxes. They do not appear in post!!!!
             // So if there are values posted but this field is not in it
             // set some intelligent default. By now that is a numeric zero
-            if(is_null($xRawPostValue) AND count($_POST)>0) {
+            if (is_null($xRawPostValue) and count($_POST) > 0) {
                 $xRawPostValue = 0;
             }
-            
+
             $aFieldConfig['__RawValue'] = $xRawValue;
             $aFieldConfig['__RawPostValue'] = $xRawPostValue;
 
             // Depending on the the rights we need to display the edit element or the view element
-            if ($bAllowEdit)
-            {
+            if ($bAllowEdit) {
                 $this->Idfix->Event('EditField', $aFieldConfig);
                 // If there is a value to save, we need to keep it....
                 // But only in validationmode
-                if ($this->bValidationMode)
-                {
+                if ($this->bValidationMode) {
                     $this->aDataRow[$cFieldName] = $aFieldConfig['__SaveValue'];
                 }
 
-            } elseif ($bAllowView)
-            {
+            }
+            elseif ($bAllowView) {
                 $this->Idfix->Event('DisplayField', $aFieldConfig);
             }
 
             // Last but not least check if there were any errors detected
-            if ($this->bValidationMode and !$this->bErrorsDetected and isset($aFieldConfig['__ValidationError']))
-            {
+            if ($this->bValidationMode and !$this->bErrorsDetected and isset($aFieldConfig['__ValidationError'])) {
                 $this->bErrorsDetected = (boolean)$aFieldConfig['__ValidationError'];
             }
 
@@ -222,11 +209,10 @@ class IdfixEdit extends Events3Module
     private function LoadDataRow($iMainID, $iTypeID)
     {
         $aReturn = array();
-        if ($iMainID)
-        {
+        if ($iMainID) {
             $aReturn = $this->IdfixStorage->LoadRecord($iMainID);
-        } else
-        {
+        }
+        else {
             $aReturn = array(
                 'TypeID' => $iTypeID,
                 'ParentID' => $this->Idfix->iParent,

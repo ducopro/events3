@@ -8,6 +8,16 @@ class Database extends Events3Module
     // Reference to the PDO instance
     private $pdo = null;
 
+    /**
+     * Simple wrapper around the quote method
+     * 
+     * @param mixed $cString
+     * @return
+     */
+    public function quote($cString) {
+        return $this->pdo->quote($cString);
+    }
+
     function Events3ConfigInit(&$aConfig)
     {
         $key = 'DatabasePDOConnectionString';

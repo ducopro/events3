@@ -1,10 +1,9 @@
 - Private and public file directories on the events3 level
-- Search
-- Sort
 - Collapsible groups
 - Groups next to each other (columns)
 - Option lists from Idfix elements (From within trail!!)
 - OTAP system
 - width of the input elements
-- Overall graphic design
 - User system + rights
+- textarea
+- file uploads

@@ -11,8 +11,21 @@
             -Land
         #fields
             #merk
+                -title=Merknaam
+                -icon=euro
+                -type=textarea
+                -rows=5
+                -cols=20
+                -placeholder=Type hier uw lange tekst
+                -description=Dit is de lange tekst bij dit relement
+                -autofocus=1
+                -required=U bent verplicht hier minimaal 100 karakters in te voeren
+                -disabled=0
+                -maxlength=20
             #Name
-            #Land
+                -maxlength=10
+            #Nummer
+                -type=number
             #Date
                 -type=date
             #Soort

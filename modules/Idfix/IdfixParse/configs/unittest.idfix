@@ -16,22 +16,27 @@
                 -title=Date & Time
                 -description=All elements that have something to do with time
                 -icon=time
-                -cols=3
+                -cols=2
             #option
                 -title=Multiple options possible
                 -icon=tags
+                -cols=6
             #number
                 -title=Numeric values
                 -icon=phone
+                -cols=4
             #internet
                 -title=Internet related
                 -icon=globe
+                -cols=3
             #form
                 -title=Internal Form Elements
                 -icon=list-alt
+                -cols=4
             #text
                 -title=Text related
                 -icon=align-left
+                -cols=3
         #fields
             #button
                 -type=button
@@ -41,6 +46,7 @@
                 -type=text
                 -description=Description for textfield
                 -group=text
+                -required=Fill in please
             #checkbox
                 -type=checkbox
                 -group=option
@@ -56,9 +62,12 @@
             #email
                 -type=email
                 -group=internet     
-            #file
+            #myfile
                 -type=file
                 -group=form
+                -icon=transfer
+                -error=Kies een geldig bestand van maximaal 3 k.b.
+                -max=300000
             #hidden
                 -type=hidden
                 -group=form
@@ -79,9 +88,13 @@
             #password
                 -type=password
                 -group=text
-            #radio
-                -type=radio
+            #radios
+                -type=radios
                 -group=option
+                #options
+                    -1
+                    -2
+                    -3
             #range
                 -type=range
                 -min=10

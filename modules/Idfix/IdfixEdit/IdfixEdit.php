@@ -177,6 +177,8 @@ class IdfixEdit extends Events3Module
             $xRawValue = (isset($this->aDataRow[$cFieldName]) ? $this->aDataRow[$cFieldName] : null);
             // Optional value from POST
             $xRawPostValue = (isset($_POST[$cFieldName]) ? $_POST[$cFieldName] : null);
+            // And maybe from files if it was an upload...??
+            $xRawPostValue = (isset($_FILES[$cFieldName]) ? $_FILES[$cFieldName] : $xRawPostValue);
 
             // Special case for checkboxes. They do not appear in post!!!!
             // So if there are values posted but this field is not in it

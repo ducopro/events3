@@ -40,6 +40,11 @@ error_reporting(0);
  */
 class Events3
 {
+    // Path to the Events3 System
+    public $BasePath;
+    public $PublicPath;
+    public $PrivatePath;
+    
     // Configuration file
     public $ConfigFile;
     // Singleton pattern
@@ -59,6 +64,9 @@ class Events3
     public function __construct($bUnitTestMode = false)
     {
         $this->bTest = $bUnitTestMode;
+        $this->BasePath = dirname(__file__);
+        $this->PublicPath = $this->BasePath . '/files';
+        $this->PrivatePath = $this->BasePath . '/../files';
         $this->ConfigFile = dirname(__file__) . '/config/config.ini';
         // Scan all modules and build the lists
         $this->BuildModuleList();

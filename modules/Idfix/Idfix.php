@@ -110,6 +110,8 @@ class Idfix extends Events3Module
             // And do not forget to store evertything in cache
             $this->GetSetCache($cConfigCacheKey, $this->aConfig);
         }
+        
+     
 
         // Create the output variable
         $output = '';
@@ -162,7 +164,7 @@ class Idfix extends Events3Module
         $data['brand']['icon'] = $this->GetIconHTML($this->aConfig['icon']);
 
         // Add a link for adding a new record
-        if ($this->cTableName and $this->cAction == 'List' and $this->FieldAccess($this->cConfigName, $this->cTableName, '', 'add')) {
+        if (isset($this->aConfig['tables'][$this->cTableName]) and $this->cAction == 'List' and $this->FieldAccess($this->cConfigName, $this->cTableName, '', 'add')) {
             $data['left'][''] = array(
                 'title' => 'New ' . $this->aConfig['tables'][$this->cTableName]['title'],
                 'tooltip' => $this->aConfig['tables'][$this->cTableName]['description'],

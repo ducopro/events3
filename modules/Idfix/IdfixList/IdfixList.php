@@ -7,6 +7,12 @@ class IdfixList extends Events3Module
     public function Events3IdfixActionList(&$output)
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
+        
+        // Check for a valid tablename
+        if( !isset($this->Idfix->aConfig['tables'][ $this->Idfix->cTableName ])) {
+            return;
+        }
+        
         // Store the last known page
         $this->Idfix->GetSetLastListPage();
 

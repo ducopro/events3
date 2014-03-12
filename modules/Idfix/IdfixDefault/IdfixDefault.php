@@ -44,6 +44,9 @@ class IdfixDefault extends Events3Module
                 $this->AlterSort($cConfigName, $cTableName, $aTableConfig, $aConfig);
             }
         }
+        else {
+            $aConfig['tables'] = array();
+        }
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
@@ -294,8 +297,6 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aFieldConfig, 'title', $cFieldName);
         $this->SetDefaultValue($aFieldConfig, 'description', '');
 
-
-
         if ($aFieldConfig['type'] == 'file') {
             $this->SetDefaultValue($aFieldConfig, 'icon', 'download.png');
         }
@@ -319,16 +320,15 @@ class IdfixDefault extends Events3Module
         if (isset($aFieldConfig['group'])) {
             $cGroupName = $aFieldConfig['group'];
             if (isset($aFullConfig['tables'][$cTableName]['groups'][$cGroupName])) {
-                
+
                 $aGroupConfig = $aFullConfig['tables'][$cTableName]['groups'][$cGroupName];
-                if(isset($aGroupConfig['cols'])) {
+                if (isset($aGroupConfig['cols'])) {
                     $iCols = (integer)$aGroupConfig['cols'];
                     $this->SetDefaultValue($aFieldConfig, 'cols', $iCols);
                 }
             }
         }
         $this->SetDefaultValue($aFieldConfig, 'cols', '12');
-
 
         // Last but not least, see if this field is in need of any
         // runtime postprocessing

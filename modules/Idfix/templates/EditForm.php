@@ -1,5 +1,5 @@
 <div class="well">
-    <form role="form" method="post" action="<?php print $cPostUrl; ?>">
+    <form enctype="multipart/form-data" role="form" method="post" action="<?php print $cPostUrl; ?>">
         <div class="panel-group" id="accordion">
             <?php print $cInput; ?>
         </div>

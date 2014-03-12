@@ -29,6 +29,10 @@ class TestEvents3 extends Events3TestCase {
         $this->assert( is_object( $oModule->load('session')) );
         $this->assert( is_object( $oModule->session ) );
         
+        // Test the file directories
+        $this->assert( is_writable( $events3->PublicPath  ));
+        $this->assert( is_writable( $events3->PrivatePath  ));
+        
     }
 
     public function Events3TestEvents3Raise( &$param, $extra = 'wim' ) {

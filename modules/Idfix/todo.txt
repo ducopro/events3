@@ -1,12 +1,14 @@
 ToDo
 
-- Private and public file directories on the events3 level
+
 - Option lists from Idfix elements (From within trail!!)
 - OTAP system
 - User system + rights
-- file uploads
+- file uploads verwijderen
 
 Done
 - Collapsible groups
 - Groups next to each other (columns)
 - textarea
+- file uploads
+- Private and public file directories on the events3 level

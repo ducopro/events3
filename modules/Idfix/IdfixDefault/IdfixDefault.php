@@ -196,7 +196,7 @@ class IdfixDefault extends Events3Module
             foreach ($aConfig['fields'] as $cFieldName => &$aFieldConfig) {
                 $aFieldConfig['_tablename'] = $cTableName;
                 $aFieldConfig['_name'] = $cFieldName;
-                $this->AlterField($cTableName, $cFieldName, $aFieldConfig);
+                $this->AlterField($cTableName, $cFieldName, $aFieldConfig, $aFullConfig);
             }
 
             $aFieldConfig = &$aConfig['fields'];
@@ -288,12 +288,12 @@ class IdfixDefault extends Events3Module
      * @return
      *   void
      */
-    private function AlterField($cTableName, $cFieldName, &$aFieldConfig)
+    private function AlterField($cTableName, $cFieldName, &$aFieldConfig, $aFullConfig)
     {
         $this->SetDefaultValue($aFieldConfig, 'type', 'text');
         $this->SetDefaultValue($aFieldConfig, 'title', $cFieldName);
         $this->SetDefaultValue($aFieldConfig, 'description', '');
-        $this->SetDefaultValue($aFieldConfig, 'cols', '12');
+
 
 
         if ($aFieldConfig['type'] == 'file') {
@@ -313,6 +313,22 @@ class IdfixDefault extends Events3Module
         else {
             $this->SetDefaultValue($aFieldConfig, 'class', 'form-control');
         }
+
+        // Check if this field belongs to a group, and if so set the default column width
+        // to the group default, otherwise make it as wide as the container.
+        if (isset($aFieldConfig['group'])) {
+            $cGroupName = $aFieldConfig['group'];
+            if (isset($aFullConfig['tables'][$cTableName]['groups'][$cGroupName])) {
+                
+                $aGroupConfig = $aFullConfig['tables'][$cTableName]['groups'][$cGroupName];
+                if(isset($aGroupConfig['cols'])) {
+                    $iCols = (integer)$aGroupConfig['cols'];
+                    $this->SetDefaultValue($aFieldConfig, 'cols', $iCols);
+                }
+            }
+        }
+        $this->SetDefaultValue($aFieldConfig, 'cols', '12');
+
 
         // Last but not least, see if this field is in need of any
         // runtime postprocessing

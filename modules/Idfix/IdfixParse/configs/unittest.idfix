@@ -16,6 +16,7 @@
                 -title=Date & Time
                 -description=All elements that have something to do with time
                 -icon=time
+                -cols=3
             #option
                 -title=Multiple options possible
                 -icon=tags

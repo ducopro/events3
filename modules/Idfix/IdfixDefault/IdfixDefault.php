@@ -293,6 +293,7 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aFieldConfig, 'type', 'text');
         $this->SetDefaultValue($aFieldConfig, 'title', $cFieldName);
         $this->SetDefaultValue($aFieldConfig, 'description', '');
+        $this->SetDefaultValue($aFieldConfig, 'cols', '12');
 
 
         if ($aFieldConfig['type'] == 'file') {

@@ -1,17 +1,24 @@
-<!-- Start Fieldset <?php print $cTitle?> -->
-<fieldset>
-    <div class="panel panel-default">
-      <div class="panel-heading">
-           <h4>
+<!-- Start Fieldset <?php print $cTitle; ?> -->
+<div class="panel <?php print $cPanelClass; ?>">
+  
+  <div class="panel-heading">
+       <h4 class="panel-title">
+           <a id="toggle-<?php print $cId; ?>" data-toggle="collapse" data-parent="#accordion" href="#<?php print $cId; ?>">
                <?php print $cIcon?>
                <?php print $cTitle?>&nbsp;
                <small><?php print $cDescription?></small>
-           </h4>
-      </div>
+           </a>    
+       </h4>
+  </div>
+
+  <div id="<?php print $cId; ?>" class="panel-collapse collapse<?php print $cClass; ?>">
       <div class="panel-body">
-        <?php print $cElements ?>
+        <div class="row">
+          <?php print $cElements ?>
+        </div>  
       </div>
-    </div>
-</fieldset>
+  </div>
+
+</div>
 <!-- End Fieldset <?php print $cTitle?> -->
 

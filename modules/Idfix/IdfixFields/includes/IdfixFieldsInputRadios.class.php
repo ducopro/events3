@@ -50,7 +50,7 @@ class IdfixFieldsInputRadios extends IdfixFieldsInputOptionsBase
 
         $cError = $this->Validate();
 
-        if (!is_null($this->aData['__RawPostValue']))
+        if (is_array($this->aData['__RawPostValue']))
         {
             $this->aData['__SaveValue'] = implode(',', $this->aData['__RawPostValue']);
         }

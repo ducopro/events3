@@ -1,7 +1,11 @@
 <div class="well">
-<form role="form" method="post" action="<?php print $cPostUrl; ?>">
-
-<?php print $cInput; ?>
-<?php print $cHidden; ?>
-</form>
+    <form role="form" method="post" action="<?php print $cPostUrl; ?>">
+        <div class="panel-group" id="accordion">
+            <?php print $cInput; ?>
+        </div>
+        <br />
+        <div class="form-group">
+            <?php print $cHidden; ?>
+        </div>
+    </form>
 </div>

@@ -12,6 +12,8 @@ class IdfixEdit extends Events3Module
     private $bValidationMode = false;
     // Are the any errors detected  in Validationmode???
     private $bErrorsDetected = false;
+    // List of groups that have errors attached
+    private $aErrorGroups = array();
     // Save all the values in this array
     private $aDataRow = array();
 
@@ -79,6 +81,8 @@ class IdfixEdit extends Events3Module
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
+   
+
     /**
      * Get the full HTML representation of the form.
      * Take into account that we may need to group the fields 
@@ -91,16 +95,38 @@ class IdfixEdit extends Events3Module
     {
         $cReturn = '';
         if (isset($aTableConfig['groups']) and is_array($aTableConfig['groups'])) {
+            $bFirst=true;
             foreach ($aTableConfig['groups'] as $cGroupId => $aGroupConfig) {
+                // First get the HTML elements. This is needed because in the next step
+                // we need to know about errors.
+                $cElements = $this->GetHtmlForInputElements($aTableConfig['fields'], $cGroupId);
+                
+                // Are there any errors on this group? Than set the right CSS classes
+                // to open the accordion and show it as a danger panel
+                $cClass = ' ';
+                $cPanelClass = 'panel-default';
+                if(count($this->aErrorGroups) > 0) {
+                    if(isset($this->aErrorGroups[$cGroupId])) {
+                        $cClass .= 'in';
+                        $cPanelClass = 'panel-danger';
+                    }
+                }
+                elseif($bFirst and !$this->bValidationMode) {
+                    $cClass .= 'in';
+                }
+                //print_r($this->aErrorGroups);
                 // Build the template variables
                 $aTemplate = array(
-                    'cElements' => $this->GetHtmlForInputElements($aTableConfig['fields'], $cGroupId),
-                    'cId' => $this->Idfix->ValidIdentifier($cGroupId),
+                    'cElements' => $cElements,
+                    'cId' => $cGroupId,
                     'cTitle' => $aGroupConfig['title'],
                     'cDescription' => $aGroupConfig['description'],
                     'cIcon' => $this->Idfix->GetIconHTML($aGroupConfig['icon']),
+                    'cClass' => $cClass,
+                    'cPanelClass' => $cPanelClass,
                     );
                 $cReturn .= $this->Idfix->RenderTemplate('EditFormGroup', $aTemplate);
+                $bFirst = false;
             }
         }
         else {
@@ -167,7 +193,7 @@ class IdfixEdit extends Events3Module
                 $this->Idfix->Event('EditField', $aFieldConfig);
                 // If there is a value to save, we need to keep it....
                 // But only in validationmode
-                if ($this->bValidationMode) {
+                if ($this->bValidationMode and isset($aFieldConfig['__SaveValue'])) {
                     $this->aDataRow[$cFieldName] = $aFieldConfig['__SaveValue'];
                 }
 
@@ -177,8 +203,14 @@ class IdfixEdit extends Events3Module
             }
 
             // Last but not least check if there were any errors detected
-            if ($this->bValidationMode and !$this->bErrorsDetected and isset($aFieldConfig['__ValidationError'])) {
-                $this->bErrorsDetected = (boolean)$aFieldConfig['__ValidationError'];
+            if ($this->bValidationMode and isset($aFieldConfig['__ValidationError']) and $aFieldConfig['__ValidationError']) {
+                // Register there were errors
+                $this->bErrorsDetected = true;
+                // Do we have a group? Than register there was an error in this group
+                if($cGroup) {
+                  $this->aErrorGroups[ $cGroup ] = true;    
+                }
+                
             }
 
             $cInput = $aFieldConfig['__DisplayValue'];

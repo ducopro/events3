@@ -170,9 +170,11 @@ class IdfixFieldsBase extends Events3Module
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
         //$this->IdfixDebug->Debug(__method__, get_defined_vars());
-        $this->IdfixDebug->Debug(__method__, $cReturn);
+        //$this->IdfixDebug->Debug(__method__, $cReturn);
         return $cReturn;
     }
+    
+    
 
     /**
      * Use this function to set elements in the data array
@@ -225,9 +227,12 @@ class IdfixFieldsBase extends Events3Module
      */
     protected function RenderFormElement($cTitle, $cDescription, $cError, $cId, $cInput)
     {
-        //$this->IdfixDebug->Profiler(__method__, 'start');
-        $return = $this->Idfix->RenderTemplate('EditFormElement', get_defined_vars());
-        //$this->IdfixDebug->Profiler(__method__, 'stop');
+        // Default set from the parameterlist 
+        $aTemplateVars = get_defined_vars();
+        // Add the number of columns the input element uis wide
+        $aTemplateVars['iColumns'] = $this->aData['cols'];
+                
+        $return = $this->Idfix->RenderTemplate('EditFormElement', $aTemplateVars);
         return $return;
     }
 

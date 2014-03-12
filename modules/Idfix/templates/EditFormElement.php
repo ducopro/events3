@@ -9,7 +9,7 @@
  */ 
  
  
- $cFormGroupClass = 'form-group';
+ $cFormGroupClass = 'form-group col-sm-'.$iColumns;
  if ($cError) {
     $cFormGroupClass .= ' has-error';
     $cDescription = $cError . '<br />' . $cDescription;

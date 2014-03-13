@@ -205,7 +205,7 @@ class Idfix extends Events3Module
         $data['right']['system'] = array(
             'title' => 'Powered by Idfix',
             'tooltip' => 'Agile PHP Cloud Development Platform',
-            'href' => '#',
+            'href' => $this->GetUrl($this->cConfigName, '', '', 0, 0, 'Controlpanel'), // top level list
             'icon' => '',
             );
     }
@@ -275,15 +275,8 @@ class Idfix extends Events3Module
      */
     public function RenderTemplate($cTemplateName, $aVars = array())
     {
-        $this->IdfixDebug->Profiler(__method__, 'start');
-        // Add reference to idfix to the template
-        $aVars['oIdfix'] = &$this;
-        /* @var $oTemplate Template*/
-        $oTemplate = $this->load('Template');
         $cTemplateFile = dirname(__file__) . "/templates/{$cTemplateName}.php";
-
-        $return = $oTemplate->Render($cTemplateFile, $aVars);
-        $this->IdfixDebug->Profiler(__method__, 'stop');
+        $return = $this->Template->Render($cTemplateFile, $aVars);
         return $return;
     }
 

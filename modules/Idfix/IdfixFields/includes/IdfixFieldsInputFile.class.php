@@ -120,8 +120,9 @@ class IdfixFieldsInputFile extends IdfixFieldsInput
     
     private function GetFullFileName( $aFileInfo ) {
       $cFileName = $aFileInfo['hash_name'];
-      $cConfigName = $this->Idfix->ValidIdentifier( $this->Idfix->cConfigName );
-      return $this->ev3->PublicPath . "/{$cConfigName}/{$cFileName}";
+      $cFilesDir = $this->Idfix->aConfig['filespace'];
+      //$cConfigName = $this->Idfix->ValidIdentifier( $this->Idfix->cConfigName );
+      return $cFilesDir . "/{$cFileName}";
     }
     
     private function GetFullFilenameAsUrl($aFileInfo) {
@@ -134,7 +135,7 @@ class IdfixFieldsInputFile extends IdfixFieldsInput
     }
     
     /**
-     * Recursive check for a dierectory structure
+     * Recursive check for a directory structure
      * 
      * @param mixed $cFullFilename
      * @return

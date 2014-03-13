@@ -6,24 +6,33 @@
 
 class IdfixParse extends Events3Module
 {
-    
-    public function Events3IdfixGetConfig() {
-       $this->IdfixDebug->Profiler( __METHOD__, 'start');
-       $cConfigName = $this->Idfix->cConfigName;
-       $cFileName = dirname(__FILE__) . '/configs/' . $cConfigName . '.idfix';
-       if (file_exists($cFileName) and is_readable($cFileName)) {
-        $this->Idfix->aConfig = $this->Parse($cFileName);
-       }
-       
-       $this->IdfixDebug->Profiler( __METHOD__, 'stop');
+
+    public function Events3IdfixGetConfig()
+    {
+        $this->IdfixDebug->Profiler(__method__, 'start');
+        $cConfigName = $this->Idfix->cConfigName;
+        $cFileName = dirname(__file__) . '/configs/' . $cConfigName . '.idfix';
+
+        // Call an Idfix Eventhandler for modifying the filename to parse
+        $aPack = compact('cConfigName', 'cFileName');
+        $this->Idfix->Event('GetConfigFileName', $aPack);
+        extract($aPack);
+
+        if (file_exists($cFileName) and is_readable($cFileName)) {
+            $aConfig = $this->Parse($cFileName);
+            $this->Idfix->Event('AfterParse', $aConfig);
+            $this->Idfix->aConfig = $aConfig;
+        }
+
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
-    
-   
+
+
     /**
      * P A R S I N G   S Y S T E M
      * 
      */
-      
+
     /**
      * Parse()
      *
@@ -43,27 +52,22 @@ class IdfixParse extends Events3Module
     {
         $cRetval = array();
 
-        while (true)
-        {
+        while (true) {
             $cRow = $this->RowReader($cFilename);
             // Exit if no row found
-            if (!$cRow)
-            {
+            if (!$cRow) {
                 break;
             }
 
             // Check if it is an array
-            if ($cRow['token'] == '#' and $cRow['key'])
-            {
+            if ($cRow['token'] == '#' and $cRow['key']) {
                 // If it is indented, we have a new structure
-                if ($cRow['level'] > $ilevel)
-                {
+                if ($cRow['level'] > $ilevel) {
                     // Create new array
                     $cRetval[$cRow['key']] = $this->Parse($cFilename, $cRow['level']);
                 }
                 // otherwise we need to go back a level
-                else
-                {
+                else {
                     // Signal that the row is not yet parsed
                     // and needs to be analyzed again
                     $this->RowReader($cFilename, true);
@@ -72,18 +76,15 @@ class IdfixParse extends Events3Module
 
             }
             // Check if it is an item
-            elseif ($cRow['token'] == '-')
-            {
+            elseif ($cRow['token'] == '-') {
                 // If key and value are the same, the rowreader has detected
                 // just a single value after the token. In that case we rather
                 // have a default numeric indexed arraykey
-                if ($cRow['key'] == $cRow['value'])
-                {
+                if ($cRow['key'] == $cRow['value']) {
                     $cRetval[] = $cRow['value'];
                 }
                 // If there's no key, noo need to store this value
-                elseif ($cRow['key'])
-                {
+                elseif ($cRow['key']) {
                     $cRetval[$cRow['key']] = $cRow['value'];
                 }
             }
@@ -92,8 +93,7 @@ class IdfixParse extends Events3Module
         }
 
         // Close the file if we are on the main entry level
-        if ($ilevel === -1)
-        {
+        if ($ilevel === -1) {
             $this->RowReader('RESET');
         }
 
@@ -121,39 +121,33 @@ class IdfixParse extends Events3Module
 
         // If filename is NULL we need to close the fiel and
         // reset the filhandle for the next file
-        if ($cFilename === 'RESET' and $fp)
-        {
+        if ($cFilename === 'RESET' and $fp) {
             fclose($fp);
             $fp = null;
             return;
         }
 
         // We only set the flag if asked
-        if ($setflag)
-        {
+        if ($setflag) {
             $bReadLineAgain = true;
             return;
         }
 
         // Need the line again?
-        if ($bReadLineAgain)
-        {
+        if ($bReadLineAgain) {
             $bReadLineAgain = false;
             return $prev_row;
         }
 
         $cRetval = null;
         // Open file
-        if (is_NULL($fp))
-        {
+        if (is_NULL($fp)) {
             $fp = fopen($cFilename, 'r');
         }
 
         // Read next row
-        if ($fp)
-        {
-            if ($cLine = fgets($fp, 4096))
-            {
+        if ($fp) {
+            if ($cLine = fgets($fp, 4096)) {
                 $cRetval = $this->LineParser($cLine);
                 // Store it in case we need it again
                 $prev_row = $cRetval;
@@ -182,39 +176,33 @@ class IdfixParse extends Events3Module
     private function LineParser($cLine)
     {
         $cToken = (string )substr(trim($cLine), 0, 1);
-        if (!$cToken)
-        {
+        if (!$cToken) {
             $cToken = ' ';
         }
         $ilevel = (integer)strpos($cLine, $cToken);
         $data = trim(substr($cLine, $ilevel + 1));
 
         // Check separator for $xKey/value pair
-        if ($cSeparator = strpos($data, '='))
-        {
+        if ($cSeparator = strpos($data, '=')) {
             $xKey = substr($data, 0, $cSeparator);
             $value = substr($data, $cSeparator + 1);
-        } else
-        {
+        }
+        else {
             $xKey = $data;
             $value = $data;
         }
 
         // Make the key an integer if needed
-        if (is_numeric($xKey))
-        {
+        if (is_numeric($xKey)) {
             $xKey = (integer)$xKey;
         }
         // ... otherwise turn the key into a valid identifier
-        else
-        {
+        else {
             $blacklist = str_ireplace(str_split('abcdefghijklmnopqrstuvwxyz_1234567890'), '', $xKey);
-            if ($blacklist)
-            {
+            if ($blacklist) {
                 $xKey = str_replace(str_split($blacklist), '_', $xKey);
             }
-            if (is_numeric(substr($xKey, 0, 1)))
-            {
+            if (is_numeric(substr($xKey, 0, 1))) {
                 $xKey = '_' . $xKey;
             }
         }
@@ -227,4 +215,3 @@ class IdfixParse extends Events3Module
             'value' => $value);
     }
 }
-

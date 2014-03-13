@@ -35,6 +35,9 @@ class IdfixDefault extends Events3Module
         // Create a default tablespace
         $cTableSpace = $this->oIdfix->ValidIdentifier('idfix_' . trim($cConfigName));
         $this->SetDefaultValue($aConfig, 'tablespace', $cTableSpace);
+        // Create a default filespace
+        $cFileSpace = $this->ev3->PublicPath . '/' . $cTableSpace;
+        $this->SetDefaultValue($aConfig, 'filespace', $cFileSpace);
 
         if (isset($aConfig['tables'])) {
             foreach ($aConfig['tables'] as $cTableName => &$aTableConfig) {

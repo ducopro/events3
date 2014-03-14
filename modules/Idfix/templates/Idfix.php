@@ -24,6 +24,7 @@
         </div>
       </div>
     </div>    
+    
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) http://code.jquery.com/ui/1.10.4/jquery-ui.min.js -->
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>

@@ -120,6 +120,9 @@ class Idfix extends Events3Module
         // ... and call the main event
         $this->Event($cEventName, $output);
 
+        // Call an extra event for postprocessing
+        $this->Event('Render', $output);
+        
         return $output;
     }
 

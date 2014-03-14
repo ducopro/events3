@@ -81,7 +81,6 @@ class IdfixEdit extends Events3Module
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
-   
 
     /**
      * Get the full HTML representation of the form.
@@ -95,23 +94,23 @@ class IdfixEdit extends Events3Module
     {
         $cReturn = '';
         if (isset($aTableConfig['groups']) and is_array($aTableConfig['groups'])) {
-            $bFirst=true;
+            $bFirst = true;
             foreach ($aTableConfig['groups'] as $cGroupId => $aGroupConfig) {
                 // First get the HTML elements. This is needed because in the next step
                 // we need to know about errors.
                 $cElements = $this->GetHtmlForInputElements($aTableConfig['fields'], $cGroupId);
-                
+
                 // Are there any errors on this group? Than set the right CSS classes
                 // to open the accordion and show it as a danger panel
                 $cClass = ' ';
                 $cPanelClass = 'panel-default';
-                if(count($this->aErrorGroups) > 0) {
-                    if(isset($this->aErrorGroups[$cGroupId])) {
+                if (count($this->aErrorGroups) > 0) {
+                    if (isset($this->aErrorGroups[$cGroupId])) {
                         $cClass .= 'in';
                         $cPanelClass = 'panel-danger';
                     }
                 }
-                elseif($bFirst and !$this->bValidationMode) {
+                elseif ($bFirst and !$this->bValidationMode) {
                     $cClass .= 'in';
                 }
                 //print_r($this->aErrorGroups);
@@ -130,7 +129,17 @@ class IdfixEdit extends Events3Module
             }
         }
         else {
-            $cReturn .= $this->GetHtmlForInputElements($aTableConfig['fields']);
+            $cElements .= $this->GetHtmlForInputElements($aTableConfig['fields']);
+            $aTemplate = array(
+                'cElements' => $cElements,
+                'cId' => 'single-group',
+                'cTitle' => $aTableConfig['title'],
+                'cDescription' => $aTableConfig['description'],
+                'cIcon' => $this->Idfix->GetIconHTML($aTableConfig['icon']),
+                'cClass' => ' in',
+                'cPanelClass' => 'panel-default',
+                );
+            $cReturn .= $this->Idfix->RenderTemplate('EditFormGroup', $aTemplate);
         }
         return $cReturn;
     }
@@ -209,10 +218,10 @@ class IdfixEdit extends Events3Module
                 // Register there were errors
                 $this->bErrorsDetected = true;
                 // Do we have a group? Than register there was an error in this group
-                if($cGroup) {
-                  $this->aErrorGroups[ $cGroup ] = true;    
+                if ($cGroup) {
+                    $this->aErrorGroups[$cGroup] = true;
                 }
-                
+
             }
 
             $cInput = $aFieldConfig['__DisplayValue'];

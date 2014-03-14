@@ -86,7 +86,7 @@ class Database extends Events3Module
         
         $list = $this->DataQuery($cSql);
         foreach($list as $row) {
-            $cTableName = $row[0];
+            $cTableName = array_shift($row);
             $return[ $cTableName ] = $cTableName;
         }
         return $return;
@@ -154,7 +154,9 @@ class Database extends Events3Module
        if ($this->pdo) {
            $this->ProfileQuery();
            $stmt = $this->pdo->prepare( $cSql );
+           $stmt->setFetchMode( PDO::FETCH_ASSOC);
            $stmt->execute( array_values( $aParams ) );
+           
            $this->ProfileQuery( $stmt->queryString);
            //$this->IdfixDebug->Debug(__METHOD__, $stmt);
            return $stmt; 

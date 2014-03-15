@@ -21,7 +21,7 @@ class TestIdfix extends Events3TestCase
         $this->assert( strpos($cOut, 'Hello Idfix'));
         
         // Access system
-        $bAccess = $idfix->FieldAccess('TestIdfixConfig','TestIdfixTable','field','view');
+        $bAccess = $idfix->Access('testidfixtable_test_v');
         $this->assert(!$bAccess);
         
         
@@ -29,9 +29,7 @@ class TestIdfix extends Events3TestCase
     
     public function Events3IdfixAccess(&$aData) {
       //print_r($aData);
-       if (isset($aData['cConfigName']) AND $aData['cConfigName'] == 'TestIdfixConfig') {
-        $this->assert(isset($aData['cTableName']));
-        $this->assert( $aData['cTableName'] == 'TestIdfixTable');
+       if (isset($aData['cPermission']) AND $aData['cPermission'] == 'testidfixtable_test_v') {
         $aData['bAccess'] = false;
        }
     }

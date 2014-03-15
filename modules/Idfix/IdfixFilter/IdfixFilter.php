@@ -187,16 +187,12 @@ class IdfixFilter extends Events3Module
             foreach ($aFilters as $iId => $aConfig) {
                 $aAttr = array('filter' => 'clear/' . $iId);
                 $cTitle = $aConfig['title'] . ' [="' . $aConfig['__SaveValue'] . '"]';
-                $cIcon = '';
-                if (isset($aConfig['icon']) and $aConfig['icon']) {
-                    $cIcon = $this->Idfix->GetIconHTML($aConfig['icon']);
-                }
                 $aDropdown[] = array(
                     'title' => 'Clear ' . $cTitle, //$aSearchList[$cFieldName]['title'],
                     'href' => $this->Idfix->GetUrl('', '', $aConfig['_name'], null, null, 'list', $aAttr), //
                     'tooltip' => 'Remove filter for ' . $cTitle,
                     'type' => 'normal',
-                    'icon' => $cIcon,
+                    'icon' => $this->Idfix->GetIconHTML($aConfig),
                     );
 
             }
@@ -212,17 +208,13 @@ class IdfixFilter extends Events3Module
 
 
         foreach ($aSearchList as $cFieldName => $aSearchConfig) {
-            $cIcon = '';
-            if (isset($aSearchConfig['icon']) and $aSearchConfig['icon']) {
-                $cIcon = $this->Idfix->GetIconHTML($aSearchConfig['icon']);
-            }
             $aAttr = array('filter' => 'add');
             $aDropdown[] = array(
                 'title' => $aSearchConfig['title'],
                 'href' => $this->Idfix->GetUrl('', '', $cFieldName, null, null, 'list', $aAttr), //
                 'tooltip' => 'Create new filter on this field.',
                 'type' => 'normal',
-                'icon' => $cIcon,
+                'icon' => $this->Idfix->GetIconHTML($aSearchConfig),
                 );
 
         }

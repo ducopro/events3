@@ -67,9 +67,14 @@ class Idfix extends Events3Module
 
         $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction);
         $navbar = $this->RenderNavBar();
+        // Get all the rendered messages
+        $messages = $this->FlashMessage();
 
         // And wrap them in the body HTML
-        $cBodyContent = $this->RenderTemplate('Idfix', array('content' => $content, 'navbar' => $navbar));
+        $cBodyContent = $this->RenderTemplate('Idfix', array(
+            'content' => $content,
+            'navbar' => $navbar,
+            'messages' => $messages));
         echo $cBodyContent;
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
@@ -110,8 +115,7 @@ class Idfix extends Events3Module
             // And do not forget to store evertything in cache
             $this->GetSetCache($cConfigCacheKey, $this->aConfig);
         }
-        
-     
+
 
         // Create the output variable
         $output = '';
@@ -122,7 +126,7 @@ class Idfix extends Events3Module
 
         // Call an extra event for postprocessing
         $this->Event('Render', $output);
-        
+
         return $output;
     }
 
@@ -153,6 +157,19 @@ class Idfix extends Events3Module
     }
 
     /**
+     * Do a nice redirect to another page while maintaining the
+     * session and also the flash messages.
+     * 
+     * @param mixed $cUrl
+     * @return void
+     */
+    public function Redirect($cUrl)
+    {
+        session_write_close();
+        header('location: ' . $cUrl);
+        exit(0);
+    }
+    /**
      * Isfix event handler for the navigation bar
      * 
      * @param mixed $data
@@ -164,10 +181,11 @@ class Idfix extends Events3Module
         $data['brand']['title'] = $this->aConfig['title'];
         $data['brand']['href'] = $this->GetUrl('', '', '', null, null, 'info');
         $data['brand']['tooltip'] = $this->aConfig['description'];
-        $data['brand']['icon'] = $this->GetIconHTML($this->aConfig['icon']);
+        $data['brand']['icon'] = $this->GetIconHTML($this->aConfig);
 
         // Add a link for adding a new record
-        if (isset($this->aConfig['tables'][$this->cTableName]) and $this->cAction == 'List' and $this->FieldAccess($this->cConfigName, $this->cTableName, '', 'add')) {
+        $bAccess = $this->Access( $this->cTableName . '_a');
+        if (isset($this->aConfig['tables'][$this->cTableName]) and $this->cAction == 'List' and $bAccess) {
             $data['left'][''] = array(
                 'title' => 'New ' . $this->aConfig['tables'][$this->cTableName]['title'],
                 'tooltip' => $this->aConfig['tables'][$this->cTableName]['description'],
@@ -184,10 +202,10 @@ class Idfix extends Events3Module
             // Be sure we do not have child objects
             if ($this->TableIsTopLevel($cTableName)) {
                 $aDropdown[$cTableName] = array(
-                    'title' => $aTableConfig['title'],
+                    'title' => isset($aTableConfig['title']) ? $aTableConfig['title']: '',
                     'href' => $this->GetUrl($this->cConfigName, $cTableName, '', 1, 0, 'list'), // top level list
-                    'tooltip' => $aTableConfig['description'],
-                    'icon' => $this->GetIconHTML($aTableConfig['icon']),
+                    'tooltip' => isset($aTableConfig['description']) ? $aTableConfig['description']: '',
+                    'icon' => $this->GetIconHTML($aTableConfig),
                     'active' => ($cTableName == $this->cTableName),
                     'type' => 'normal',
                     );
@@ -345,50 +363,30 @@ class Idfix extends Events3Module
         return $cKey;
     }
 
+  
+    
     /**
-     * Check if there is access to this field of the configuration
-     * This is the main method for checking permissions
+     * Check access restrictions
      * 
-     * @param string $cConfigName
-     * @param string $cTableName
-     * @param string $cFieldName
-     * @param string $cOp Allowed values: view, edit, add, delete
+     * @param mixed $cPermission
      * @return
      */
-    public function FieldAccess($cConfigName, $cTableName, $cFieldName, $cOp)
-    {
+    public function Access( $cPermission ) {
         $this->IdfixDebug->Profiler(__method__, 'start');
         //$args = func_get_args();
-        $bAccess = false;
+        $bAccess = true;
         // Put all the values in the array
-        $aPack = Get_defined_vars();
+        $aPack = compact('bAccess', 'cPermission');
         // And send them to the event handler
         $this->Event('Access', $aPack);
         // Now only extract the access value
         $bAccess = (boolean)$aPack['bAccess'];
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $bAccess;
+        
     }
 
-    /**
-     * Stub for the access handling. Access is always allowed.
-     * This stub is implemented as a BEFORE handler, so it is mneant to
-     * be a default value.
-     * Other modules could ovberride it in the NORMAL or AFTER handler
-     * 
-     * @see also the IdfixUser module which imnplements access handling
-     * 
-     * @param boolean reference $bAccess
-     * @param string $cConfigName
-     * @param string $cTableName
-     * @param string $cFieldName
-     * @param string $cOp
-     * @return void
-     */
-    public function Events3IdfixAccessBefore(&$aPack)
-    {
-        $aPack['bAccess'] = true;
-    }
+    
 
     /**
      * Cleanup any string for output
@@ -416,16 +414,28 @@ class Idfix extends Events3Module
      */
     public function GetIconHTML($cIcon)
     {
+        // Special case if we send in a configuration structure
+        if (is_array($cIcon)) {
+            if (isset($cIcon['icon'])) {
+                $cIcon = $cIcon['icon'];
+            }
+            else {
+                $cIcon = '';
+            }
+        }
+
         if (substr($cIcon, 0, 4) == 'http') {
             return "<img align=\"absmiddle\" src=\"{$cIcon}\">&nbsp;";
         }
-        elseif (strtolower($this->aConfig['iconlib']) == 'bootstrap') {
+        elseif ($cIcon and strtolower($this->aConfig['iconlib']) == 'bootstrap') {
             return "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>&nbsp;";
         }
-        else {
+        elseif ($cIcon) {
             $cIcon = $this->aConfig['iconlib'] . '/' . $cIcon;
             return "<img align=\"absmiddle\" height=\"16\" width=\"16\" src=\"{$cIcon}\">&nbsp;";
         }
+
+        return '';
     }
 
     /**
@@ -521,6 +531,33 @@ class Idfix extends Events3Module
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aHaystack;
+    }
+
+    /**
+     * Set a message to show on the next page
+     * 
+     * @param string $cMessage
+     * @param string $cType = (success,info,warning,danger)
+     * @return string rendered messages if no parameters are sent
+     */
+    public function FlashMessage($cMessage = null, $cType = 'success')
+    {
+        if (is_null($cMessage)) {
+            $cMessages = '';
+            // Render the messages
+            if (isset($_SESSION[__method__]) and is_array($_SESSION[__method__])) {
+                foreach ($_SESSION[__method__] as $cType => $aMessages) {
+                    $cMessages .= $this->RenderTemplate('FlashMessages', compact('cType', 'aMessages'));
+                }
+            }
+            // Clear the mesaage queu
+            unset($_SESSION[__method__]);
+            return $cMessages;
+        }
+        else {
+            // Set new message
+            $_SESSION[__method__][$cType][] = $cMessage;
+        }
     }
 
     /**

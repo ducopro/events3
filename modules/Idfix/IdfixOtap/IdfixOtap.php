@@ -82,9 +82,36 @@ class IdfixOtap extends Events3Module
         }
     }
 
-    public function Events3IdfixNavbar(&$data)
+    public function Events3IdfixNavbarAfter(&$data)
     {
-        // Nothiong to show in production mode
+        // If the user module is enabled and we are running in superuser mode
+        // we need to show all the available configurations and links to the controlpanel
+        if ($oUserModule = $this->IdfixUser) {
+            if ($oUserModule->IsSuperUser()) {
+                $aDropdown = array();
+                $aModuleList = glob($this->GetConfigDir(self::ENV_DEV) . '/*.idfix');
+                foreach ($aModuleList as $cFileName) {
+                    $cConfigName = basename($cFileName, '.idfix');
+                    $bActive = ($this->Idfix->cConfigName == $cConfigName);
+                    $aDropdown[$cConfigName] = array(
+                        'title' => $cConfigName,
+                        'href' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'Controlpanel'),
+                        'tooltip' => $cConfigName,
+                        'icon' => $bActive ? $this->Idfix->GetIconHTML('ok'): '',
+                        'active' => $bActive,
+                        'type' => 'normal',
+                        );
+                }
+                $data['right']['configs'] = array(
+                    'title' => 'Configurations',
+                    'tooltip' => 'Select one of the configurations and show the control panel.',
+                    'href' => '#',
+                    'dropdown' => $aDropdown,
+                    'icon' => $this->Idfix->GetIconHTML('cloud'),
+                    );
+            }
+        }
+        // Nothing else to show in production mode
         if ($this->cCurrentEnvironment == self::ENV_PROD) {
             return;
         }
@@ -179,7 +206,10 @@ class IdfixOtap extends Events3Module
     private function DeleteFileSystem($cEnv, $cConfigName)
     {
         $cFilesPath = $this->GetFilesDirConfig($cEnv, $cConfigName);
-        $this->RecurseDelete($cFilesPath);
+        $iCount = $this->RecurseDelete($cFilesPath);
+        if ($iCount) {
+            $this->Idfix->FlashMessage("{$iCount} files removed from the filesystem.");
+        }
     }
 
     /**
@@ -190,14 +220,20 @@ class IdfixOtap extends Events3Module
      */
     private function RecurseDelete($cDir)
     {
+        static $iCount = 0;
         foreach (glob($cDir . '/*') as $cFile) {
-            if (is_dir($cFile))
+            if (is_dir($cFile)) {
                 $this->RecurseDelete($cFile);
-            else
+            }
+
+            else {
                 unlink($cFile);
+                $iCount++;
+            }
+
         }
         rmdir($cDir);
-
+        return $iCount;
     }
     private function DeleteTableSpace($cEnv, $cConfigName)
     {
@@ -307,7 +343,8 @@ class IdfixOtap extends Events3Module
     private function RedirectToControlPanel()
     {
         $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'Controlpanel');
-        header('location: ' . $cUrl);
+        $this->Idfix->Redirect($cUrl);
+        //header('location: ' . $cUrl);
         //exit();
     }
 
@@ -323,6 +360,8 @@ class IdfixOtap extends Events3Module
         $this->IdfixDebug->Profiler(__method__, 'start');
 
         $aTemplateVars = array(
+            'title' => $this->Idfix->aConfig['title'],
+            'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
             self::ENV_DEV => $this->RenderInfoPanel(self::ENV_DEV, 1),
             self::ENV_TEST => $this->RenderInfoPanel(self::ENV_TEST, 2),
             self::ENV_ACC => $this->RenderInfoPanel(self::ENV_ACC, 3),
@@ -381,7 +420,8 @@ class IdfixOtap extends Events3Module
             'class' => $aEnvironmentNames[$cEnv]['class'],
             'deploy' => $cDeploy,
             'fileinfo' => $this->RenderInfoFileSystem($cEnv),
-            'password' => $this->RenderTemplate('Password'),
+            //'password' => $this->RenderTemplate('Password'),
+            'password' => '',
             );
 
         return $this->RenderTemplate('ControlPanelItem', $aTemplateVars);

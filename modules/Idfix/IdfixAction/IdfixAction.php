@@ -29,7 +29,8 @@ class IdfixAction extends Events3Module
         // Goto the last known page of the list
         $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
         //$cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
-        header('location: ' . $cUrl);
+        //header('location: ' . $cUrl);
+        $this->Idfix->Redirect($cUrl);
     }
 
     private function CopyRecurse($record, $parent_id)
@@ -67,7 +68,8 @@ class IdfixAction extends Events3Module
         $this->DeleteRecurse($this->Idfix->iObject);
         // Goto the last known page of the list
         $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
-        header('location: ' . $cUrl);
+        //header('location: ' . $cUrl);
+        $this->Idfix->Redirect($cUrl);
 
     }
 

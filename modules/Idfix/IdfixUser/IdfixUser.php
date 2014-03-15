@@ -21,6 +21,19 @@ class IdfixUser extends Events3Module
             $data['left'] = array();
             $data['right'] = array();
         }
+        else {
+            // Add logout button to the navbar
+            $aUser = $this->GetSetUserObject();
+            $cUserName = $aUser['UserName'];
+            $cUserType = $aUser['SubTypeID'];
+            $data['right']['logout'] = array(
+                'title' => 'Logout '.$cUserName,
+                'tooltip' => $cUserType,
+                'href' => $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'logout'), // top level list
+                'icon' => $this->Idfix->GetIconHTML('user'),
+                );
+
+        }
     }
     /**
      * Postprocess the output and only show login form
@@ -64,6 +77,9 @@ class IdfixUser extends Events3Module
         $this->bGoodLogin = $this->IsLoggedIn();
     }
 
+    public function Events3IdfixActionLogout(){
+        unset($_SESSION[__class__]);
+    }
 
     /**
      * Get or set a userobject
@@ -112,6 +128,22 @@ class IdfixUser extends Events3Module
 
     }
 
+    public function Events3IdfixAccess(&$aPack)
+    {
+        $cPermission = $aPack['cPermission'];
+        $bAccess = &$aPack['bAccess'];
+
+        if ($this->IsSuperUser()) {
+            $bAccess = true;
+        }
+        elseif ($this->IsAdministrator()) {
+            $bAccess = true;
+        }
+        elseif ($aUser = $this->GetSetUserObject()) {
+            $bAccess = !(stripos($aUser['Text_1'], $cPermission) === false);
+        }
+    }
+
     /**
      * Consistent way to create a hashed value for the usersystem
      * 
@@ -132,6 +164,21 @@ class IdfixUser extends Events3Module
     {
         return !is_null($this->GetSetUserObject());
     }
+    public function IsSuperUser()
+    {
+        if ($aUser = $this->GetSetUserObject()) {
+            return ($aUser['SubTypeID'] == 3);
+        }
+        return false;
+    }
+    public function IsAdministrator()
+    {
+        if ($aUser = $this->GetSetUserObject()) {
+            return ($aUser['SubTypeID'] == 2);
+        }
+        return false;
+    }
+
     /**
      * Configuration settings that can be overruled
      * in the configurationfile.
@@ -164,6 +211,47 @@ class IdfixUser extends Events3Module
     public function Events3IdfixAfterParse(&$aConfig)
     {
         $aConfig['tables'] += $this->GetTableStructure();
+    }
+
+    /**
+     * Idfix Event
+     * Called from the SaveRecord method of the IdfixStorage module
+     * 
+     * Gives us the opportunity to change some fields
+     * 
+     * @param array $aFields Key/Value pairs Fieldname/Fieldvalue
+     * @return void
+     */
+    public function Events3IdfixSaveRecord(&$aFields)
+    {
+        // Store the userID in the record
+        $aUser = $this->GetSetUserObject();
+        if (!is_null($aUser)) {
+            // Get the UserId
+            $iUserId = $aUser['MainID'];
+            // Set the correct values
+            // Change Id can be set always
+            $aFields['UidChange'] = $iUserId;
+            // Only change the userid for the creator if we have a new record
+            if (!isset($aFields['UidCreate'])) {
+                $aFields['UidCreate'] = $iUserId;
+            }
+
+        }
+
+        // Specific postprocessing for creating the hashvalue from the password
+        if (isset($aFields['TypeID']) and $aFields['TypeID'] == 9999) {
+            // Only operate on user records
+            $cPassword = $aFields['Char_1'];
+            $cNewPassword = $this->CreateHashValue($cPassword);
+            // If the two passwords are of identical length, it means both
+            // are hashvalues. In that case we do not need to do anything.
+            if (strlen($cPassword) != strlen($cNewPassword)) {
+                // Not identical, means we changed the password.
+                $aFields['Char_1'] = $cNewPassword;
+                $this->Idfix->FlashMessage('New password is set.');
+            }
+        }
     }
 
 
@@ -204,7 +292,7 @@ class IdfixUser extends Events3Module
     {
 
         return array( // First table: user
-            '__users' => array(
+                '__users' => array(
                 'title' => 'Users',
                 'description' => 'Accounts to log into the Idfix system for a specific configuration',
                 'id' => '9999',
@@ -217,7 +305,6 @@ class IdfixUser extends Events3Module
                     'SubTypeID' => 'Role',
                     '_delete',
                     ),
-                'childs' => array('__permissions'),
                 'fields' => array(
                     'Text_1' => array(
                         'type' => 'checkboxes',
@@ -239,7 +326,6 @@ class IdfixUser extends Events3Module
                             3 => '<strong>Idfix Global Superuser</strong> Administer all <em>Idfix</em> configurations',
                             ),
                         ),
-
                     'Name' => array(
                         'type' => 'text',
                         'title' => 'Email',
@@ -270,28 +356,7 @@ class IdfixUser extends Events3Module
 
 
                     ),
-                ), // Second table: Permissions
-            '__permissions' => array(
-                'title' => 'Permissions',
-                'description' => 'Which parts of the system is this user allowed to go?',
-                'id' => '8888',
-                'icon' => 'ok-circle',
-                'fields' => array(
-                    'Name' => array(
-                        'type' => 'select',
-                        'title' => 'Permission',
-                        'description' => 'Choose one of the permissions',
-                        'cols' => '6',
-                        ),
-                    'SubTypeID' => array(
-                        'type' => 'checkbox',
-                        'title' => 'Allowed',
-                        'description' => 'When checked, this permissions is granted.',
-                        'cols' => '6',
-                        ),
-                    ),
-                ),
-            );
+                ), );
     }
 
 
@@ -317,27 +382,33 @@ class IdfixUser extends Events3Module
 
         foreach ($config['tables'] as $table_name => $table_config) {
             $table_name_user = $table_config['title'];
+            $table_name_user = "<em>{$table_name_user}</em>: ";
 
-            $return[$table_name . '_a'] = $this->CreatePermissionName('a', $table_name_user);
-            $return[$table_name . '_v'] = $this->CreatePermissionName('v', $table_name_user);
-            $return[$table_name . '_e'] = $this->CreatePermissionName('e', $table_name_user);
-            $return[$table_name . '_d'] = $this->CreatePermissionName('d', $table_name_user);
+            $return[$table_name . '_a'] = $table_name_user . 'Add records';
+            $return[$table_name . '_v'] = $table_name_user . 'View records';
+            $return[$table_name . '_e'] = $table_name_user . 'Edit records';
+            $return[$table_name . '_d'] = $table_name_user . 'Delete records';
 
             // Add custom permissions
             if (isset($table_config['permissions']) and is_array($table_config['permissions'])) {
                 foreach ($table_config['permissions'] as $perm_name => $perm_sql) {
-                    $return[$table_name . '_' . $perm_name . '_cu'] = $this->CreatePermissionName('cu', $table_name_user, $perm_name);
+                    // $perm_name is already a valid identifier
+                    $key = $table_name . '_' . $perm_name;
+                    $return[$key] = $table_name_user . str_replace('_', ' ', $perm_name);
                 }
             }
             // Check field-level permissions
-            if (is_array($table_config['fields'])) {
+            if (isset($table_config['fields']) and is_array($table_config['fields'])) {
                 foreach ($table_config['fields'] as $field_name => $field_config) {
                     $field_name_user = $field_config['title'];
+                    $field_name_user = "<em><strong>{$field_name_user}</strong></em>";
                     if (isset($field_config['permissions'])) {
-                        $return[$table_name . '_' . $field_name . '_v'] = $this->CreatePermissionName('v', $table_name_user, $field_name_user);
-                        $return[$table_name . '_' . $field_name . '_e'] = $this->CreatePermissionName('e', $table_name_user, $field_name_user);
+                        $return[$table_name . '_' . $field_name . '_v'] = $table_name_user . 'View field ' . $field_name_user;
+                        $return[$table_name . '_' . $field_name . '_e'] = $table_name_user . 'Edit field ' . $field_name_user;
                         if ($field_config['type'] == 'file') {
-                            $return[$table_name . '_' . $field_name . '_do'] = $this->CreatePermissionName('do', $table_name_user, $field_name_user);
+                            // Because we are using the public file system, viewing the file means also knowing the url and
+                            // the possibility of accessing it.
+                            //$return[$table_name . '_' . $field_name . '_do'] = $table_name_user . 'Download file ' . $field_name_user;
                         }
                     }
                 }

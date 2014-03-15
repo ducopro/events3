@@ -62,8 +62,8 @@ class IdfixEdit extends Events3Module
             // Than return to the list
             $cUrl = $this->Idfix->GetSetLastListPage($cTableName);
             //$cUrl = $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iLastPage, null, 'list');
-            header('location: ' . $cUrl);
-
+            //header('location: ' . $cUrl);
+            $this->Idfix->Redirect($cUrl);
         }
 
         // Now wrap the raw html in it's form tag and add some hidden fields
@@ -73,7 +73,7 @@ class IdfixEdit extends Events3Module
             'cHidden' => $this->GetHtmlHiddenFields($aTableConfig),
             'cTitle' => $aTableConfig['title'],
             'cDescription' => $aTableConfig['description'],
-            'cIcon' => $this->Idfix->GetIconHTML($aTableConfig['icon']),
+            'cIcon' => $this->Idfix->GetIconHTML($aTableConfig),
             'cPostUrl' => $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iMainID, null, 'edit'),
             );
 
@@ -120,7 +120,7 @@ class IdfixEdit extends Events3Module
                     'cId' => $cGroupId,
                     'cTitle' => $aGroupConfig['title'],
                     'cDescription' => $aGroupConfig['description'],
-                    'cIcon' => $this->Idfix->GetIconHTML($aGroupConfig['icon']),
+                    'cIcon' => $this->Idfix->GetIconHTML($aGroupConfig),
                     'cClass' => $cClass,
                     'cPanelClass' => $cPanelClass,
                     );
@@ -129,13 +129,13 @@ class IdfixEdit extends Events3Module
             }
         }
         else {
-            $cElements .= $this->GetHtmlForInputElements($aTableConfig['fields']);
+            $cElements = $this->GetHtmlForInputElements($aTableConfig['fields']);
             $aTemplate = array(
                 'cElements' => $cElements,
                 'cId' => 'single-group',
                 'cTitle' => $aTableConfig['title'],
                 'cDescription' => $aTableConfig['description'],
-                'cIcon' => $this->Idfix->GetIconHTML($aTableConfig['icon']),
+                'cIcon' => $this->Idfix->GetIconHTML($aTableConfig),
                 'cClass' => ' in',
                 'cPanelClass' => 'panel-default',
                 );
@@ -172,10 +172,12 @@ class IdfixEdit extends Events3Module
                 continue;
             }
             // Check if we have the correct rights to show or edit the field
-            $bAllowEdit = $this->Idfix->FieldAccess($this->Idfix->cConfigName, $aFieldConfig['_tablename'], $cFieldName, 'edit');
+            $cPermission = $aFieldConfig['_tablename'] . '_' . $cFieldName . '_e';
+            $bAllowEdit = $this->Idfix->Access($cPermission);
             $bAllowView = true;
             if (!$bAllowEdit) {
-                $bAllowView = $this->Idfix->FieldAccess($this->Idfix->cConfigName, $aFieldConfig['_tablename'], $cFieldName, 'view');
+                $cPermission = $aFieldConfig['_tablename'] . '_' . $cFieldName . '_v';
+                $bAllowView = $this->Idfix->Access($cPermission);
             }
             // No need to go on if we do not have at least VIEW rights
             if (!$bAllowView) {

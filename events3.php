@@ -181,7 +181,7 @@ class Events3
         }
 
         $oModule = null;
-        if (is_object($this->_aInstances[$cModulePath]))
+        if ( isset($this->_aInstances[$cModulePath]) and is_object($this->_aInstances[$cModulePath]))
         {
             $oModule = $this->_aInstances[$cModulePath];
         }

@@ -28,7 +28,7 @@ class IdfixDefault extends Events3Module
 
         $this->SetDefaultValue($aConfig, 'title', 'Untitled configuration');
         $this->SetDefaultValue($aConfig, 'description', 'Description for this untitled configuration');
-        $this->SetDefaultValue($aConfig, 'icon', 'application.png ');
+        $this->SetDefaultValue($aConfig, 'icon', 'book');
         $this->SetDefaultValue($aConfig, '_name', $cConfigName);
         $this->SetDefaultValue($aConfig, 'iconlib', "bootstrap");
 
@@ -134,7 +134,7 @@ class IdfixDefault extends Events3Module
         foreach ($aConfig['search'] as $cFieldName => &$aSearchConfig) {
             // Get the defaults from the field
             $aFieldConfig = array();
-            if (is_array($aConfig['fields'][$cFieldName])) {
+            if (isset($aConfig['fields'][$cFieldName]) and is_array($aConfig['fields'][$cFieldName])) {
                 $aFieldConfig = $aConfig['fields'][$cFieldName];
             }
             // .. and merge them with the existing search fields

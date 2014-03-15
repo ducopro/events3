@@ -60,7 +60,7 @@ class IdfixList extends Events3Module
 
         $aTitle['cTitle'] = $aTableConfig['title'];
         $aTitle['cDescription'] = $aTableConfig['description'];
-        $aTitle['cIcon'] = $this->Idfix->GetIconHTML($aTableConfig['icon']);
+        $aTitle['cIcon'] = $this->Idfix->GetIconHTML($aTableConfig);
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
@@ -169,10 +169,16 @@ class IdfixList extends Events3Module
                     $cFieldName = $cColumnName;
                     $cColumnName = (string )@$aTableConfig['fields'][$cFieldName]['title'];
                 }
-                // If there are field level permissions, check them and act accordingly
-                if (!$this->Idfix->FieldAccess($cConfigName, $aTableConfig['_name'], $cFieldName, 'view')) {
-                    continue;
+                
+                // Check if we configured field level permissions
+                if( isset( $aTableConfig['fields'][$cFieldName]['permissions']) and $aTableConfig['fields'][$cFieldName]['permissions']) {
+                    // And check it accordingly
+                    $cPermission = $aTableConfig['_name'] . '_' . $cFieldName . '_v';
+                    if(!$this->Idfix->Access($cPermission)) {
+                        continue;
+                    }
                 }
+                
                 // Check if we have a title
                 if (!$cColumnName) {
                     $cColumnName = $cFieldName;

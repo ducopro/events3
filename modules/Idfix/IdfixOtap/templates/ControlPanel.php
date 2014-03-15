@@ -1,5 +1,5 @@
 <div class="well">
-<h1>Idfix OTAP Configuration Control Panel</h1>
+<h1><?php print $icon . $title?> <small>DTAP Configuration Control Panel</small></h1>
 <div class="row">
    <?php print $dev; ?>
    <?php print $test; ?>

@@ -34,8 +34,11 @@ class IdfixStorage extends Events3Module
     public function SaveRecord($aFields)
     {
         $cTableSpace = $this->GetTableSpaceName();
-        $aFields['UidChange'] = 0;
         $aFields['TSChange'] = time();
+        
+        // Call a hook for postprocessing the values
+        $this->Idfix->Event('SaveRecord', $aFields);
+        
         // Store all the NON-sql columns in the data field
         $aFields = $this->SavePostProcess($aFields);
 
@@ -52,8 +55,6 @@ class IdfixStorage extends Events3Module
         } else
         {
             $aFields['TSCreate'] = time();
-            $aFields['UidCreate'] = 0;
-
             $iRetval = $this->Database->Insert($cTableSpace, $aFields);
 
         }

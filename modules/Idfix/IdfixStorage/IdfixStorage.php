@@ -178,6 +178,8 @@ class IdfixStorage extends Events3Module
         if (!$bTableIsThere)
         {
             $this->Database->Query("CREATE TABLE {$cTable} LIKE idfix");
+            // Event is now only used by the User module to create a default SuperUser
+            $this->Idfix->Event('CreateTable', $cTable);
         }
     }
 

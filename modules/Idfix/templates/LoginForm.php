@@ -1,6 +1,4 @@
-<div class="container">
- <div class="row">
-   <div class="col-sm-4 col-sm-offset-4">
+
      <form class="form-signin" role="form" method="post" action="<?php print $cPostUrl; ?>">
         
         <h2 class="form-signin-heading">
@@ -34,6 +32,3 @@
         </button>
     
     </form> 
-   </div>
- </div>
-</div>

@@ -8,6 +8,7 @@ class IdfixUser extends Events3Module
     // False login
     private $bGoodLogin = true;
 
+
     /**
      * Unset everything in the navigationbar if we are not logged in
      * Only keep the branding.
@@ -27,7 +28,7 @@ class IdfixUser extends Events3Module
             $cUserName = $aUser['UserName'];
             $cUserType = $aUser['SubTypeID'];
             $data['right']['logout'] = array(
-                'title' => 'Logout '.$cUserName,
+                'title' => 'Logout ' . $cUserName,
                 'tooltip' => $cUserType,
                 'href' => $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'logout'), // top level list
                 'icon' => $this->Idfix->GetIconHTML('user'),
@@ -44,14 +45,37 @@ class IdfixUser extends Events3Module
     public function Events3IdfixRender(&$output)
     {
         if (!$this->IsLoggedIn()) {
+            // Render Application Info panel
+            $aTemplateVars = array(
+                'title' => isset($this->Idfix->aConfig['title']) ? $this->Idfix->aConfig['title'] : '',
+                'description' => isset($this->Idfix->aConfig['description']) ? $this->Idfix->aConfig['description'] : '',
+                'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
+                'env' => $this->IdfixOtap->GetEnvironmentAsText(),
+                );
+            $app = $this->Idfix->RenderTemplate('LoginAppInfo', $aTemplateVars);
+            
+            // Render login form
             $aTemplateVars = array(
                 'cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'login'),
                 'bGoodLogin' => $this->bGoodLogin,
                 );
-            $output = $this->Idfix->RenderTemplate('Login', $aTemplateVars);
+            $form = $this->Idfix->RenderTemplate('LoginForm', $aTemplateVars);
+
+            // Render Password form
+            $aTemplateVars = array('cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'resend'), );
+            $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
+
+            // Render the tabular container
+            $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app'));
         }
     }
 
+    public function Events3IdfixActionResend()
+    {
+        if (isset($_POST['email'])) {
+            $this->Idfix->FlashMessage('New password requested. Please check your email inbox.');
+        }
+    }
     /**
      * Try to login into the system
      * 
@@ -77,7 +101,8 @@ class IdfixUser extends Events3Module
         $this->bGoodLogin = $this->IsLoggedIn();
     }
 
-    public function Events3IdfixActionLogout(){
+    public function Events3IdfixActionLogout()
+    {
         unset($_SESSION[__class__]);
     }
 
@@ -94,6 +119,7 @@ class IdfixUser extends Events3Module
      */
     private function GetSetUserObject($aUser = null)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $cTableSpace = $this->Idfix->aConfig['tablespace'];
         $cConfigName = $this->Idfix->cConfigName;
 
@@ -124,12 +150,13 @@ class IdfixUser extends Events3Module
             $aUser = $_SESSION[__class__][$cTableSpace];
         }
 
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aUser;
-
     }
 
     public function Events3IdfixAccess(&$aPack)
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $cPermission = $aPack['cPermission'];
         $bAccess = &$aPack['bAccess'];
 
@@ -142,6 +169,7 @@ class IdfixUser extends Events3Module
         elseif ($aUser = $this->GetSetUserObject()) {
             $bAccess = !(stripos($aUser['Text_1'], $cPermission) === false);
         }
+        $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
     /**
@@ -282,6 +310,7 @@ class IdfixUser extends Events3Module
     public function Events3IdfixGetPermissions(&$aPerm)
     {
         $aPerm += $this->GetPermissionsByConfig();
+
     }
     /**
      * Code to be added to the [tables] section of the configuration
@@ -327,7 +356,7 @@ class IdfixUser extends Events3Module
                             ),
                         ),
                     'Name' => array(
-                        'type' => 'text',
+                        'type' => 'email',
                         'title' => 'Email',
                         'description' => 'What is the unique email adress for this user? This email address is used to log into the system.',
                         'placeholder' => 'Email',
@@ -359,6 +388,30 @@ class IdfixUser extends Events3Module
                 ), );
     }
 
+    /**
+     * Called directly after creating the Idfix table
+     * Give us a nice default Superuser
+     * 
+     * If this event is called, we already know the characteristics of
+     * the called configuration. So it is perfectly save to call the
+     * standard IdfixStorage functions.
+     * 
+     * @param mixed $cTableSpace
+     * @return void
+     */
+    public function Events3IdfixCreateTable($cTableSpace)
+    {
+        $aUser = array(
+            'TypeID' => 9999,
+            'Name' => $this->IdfixUserDefault_SU_Email,
+            'UserName' => 'Default SuperUser',
+            'Char_1' => $this->CreateHashValue($this->IdfixUserDefault_SU_Password),
+            'SubTypeID' => 3,
+            'ParentID' => 0,
+            );
+        $this->IdfixStorage->SaveRecord($aUser);
+    }
+
 
     /**
      * Low level support function for getting the permissions from a single configuration
@@ -369,6 +422,7 @@ class IdfixUser extends Events3Module
      */
     private function GetPermissionsByConfig()
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $return = array();
 
         // Add table level permissions
@@ -414,44 +468,9 @@ class IdfixUser extends Events3Module
                 }
             }
         }
-        //print_r($return);
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $return;
     }
 
-    /**
-     * $this->CreatePermissionName()
-     *
-     * @param
-     *   mixed $op
-     * @param
-     *   mixed $config_name
-     * @param
-     *   mixed $tablename
-     * @param
-     *   string $fieldname
-     * @return
-     *   Name of the permission
-     */
-    public function CreatePermissionName($op, $tablename, $fieldname = 'All')
-    {
-        static $op_list = array(
-            'v' => 'view',
-            'a' => 'add',
-            'e' => 'edit',
-            'd' => 'delete',
-            'do' => 'download',
-            'cu' => 'custom');
-        if ($fieldname !== 'All') {
-            $fieldname = "<strong>{$fieldname}</strong>";
-        }
-        if ($op == 'cu') {
-            $return = "{$tablename} {$fieldname}";
-        }
-        else {
-            $return = "{$tablename} ({$op_list[$op]}  {$fieldname})";
-        }
-
-        return $return;
-    }
 
 }

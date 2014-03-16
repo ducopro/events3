@@ -184,7 +184,7 @@ class Idfix extends Events3Module
         $data['brand']['icon'] = $this->GetIconHTML($this->aConfig);
 
         // Add a link for adding a new record
-        $bAccess = $this->Access( $this->cTableName . '_a');
+        $bAccess = $this->Access($this->cTableName . '_a');
         if (isset($this->aConfig['tables'][$this->cTableName]) and $this->cAction == 'List' and $bAccess) {
             $data['left'][''] = array(
                 'title' => 'New ' . $this->aConfig['tables'][$this->cTableName]['title'],
@@ -202,9 +202,9 @@ class Idfix extends Events3Module
             // Be sure we do not have child objects
             if ($this->TableIsTopLevel($cTableName)) {
                 $aDropdown[$cTableName] = array(
-                    'title' => isset($aTableConfig['title']) ? $aTableConfig['title']: '',
+                    'title' => isset($aTableConfig['title']) ? $aTableConfig['title'] : '',
                     'href' => $this->GetUrl($this->cConfigName, $cTableName, '', 1, 0, 'list'), // top level list
-                    'tooltip' => isset($aTableConfig['description']) ? $aTableConfig['description']: '',
+                    'tooltip' => isset($aTableConfig['description']) ? $aTableConfig['description'] : '',
                     'icon' => $this->GetIconHTML($aTableConfig),
                     'active' => ($cTableName == $this->cTableName),
                     'type' => 'normal',
@@ -270,15 +270,15 @@ class Idfix extends Events3Module
      */
     public function Event($cEventName, &$xValue = '')
     {
-        $this->IdfixDebug->Profiler(__method__, 'start');
         // Prefix all events with Idfix
         $cEventName = 'Idfix' . $cEventName;
+        $this->IdfixDebug->Profiler(__method__ . '::' . $cEventName, 'start');
         // Raise three events
         $this->ev3->Raise($cEventName . 'Before', $xValue);
         $this->ev3->Raise($cEventName, $xValue);
         $this->ev3->Raise($cEventName . 'After', $xValue);
         // Stop profiling
-        $this->IdfixDebug->Profiler(__method__, 'stop');
+        $this->IdfixDebug->Profiler(__method__ . '::' . $cEventName, 'stop');
     }
 
 
@@ -363,15 +363,15 @@ class Idfix extends Events3Module
         return $cKey;
     }
 
-  
-    
+
     /**
      * Check access restrictions
      * 
      * @param mixed $cPermission
      * @return
      */
-    public function Access( $cPermission ) {
+    public function Access($cPermission)
+    {
         $this->IdfixDebug->Profiler(__method__, 'start');
         //$args = func_get_args();
         $bAccess = true;
@@ -383,10 +383,9 @@ class Idfix extends Events3Module
         $bAccess = (boolean)$aPack['bAccess'];
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $bAccess;
-        
+
     }
 
-    
 
     /**
      * Cleanup any string for output

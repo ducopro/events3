@@ -46,6 +46,10 @@
 
 class IdfixOtap extends Events3Module
 {
+    // Permissions
+    const PERM_ACCESS_CONTROLPANEL = 'otap_access';
+
+
     // List of environment strings
     const ENV_DEV = 'dev';
     const ENV_TEST = 'test';
@@ -56,12 +60,33 @@ class IdfixOtap extends Events3Module
         self::ENV_DEV => 1,
         self::ENV_TEST => 2,
         self::ENV_ACC => 3,
-        self::ENV_PROD => 4);
+        self::ENV_PROD => 4,
+        );
+    private $aEnvDescription = array(
+        self::ENV_DEV => 'Development',
+        self::ENV_TEST => 'Test',
+        self::ENV_ACC => 'Acceptance',
+        self::ENV_PROD => 'Production',
+        );
+
     // The GET variable to look for
     const GET_OTAP = 'otap';
     // Current and default environment if nothing is found in URL
     private $cCurrentEnvironment = IdfixOtap::ENV_PROD;
 
+    /**
+     * Simple getter for the environment description
+     * 
+     * @param mixed $cEnv
+     * @return
+     */
+    public function GetEnvironmentAsText($cEnv = null)
+    {
+        if (is_null($cEnv)) {
+            $cEnv = $this->cCurrentEnvironment;
+        }
+        return $this->aEnvDescription[$cEnv];
+    }
     /**
      * Read the correct environment from the url
      * 
@@ -82,6 +107,51 @@ class IdfixOtap extends Events3Module
         }
     }
 
+    public function Events3IdfixGetPermissions(&$aPerm)
+    {
+        $aPerm[self::PERM_ACCESS_CONTROLPANEL] = 'Access DTAP Controlpanel';
+
+    }
+
+    /**
+     * Return complete list of found configurations
+     * needed for building the accordeon on the login page
+     * to choose a configuration top login to.
+     * 
+     * @todo Parse the configurations for title, icon and description.
+     * 
+     * @return
+     */
+    public function GetActiveConfigList()
+    {
+        $aReturn = array();
+
+        $aModuleList = glob($this->GetConfigDir(self::ENV_DEV) . '/*.idfix');
+        foreach ($aModuleList as $cFileName) {
+            $cConfigName = basename($cFileName, '.idfix');
+            $bConfigActive = ($this->Idfix->cConfigName == $cConfigName);
+
+            $aEnv = array();
+            foreach ($this->aEnvList as $cEnv) {
+                $bEnvActive = ($this->cCurrentEnvironment == $cEnv) and $bConfigActive;
+                $bConfigFilePresent = file_exist( $this->GetConfigFileName($cEnv,$cConfigName)); 
+                $aEnv[$cEnv] = array(
+                    'title' => $this->aEnvDescription($cEnv),
+                    'active' => $bEnvActive,
+                    'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'login', array('otap' => $cEnv)),
+                    'found' => $bConfigFilePresent,
+                    );
+            }
+
+            $aReturn[$cConfigName] = array(
+                'env' => $aEnv,
+                'active' => $bConfigActive,
+                );
+
+        }
+        return $aReturn;
+    }
+
     public function Events3IdfixNavbarAfter(&$data)
     {
         // If the user module is enabled and we are running in superuser mode
@@ -97,7 +167,7 @@ class IdfixOtap extends Events3Module
                         'title' => $cConfigName,
                         'href' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'Controlpanel'),
                         'tooltip' => $cConfigName,
-                        'icon' => $bActive ? $this->Idfix->GetIconHTML('ok'): '',
+                        'icon' => $bActive ? $this->Idfix->GetIconHTML('ok') : '',
                         'active' => $bActive,
                         'type' => 'normal',
                         );
@@ -358,6 +428,11 @@ class IdfixOtap extends Events3Module
     public function Events3IdfixActionControlpanel(&$output)
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
+
+        if (!$this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
+            $this->Idfix->FlashMessage('No access allowed to the controlpanel.');
+            return;
+        }
 
         $aTemplateVars = array(
             'title' => $this->Idfix->aConfig['title'],

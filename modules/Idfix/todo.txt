@@ -4,8 +4,9 @@ ToDo
 - Add information page for table statistics
 - Add default superuser when new table created
 - Option lists from Idfix elements (From within trail!!)
-- file uploads verwijderen
-- Add Information system
+- remove file uploads 
+- copy file uploads
+- Add Information system, sum/average/count group by(typeid/ other field)
 
 Done
 - Collapsible groups

@@ -132,11 +132,11 @@ class IdfixOtap extends Events3Module
             $bConfigActive = ($this->Idfix->cConfigName == $cConfigName);
 
             $aEnv = array();
-            foreach ($this->aEnvList as $cEnv) {
-                $bEnvActive = ($this->cCurrentEnvironment == $cEnv) and $bConfigActive;
-                $bConfigFilePresent = file_exist( $this->GetConfigFileName($cEnv,$cConfigName)); 
+            foreach ($this->aEnvList as $cEnv => $iEnv ) {
+                $bEnvActive = (($this->cCurrentEnvironment == $cEnv) and $bConfigActive);
+                $bConfigFilePresent = file_exists( $this->GetConfigFileName($cEnv,$cConfigName)); 
                 $aEnv[$cEnv] = array(
-                    'title' => $this->aEnvDescription($cEnv),
+                    'title' => $this->aEnvDescription[$cEnv],
                     'active' => $bEnvActive,
                     'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'login', array('otap' => $cEnv)),
                     'found' => $bConfigFilePresent,

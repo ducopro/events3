@@ -53,7 +53,7 @@ class IdfixUser extends Events3Module
                 'env' => $this->IdfixOtap->GetEnvironmentAsText(),
                 );
             $app = $this->Idfix->RenderTemplate('LoginAppInfo', $aTemplateVars);
-            
+
             // Render login form
             $aTemplateVars = array(
                 'cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'login'),
@@ -65,8 +65,15 @@ class IdfixUser extends Events3Module
             $aTemplateVars = array('cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'resend'), );
             $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
 
+            // Render the advanced tab with a list of configurations to choose from
+            $advanced = 'No other configurations found on this server.';
+            if ($this->IdfixOtap) {
+                $aList = $this->IdfixOtap->GetActiveConfigList();
+                $advanced = $this->Idfix->RenderTemplate('LoginAdvanced', compact('aList'));
+            }
+
             // Render the tabular container
-            $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app'));
+            $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app', 'advanced'));
         }
     }
 
@@ -95,10 +102,10 @@ class IdfixUser extends Events3Module
                 $this->GetSetUserObject($aUserObject);
                 //print_r($aUserObject);
             }
-
+            // Set marker for the login form
+            $this->bGoodLogin = $this->IsLoggedIn();
         }
-        // Set marker for the login form
-        $this->bGoodLogin = $this->IsLoggedIn();
+
     }
 
     public function Events3IdfixActionLogout()

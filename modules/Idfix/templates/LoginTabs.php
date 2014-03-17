@@ -25,6 +25,7 @@
               </div>
               
               <div class="tab-pane" id="advanced">
+                 <?php print $advanced;?>
               </div>
             </div>
             

@@ -18,6 +18,8 @@ class IdfixParse extends Events3Module
         $this->Idfix->Event('GetConfigFileName', $aPack);
         extract($aPack);
 
+        $this->IdfixDebug->Debug($cFileName);
+
         if (file_exists($cFileName) and is_readable($cFileName)) {
             $aConfig = $this->Parse($cFileName);
             $this->Idfix->Event('AfterParse', $aConfig);

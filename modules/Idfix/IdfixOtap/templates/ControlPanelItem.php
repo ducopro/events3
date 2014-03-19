@@ -7,6 +7,7 @@
     <?php print $deploy;?><br />
     <?php print $fileinfo;?><br />
     <?php print $password;?><br />
+    <?php print $edit;?><br />
     </div>
   </div>
 </div>

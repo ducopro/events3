@@ -48,7 +48,7 @@ class IdfixOtap extends Events3Module
 {
     // Permissions
     const PERM_ACCESS_CONTROLPANEL = 'otap_access';
-
+    const PERM_DELETE_CONFIG = 'otap_del_config';
 
     // List of environment strings
     const ENV_DEV = 'dev';
@@ -110,7 +110,7 @@ class IdfixOtap extends Events3Module
     public function Events3IdfixGetPermissions(&$aPerm)
     {
         $aPerm[self::PERM_ACCESS_CONTROLPANEL] = 'Access DTAP Controlpanel';
-
+        $aPerm[self::PERM_DELETE_CONFIG] = 'Delete Idfix Configuration';
     }
 
     /**
@@ -132,9 +132,9 @@ class IdfixOtap extends Events3Module
             $bConfigActive = ($this->Idfix->cConfigName == $cConfigName);
 
             $aEnv = array();
-            foreach ($this->aEnvList as $cEnv => $iEnv ) {
+            foreach ($this->aEnvList as $cEnv => $iEnv) {
                 $bEnvActive = (($this->cCurrentEnvironment == $cEnv) and $bConfigActive);
-                $bConfigFilePresent = file_exists( $this->GetConfigFileName($cEnv,$cConfigName)); 
+                $bConfigFilePresent = file_exists($this->GetConfigFileName($cEnv, $cConfigName));
                 $aEnv[$cEnv] = array(
                     'title' => $this->aEnvDescription[$cEnv],
                     'active' => $bEnvActive,
@@ -192,6 +192,16 @@ class IdfixOtap extends Events3Module
             'href' => $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'Controlpanel'), // top level list
             'icon' => '',
             );
+
+        // Add the save button to the toolbar
+        if ($this->cCurrentEnvironment == self::ENV_DEV and $this->Idfix->cAction == 'Editconfig') {
+            $cFile = $this->GetConfigFileName(self::ENV_DEV, $this->Idfix->cConfigName);
+            $cUrl = $this->Idfix->GetUrl('', '', '', 0, 0, 'Saveconfig');
+            $cIcon = $this->Idfix->GetIconHTML('save');
+            $cButton = "<a href=\"#\" id= \"save-config\"  role=\"button\">{$cIcon} Save configuration to server</a>";
+
+            $data['custom']['savebutton'] = $cButton;
+        }
     }
 
     /**
@@ -243,15 +253,51 @@ class IdfixOtap extends Events3Module
 
     public function Events3IdfixActionRemoveconfig(&$output)
     {
-        // Everything we need :-)
-        $cConfigName = $this->Idfix->cConfigName;
-        $cEnv = $this->Idfix->cTableName;
+        if ($this->Idfix->Access(self::PERM_DELETE_CONFIG)) {
+            // Everything we need :-)
+            $cConfigName = $this->Idfix->cConfigName;
+            $cEnv = $this->Idfix->cTableName;
 
-        $this->DeleteConfigFile($cEnv, $cConfigName);
-        $this->DeleteFileSystem($cEnv, $cConfigName);
-        $this->DeleteTableSpace($cEnv, $cConfigName);
+            $this->DeleteConfigFile($cEnv, $cConfigName);
+            $this->DeleteFileSystem($cEnv, $cConfigName);
+            $this->DeleteTableSpace($cEnv, $cConfigName);
+        }
 
         $this->RedirectToControlPanel();
+    }
+
+    public function Events3IdfixActionEditconfig(&$output)
+    {
+        if ($this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
+            $cFile = $this->GetConfigFileName(self::ENV_DEV, $this->Idfix->cConfigName);
+            $cUrl = $this->Idfix->GetUrl('', '', '', 0, 0, 'Saveconfig');
+            $cIcon = $this->Idfix->GetIconHTML('save');
+            $cButton = "<a href=\"#\" id= \"save-config\" class=\"btn btn-primary btn-block\" role=\"button\">{$cIcon} Save configuration to server</a>";
+
+            $cFileContent = trim(file_get_contents($cFile));
+            $output = $this->RenderTemplate('EditConfig', compact('cFileContent', 'cUrl', 'cButton'));
+        }
+    }
+
+    /**
+     * This is the ajax handler for saving the config file
+     * 
+     * @param mixed $output
+     * @return void
+     */
+    public function Events3IdfixActionSaveconfig(&$output)
+    {
+
+
+        if ($this->IdfixUser) {
+            if ($this->IdfixUser->IsSuperUser() or $this->IdfixUser->IsAdministrator()) {
+                $config_contents = trim($_POST['config']);
+                if ($config_contents and stripos($config_contents, '#tables')) {
+                    $cFile = $this->GetConfigFileName(self::ENV_DEV, $this->Idfix->cConfigName);
+                    file_put_contents($cFile, $config_contents);
+                }
+            }
+        }
     }
 
     /**
@@ -476,10 +522,16 @@ class IdfixOtap extends Events3Module
             $cDeploy .= $this->GetDeployButton($cEnv, $cPrevEnv, "{$cIcon} Copy data & files to <em>{$cPrevEnvName}</em> environment");
         }
 
-        // Create the delete button
-
-        if ($bConfigPresent) {
+        // Create the delete button but only if we have access and there is a configuration
+        if ($bConfigPresent and $this->Idfix->Access(self::PERM_DELETE_CONFIG)) {
             $cDeploy .= $this->GetDeleteButton($cEnv);
+        }
+
+        // Create Add/Edit button for DEV
+        $cEditButton = '';
+        if ($cEnv == self::ENV_DEV) {
+            $cText = (!$bConfigPresent ? 'Add' : 'Edit') . ' Configuration';
+            $cEditButton = $this->GetEditButton($cText);
         }
 
         // Create url to the right environment
@@ -497,6 +549,7 @@ class IdfixOtap extends Events3Module
             'fileinfo' => $this->RenderInfoFileSystem($cEnv),
             //'password' => $this->RenderTemplate('Password'),
             'password' => '',
+            'edit' => $cEditButton,
             );
 
         return $this->RenderTemplate('ControlPanelItem', $aTemplateVars);
@@ -513,6 +566,13 @@ class IdfixOtap extends Events3Module
     {
         $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, $cEnvFrom, $cEnvTo, 0, 0, 'deploy');
         $cButton = "<a  onclick=\"confirm('Are you sure you want to proceed? The target configuration and/or dataset will be destroyed before deployment!')\" href=\"{$cUrl}\" class=\"btn btn-primary btn-block\" role=\"button\">{$cName}</a>";
+        return $cButton;
+    }
+    private function GetEditButton($cTitle)
+    {
+        $cIcon = $this->Idfix->GetIconHTML('edit');
+        $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'editconfig');
+        $cButton = "<a  href=\"{$cUrl}\" class=\"btn btn-default btn-block\" role=\"button\">{$cIcon} {$cTitle}</a>";
         return $cButton;
     }
     private function GetDeleteButton($cEnv)

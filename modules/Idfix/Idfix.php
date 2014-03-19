@@ -200,7 +200,7 @@ class Idfix extends Events3Module
         $aDropdown = array();
         foreach ($this->aConfig['tables'] as $cTableName => $aTableConfig) {
             // Be sure we do not have child objects
-            if ($this->TableIsTopLevel($cTableName)) {
+            if ($this->TableIsTopLevel($cTableName) and $this->Access($cTableName . '_v')) {
                 $aDropdown[$cTableName] = array(
                     'title' => isset($aTableConfig['title']) ? $aTableConfig['title'] : '',
                     'href' => $this->GetUrl($this->cConfigName, $cTableName, '', 1, 0, 'list'), // top level list
@@ -322,7 +322,7 @@ class Idfix extends Events3Module
         $iParent = !is_null($iParent) ? $iParent : $this->iParent;
         $cAction = $cAction ? $cAction : $this->cAction;
 
-        // Create an araay of querystring parameters
+        // Create an array of querystring parameters
         $aAttributes['idfix'] = "{$cConfigName}/{$cTablename}/{$cFieldName}/{$iObject}/{$iParent}/{$cAction}";
         // Now let other modules add default values to it if needed
         // See the sort module for information

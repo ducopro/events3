@@ -7,12 +7,17 @@ class IdfixList extends Events3Module
     public function Events3IdfixActionList(&$output)
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
-        
+
         // Check for a valid tablename
-        if( !isset($this->Idfix->aConfig['tables'][ $this->Idfix->cTableName ])) {
+        if (!isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName])) {
             return;
         }
-        
+
+        // Check for view access
+        if (!$this->Idfix->Access($this->Idfix->cTableName . '_v')) {
+            return;
+        }
+
         // Store the last known page
         $this->Idfix->GetSetLastListPage();
 
@@ -157,6 +162,8 @@ class IdfixList extends Events3Module
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cConfigName = $this->Idfix->cConfigName;
+        $cTblName = $this->Idfix->cTableName;
+
         // initialize Output array
         $aColumns = array();
         // Callback processing
@@ -169,16 +176,32 @@ class IdfixList extends Events3Module
                     $cFieldName = $cColumnName;
                     $cColumnName = (string )@$aTableConfig['fields'][$cFieldName]['title'];
                 }
-                
+
+                // Just a shortcut
+                $aFieldConfig = $aTableConfig['fields'][$cFieldName];
+
+                // Delete access
+                if ($aFieldConfig['_name'] == '_delete' and !$this->Idfix->Access($cTblName . '_d')) {
+                    continue;
+                }
+                // Edit access
+                if ($aFieldConfig['_name'] == '_edit' and !$this->Idfix->Access($cTblName . '_e')) {
+                    continue;
+                }
+                // Copy access
+                if ($aFieldConfig['_name'] == '_copy' and !$this->Idfix->Access($cTblName . '_c')) {
+                    continue;
+                }
+
                 // Check if we configured field level permissions
-                if( isset( $aTableConfig['fields'][$cFieldName]['permissions']) and $aTableConfig['fields'][$cFieldName]['permissions']) {
+                if (isset($aTableConfig['fields'][$cFieldName]['permissions']) and $aTableConfig['fields'][$cFieldName]['permissions']) {
                     // And check it accordingly
                     $cPermission = $aTableConfig['_name'] . '_' . $cFieldName . '_v';
-                    if(!$this->Idfix->Access($cPermission)) {
+                    if (!$this->Idfix->Access($cPermission)) {
                         continue;
                     }
                 }
-                
+
                 // Check if we have a title
                 if (!$cColumnName) {
                     $cColumnName = $cFieldName;

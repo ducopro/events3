@@ -19,6 +19,11 @@ class IdfixEdit extends Events3Module
 
     public function Events3IdfixActionEdit(&$output)
     {
+        // First check access!!!!
+        if (!$this->Idfix->Access($this->Idfix->cTableName . '_e')) {
+            return;
+        }
+
         $this->IdfixDebug->Profiler(__method__, 'start');
         // Id of the record we need to edit
         $iMainID = $this->Idfix->iObject;
@@ -171,16 +176,17 @@ class IdfixEdit extends Events3Module
             if (!isset($aFieldConfig['group']) and $cGroup) {
                 continue;
             }
-            // Check if we have the correct rights to show or edit the field
-            $cPermission = $aFieldConfig['_tablename'] . '_' . $cFieldName . '_e';
-            $bAllowEdit = $this->Idfix->Access($cPermission);
-            $bAllowView = true;
-            if (!$bAllowEdit) {
-                $cPermission = $aFieldConfig['_tablename'] . '_' . $cFieldName . '_v';
-                $bAllowView = $this->Idfix->Access($cPermission);
+
+            // We know that we have table level access at this point.
+            // But do we need to check field-level permissions?????
+            $bAllowEdit = true;
+            $bCheckPermissions = (isset($aFieldConfig['permissions']) and $aFieldConfig['permissions']);
+            if ($bCheckPermissions) {
+                $bAllowEdit = $this->Idfix->Access($aFieldConfig['_tablename'] . '_' . $cFieldName . '_e');
             }
-            // No need to go on if we do not have at least VIEW rights
-            if (!$bAllowView) {
+
+            // No need to go on if we do not have  rights
+            if (!$bAllowEdit) {
                 continue;
             }
 
@@ -211,10 +217,7 @@ class IdfixEdit extends Events3Module
                 }
 
             }
-            elseif ($bAllowView) {
-                $this->Idfix->Event('DisplayField', $aFieldConfig);
-            }
-
+            
             // Last but not least check if there were any errors detected
             if ($this->bValidationMode and isset($aFieldConfig['__ValidationError']) and $aFieldConfig['__ValidationError']) {
                 // Register there were errors

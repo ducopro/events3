@@ -58,8 +58,14 @@
        foreach( $navbar['left'] as $aTopItem ) {
           print __GetTopItem($aTopItem);
        }
-       print '</ul>';
        
+       if (isset($navbar['custom'])) {
+           foreach($navbar['custom'] as $cHtml) {
+            print "<li>$cHtml</li>";
+           }
+       }
+
+       print '</ul>';
        // Show our right navigation last
        print '<ul class="nav navbar-nav navbar-right">';
        foreach( $navbar['right'] as $aTopItem ) {

@@ -343,12 +343,14 @@ class IdfixUser extends Events3Module
                     ),
                 'fields' => array(
                     'Text_1' => array(
+                        'permissions' => 1,
                         'type' => 'checkboxes',
                         'title' => 'Permissions',
                         'cols' => '4',
                         'options' => array(),
                         ),
                     'SubTypeID' => array(
+                        'permissions' => 1,
                         'type' => 'radios',
                         'title' => 'User Mode',
                         'description' => '<strong>If you change this mode you must logout first for the settings to take effect.</strong>',

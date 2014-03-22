@@ -1,4 +1,4 @@
-<div id="idfix-breadcrumb">
+
 <ol class="breadcrumb">
 
 <?php

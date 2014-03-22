@@ -287,9 +287,7 @@ class IdfixOtap extends Events3Module
      */
     public function Events3IdfixActionSaveconfig(&$output)
     {
-
-
-        if ($this->IdfixUser) {
+        if ($this->IdfixUser and $this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
             if ($this->IdfixUser->IsSuperUser() or $this->IdfixUser->IsAdministrator()) {
                 $config_contents = trim($_POST['config']);
                 if ($config_contents and stripos($config_contents, '#tables')) {
@@ -310,7 +308,9 @@ class IdfixOtap extends Events3Module
     private function DeleteConfigFile($cEnv, $cConfigName)
     {
         $cConfigFile = $this->GetConfigFileName($cEnv, $cConfigName);
-        unlink($cConfigFile);
+        if (file_exists($cConfigFile)) {
+            unlink($cConfigFile);
+        }
     }
     /**
      * Delete the upload file structure
@@ -348,7 +348,11 @@ class IdfixOtap extends Events3Module
             }
 
         }
-        rmdir($cDir);
+
+        if (is_dir($cDir)) {
+            rmdir($cDir);
+        }
+
         return $iCount;
     }
     private function DeleteTableSpace($cEnv, $cConfigName)
@@ -365,6 +369,10 @@ class IdfixOtap extends Events3Module
      */
     public function Events3IdfixActionDeploy(&$output)
     {
+        if (!$this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
+            return;
+        }
+
         // Everything we need :-)
         $cConfigName = $this->Idfix->cConfigName;
         $cSourceEnv = $this->Idfix->cTableName;
@@ -391,7 +399,9 @@ class IdfixOtap extends Events3Module
     {
         $cSourceConfigFile = $this->GetConfigFileName($cSourceEnv, $cConfigName);
         $cTargetConfigFile = $this->GetConfigFileName($cTargetEnv, $cConfigName);
-        unlink($cTargetConfigFile);
+        if (file_exists($cTargetConfigFile)) {
+            unlink($cTargetConfigFile);
+        }
         copy($cSourceConfigFile, $cTargetConfigFile);
     }
 

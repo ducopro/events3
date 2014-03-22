@@ -71,6 +71,20 @@ class IdfixDefault extends Events3Module
         // If there's a sort array, ok, otherwise build a default on all
         // the available system fields
         if (isset($aTableConfig['sort']) and is_array($aTableConfig['sort'])) {
+            
+            // Are these values MySql columns??
+            foreach ($aTableConfig['sort'] as $xSortID => $xSortValue) {
+                // We do not know which part is the fieldname
+                $cFieldName = $xSortID;
+                if (is_numeric($cFieldName)) {
+                    $cFieldName = $xSortValue;
+                }
+                // Now test the name
+                if (!isset($aFieldList[$cFieldName])) {
+                    // NO Real sql column!!!
+                    unset($aTableConfig['sort'][$xSortID]);
+                }
+            }
             return;
         }
 

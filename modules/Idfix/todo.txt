@@ -2,7 +2,6 @@ ToDo
 
 - After logging in, show relevant page.
 - Add information page for table statistics
-- Add default superuser when new table created
 - Option lists from Idfix elements (From within trail!!)
 - remove file uploads 
 - copy file uploads
@@ -16,3 +15,4 @@ Done
 - Private and public file directories on the events3 level
 - OTAP system
 - User system + rights
+- Add default superuser when new table created

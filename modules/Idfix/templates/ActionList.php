@@ -12,7 +12,9 @@
     </div>  
     <div class="row">
         <div class="col-lg-12">
+           <div id="idfix-breadcrumb">
            <?php print $ActionListBreadcrumb; ?>
+           </div>
         </div>
     
     </div>        

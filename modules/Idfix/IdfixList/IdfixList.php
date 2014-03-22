@@ -30,9 +30,9 @@ class IdfixList extends Events3Module
         $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
         // Get the Breadcrumb trail
         $cHook = 'ActionListBreadcrumb';
-        $aData = array();
-        $this->Idfix->Event($cHook, $aData);
-        $aTemplateVars[$cHook] = $this->Idfix->RenderTemplate($cHook, $aData);
+        //$aData = array();
+        //$this->Idfix->Event($cHook, $aData);
+        $aTemplateVars[$cHook] = $this->Idfix->BreadCrumbs($this->Idfix->iParent);
         // Get the grid
         $cHook = 'ActionListMain';
         $aData = array();
@@ -176,6 +176,11 @@ class IdfixList extends Events3Module
                     $cFieldName = $cColumnName;
                     $cColumnName = (string )@$aTableConfig['fields'][$cFieldName]['title'];
                 }
+                
+                // If this field is not in the fileslist, skip it.....
+                if( !isset($aTableConfig['fields'][$cFieldName])) {
+                    continue;
+                }
 
                 // Just a shortcut
                 $aFieldConfig = $aTableConfig['fields'][$cFieldName];
@@ -194,7 +199,7 @@ class IdfixList extends Events3Module
                 }
 
                 // Check if we configured field level permissions
-                if (isset($aTableConfig['fields'][$cFieldName]['permissions']) and $aTableConfig['fields'][$cFieldName]['permissions']) {
+                if (isset($aFieldConfig['permissions']) and $aFieldConfig['permissions']) {
                     // And check it accordingly
                     $cPermission = $aTableConfig['_name'] . '_' . $cFieldName . '_v';
                     if (!$this->Idfix->Access($cPermission)) {
@@ -211,6 +216,9 @@ class IdfixList extends Events3Module
             }
         }
         $this->Idfix->Event('ListColumns', $aColumns);
+        
+        
+        
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aColumns;
     }
@@ -283,6 +291,7 @@ class IdfixList extends Events3Module
         $this->IdfixDebug->Profiler(__method__ . '::LoadAllRecords', 'start');
         $aRawDataSet = $this->IdfixStorage->LoadAllRecords($iTypeID, $iParentID, $cOrder, $aWhere, $cLimit);
         $this->IdfixDebug->Profiler(__method__ . '::LoadAllRecords', 'stop');
+
 
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aRawDataSet;

@@ -242,13 +242,13 @@ class Idfix extends Events3Module
         $bRetval = true;
 
         if (is_array($this->aConfig['tables'])) {
-            foreach ($this->aConfig['tables'] as $table_sub_name => $table_config) {
-                if (isset($table_config['childs']) and is_array($table_config['childs'])) {
+            foreach ($this->aConfig['tables'] as $table_sub_name => $aTableConfig) {
+                if (isset($aTableConfig['childs']) and is_array($aTableConfig['childs'])) {
                     // Check if the tablename itself is in it's child list
                     // If that's the case we have inheritance and the table must
                     // be top level
-                    $is_inherit = in_array($table_sub_name, $table_config['childs']);
-                    if (in_array($cTableName, $table_config['childs']) and !$is_inherit) {
+                    $is_inherit = in_array($table_sub_name, $aTableConfig['childs']);
+                    if (in_array($cTableName, $aTableConfig['childs']) and !$is_inherit) {
                         $bRetval = false;
                         break;
                     }
@@ -297,8 +297,8 @@ class Idfix extends Events3Module
     public function RenderTemplate($cTemplateName, $aVars = array())
     {
         $cTemplateFile = dirname(__file__) . "/templates/{$cTemplateName}.php";
-        $return = $this->Template->Render($cTemplateFile, $aVars);
-        return $return;
+        $cReturn = $this->Template->Render($cTemplateFile, $aVars);
+        return $cReturn;
     }
 
     /**
@@ -315,6 +315,7 @@ class Idfix extends Events3Module
      */
     public function GetUrl($cConfigName = '', $cTablename = '', $cFieldName = '', $iObject = null, $iParent = null, $cAction = '', $aAttributes = array())
     {
+        $this->IdfixDebug->Profiler(__method__, 'start');
         $cConfigName = $cConfigName ? $cConfigName : $this->cConfigName;
         $cTablename = $cTablename ? $cTablename : $this->cTableName;
         $cFieldName = $cFieldName ? $cFieldName : $this->cFieldName;
@@ -334,6 +335,7 @@ class Idfix extends Events3Module
         //$cQueryString = implode('&',$aAttributes);
         // Build the Url
         $cUrl = "index.php?{$cQueryString}";
+        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $cUrl;
     }
 
@@ -473,29 +475,16 @@ class Idfix extends Events3Module
 
         if (is_array($aConfig)) {
             foreach ($aConfig as &$aConfig_element) {
-                // 1. Callback without parameters
-                if (is_string($aConfig_element) and (substr($aConfig_element, 0, 1) == '@') and function_exists(substr($aConfig_element, 1))) {
-                    $aConfig_element = call_user_func(substr($aConfig_element, 1));
-                    $bProcessed = true;
-
+                // 1. Get dynamic display values, option elements!!!!
+                if ((is_string($aConfig_element) and (stripos($aConfig_element, '%%') !== false))) {
+                    $aConfig_element = $this->DynamicDisplayValues($aConfig_element, $aRecord);
                 }
-                // 2. Callback with parameters
-                elseif (isset($aConfig_element[0]) and (substr($aConfig_element[0], 0, 1) == '@') and function_exists(substr($aConfig_element[0], 1))) {
-                    // Get the function
-                    $cFunctionName = substr(array_shift($aConfig_element), 1);
-                    // Now postprocess the parameters for dynamic values
-                    $aParameters = $this->PostprocesConfig($aConfig_element, $aRecord);
-                    $aConfig_element = call_user_func_array($cFunctionName, $aParameters);
-                    $bProcessed = true;
-
-                }
-                // 3. Dynamic values to parse?
-                elseif (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false)) {
+                
+                // 2. Get normal dynamic values to parse?
+                if (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false)) {
                     $aConfig_element = $this->DynamicValues($aConfig_element, $aRecord);
-                    $bProcessed = true;
                 }
-
-                // 4. Plain array? Recursive action
+                // 3. Plain array? Recursive action
                 elseif (is_array($aConfig_element)) {
                     $aConfig_element = $this->PostprocesConfig($aConfig_element, $aRecord);
                 }
@@ -504,6 +493,47 @@ class Idfix extends Events3Module
 
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aConfig;
+    }
+
+    /**
+     * Idfix::DynamicDisplayValues()
+     * 
+     * Use the double procents with care. There is a lot of processing involved here :-(
+     * 
+     * @param mixed $aHaystack
+     * @param mixed $aValues
+     * @return void
+     */
+    private function DynamicDisplayValues($aHaystack, $aValues)
+    {
+        $this->IdfixDebug->Profiler(__method__, 'start');
+        if (is_array($aValues)) {
+            // We need to know the table configuration first
+            $aTableConfig = $this->TableConfigById($aValues['TypeID']);
+            // Now process all the values
+            foreach ($aValues as $cKey => $xValue) {
+                $search = '%%' . $cKey . '%%';
+                if (strpos($aHaystack, $search) !== false) {
+                    // Ok, now we know the this key is a fieldname and should be
+                    // replaced by the displayvalue, but first we need to get
+                    // the full field configuration
+                    if (isset($aTableConfig['fields'][$cKey])) {
+                        // The fieldconfiguration
+                        $aFieldConfig = $aTableConfig['fields'][$cKey];
+                        // Set the value to prosess
+                        $aFieldConfig['__RawValue'] = $xValue;
+                        // Call the weventhandler on the field
+                        $this->Idfix->Event('DisplayField', $aFieldConfig);
+                        // Set the value back in the variable
+                        $xValue = $aFieldConfig['__DisplayValue'];
+                        // And do a search and replace on the element
+                        $aHaystack = str_replace($search, $xValue, $aHaystack);
+                    }
+                }
+            }
+        }
+        $this->IdfixDebug->Profiler(__method__, 'stop');
+        return $aHaystack;
     }
 
     /**
@@ -652,5 +682,111 @@ class Idfix extends Events3Module
         return $xValue;
     }
 
+    /**
+     * Trail()
+     *
+     * @param
+     *   integer $iMainId
+     * @return
+     *   Array with the current trail
+     */
+    public function Trail($iMainId)
+    {
+        // return cached trail if set
+        static $aStaticCache = array();
+        if (isset($aStaticCache[$iMainId])) {
+            return $aStaticCache[$iMainId];
+        }
+
+        $aTrail = array();
+
+        $next_id = $iMainId;
+        while ($next_id) {
+            $aRecord = $this->IdfixStorage->LoadRecord($next_id);
+            $aTrail[$aRecord['MainID']] = $aRecord['TypeID'];
+            $next_id = $aRecord['ParentID'];
+        }
+
+        // Store the trail for later use
+        $aStaticCache[$iMainId] = $aTrail;
+
+        return $aTrail;
+
+    }
+
+    /**
+     * Idfix::BreadCrumbs()
+     * 
+     * @param mixed $iMainId
+     * @return string Fully rendered OL list for showing breadcrumbs from the current MainID
+     */
+    public function BreadCrumbs($iMainId)
+    {
+        $aBaseTrail = $this->Trail($iMainId);
+        $aTrail = array();
+
+
+        // New functionality based on the API trail function
+        foreach ($aBaseTrail as $iTrailMainId => $iTrailTypeId) {
+            $aRecord = $this->IdfixStorage->LoadRecord($iTrailMainId);
+            $aTrail[] = $this->BreadCrumbItem($aRecord, $iTrailTypeId);
+        }
+
+        $cItems = implode('', array_reverse($aTrail));
+        return "<ol class=\"breadcrumb\">{$cItems}</ol>";
+    }
+
+    /**
+     * Idfix::BreadCrumbItem()
+     * 
+     * @param array $aRecord Record from the idfix table
+     * @param integer $iTypeId Unique identifier of the table
+     * @return string List item for the breadcrumb trail
+     */
+    private function BreadCrumbItem($aRecord, $iTypeId)
+    {
+        $aConfig = $this->TableConfigById($iTypeId);
+        $aConfig = $this->PostprocesConfig($aConfig, $aRecord);
+        if (isset($aConfig['trail']) and $aConfig['trail']) {
+            $cTitle = $aConfig['trail'];
+        }
+        else {
+            $cTitle = $aConfig['title'] . ' ' . $aRecord['MainID'];
+        }
+
+        $cUrl = $this->GetUrl('', $aConfig['_name'], '', 1, $aRecord['ParentID'], 'list');
+        $cReturn = "<li><a href=\"{$cUrl}\">{$cTitle}</a></li>";
+
+        return $cReturn;
+    }
+
+
+    /**
+     * Idfix::TableConfigById()
+     * 
+     * @param integer $iTypeId
+     * @return array Table Configuration
+     */
+    private function TableConfigById($iTypeId)
+    {
+        static $aStaticCache = array();
+        if (isset($aStaticCache[$iTypeId])) {
+            return $aStaticCache[$iTypeId];
+        }
+        //$this->IdfixDebug->Profiler(__method__, 'start');
+
+        $cReturn = array();
+        $aConfig = $this->aConfig;
+        foreach ($aConfig['tables'] as $cTableName => $aTableConfig) {
+            if ($aTableConfig['id'] == $iTypeId) {
+                $cReturn = $aTableConfig;
+                break;
+            }
+        }
+
+        $aStaticCache[$iTypeId] = $cReturn;
+        //$this->IdfixDebug->Profiler(__method__, 'stop');
+        return $cReturn;
+    }
 
 }

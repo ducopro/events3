@@ -131,21 +131,40 @@ class IdfixOtap extends Events3Module
             $cConfigName = basename($cFileName, '.idfix');
             $bConfigActive = ($this->Idfix->cConfigName == $cConfigName);
 
+            // Get the configuratio title, description and icon defaults
+            $cConfigTitle = $cConfigName;
+            $cConfigDescription = '';
+            $cConfigIcon = '';
+
             $aEnv = array();
             foreach ($this->aEnvList as $cEnv => $iEnv) {
+                $cConfigFileName = $this->GetConfigFileName($cEnv, $cConfigName);
                 $bEnvActive = (($this->cCurrentEnvironment == $cEnv) and $bConfigActive);
-                $bConfigFilePresent = file_exists($this->GetConfigFileName($cEnv, $cConfigName));
+                $bConfigFilePresent = file_exists($cConfigFileName);
                 $aEnv[$cEnv] = array(
                     'title' => $this->aEnvDescription[$cEnv],
                     'active' => $bEnvActive,
                     'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'login', array('otap' => $cEnv)),
                     'found' => $bConfigFilePresent,
                     );
+
+                // Now check if we need to load this config to determine the title, description and icon
+                if (!$cConfigDescription and $bConfigFilePresent) {
+                    // Do a quick low level parse of the configfile
+                    $aConfig = $this->IdfixParse->Parse($cConfigFileName);
+                    $cConfigTitle = (isset($aConfig['title']) ? $aConfig['title'] : '');
+                    $cConfigDescription = (isset($aConfig['description']) ? $aConfig['description'] : '');
+                    $cConfigIcon = $this->Idfix->GetIconHTML($aConfig);
+                }
+
             }
 
             $aReturn[$cConfigName] = array(
                 'env' => $aEnv,
                 'active' => $bConfigActive,
+                'title' => $cConfigTitle,
+                'description' => $cConfigDescription,
+                'icon' => $cConfigIcon,
                 );
 
         }

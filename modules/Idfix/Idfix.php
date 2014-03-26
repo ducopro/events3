@@ -12,7 +12,7 @@ class Idfix extends Events3Module
 
     // Stubs for the configuration properties
     // Main purpose for this declaration is code completion.
-    public $IdfixConfigSalt, $IdfixConfigCache;
+    public $IdfixConfigSalt, $IdfixConfigCache, $IdfixConfigCleanUrls;
 
     // Entry in $_SESSION array for caching
     const CACHE_KEY = '__idfix_cache__';
@@ -32,6 +32,10 @@ class Idfix extends Events3Module
         $this->$cKey = $aConfig[$cKey];
 
         $cKey = 'IdfixConfigCache';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 1;
+        $this->$cKey = $aConfig[$cKey];
+
+        $cKey = 'IdfixConfigCleanUrls';
         $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 1;
         $this->$cKey = $aConfig[$cKey];
     }
@@ -328,13 +332,33 @@ class Idfix extends Events3Module
         // Now let other modules add default values to it if needed
         // See the sort module for information
         $this->Event('GetUrl', $aAttributes);
+        // Now, be sure the idfix attribute is set FIRST!!!
+        // because we need it there for clean URLS
+        if ($this->IdfixConfigCleanUrls) {
+            // Get it
+            $cIdfix = $aAttributes['idfix'];
+            // remove it from the list
+            unset($aAttributes['idfix']);
+            // set it as last one
+            $aAttributes['idfix'] = $cIdfix;
+            // and revert the array, so it is first
+            $aAttributes = array_reverse($aAttributes, true);
+
+        }
         // Create the concatenated querystring
         $cQueryString = http_build_query($aAttributes);
         // But decode it, because there might be variables in there for postprocessing!!!
         $cQueryString = urldecode($cQueryString);
         //$cQueryString = implode('&',$aAttributes);
-        // Build the Url
-        $cUrl = "index.php?{$cQueryString}";
+
+        $cUrl = $this->ev3->BasePathUrl . '/index.php?' . $cQueryString;
+
+        // Build the Url in Clean style
+        if ($this->IdfixConfigCleanUrls) {
+            $cUrl = str_replace('index.php?idfix=', 'idfix/', $cUrl);
+        }
+
+
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $cUrl;
     }
@@ -425,15 +449,20 @@ class Idfix extends Events3Module
             }
         }
 
+        // Set special string to define to size of the icon
+        // This dopes not apply to bootstrap icons, though..
+        $cIconSize = 'height="' . $this->aConfig['iconsize'] . '"';
+        //$cIconSize = 'width="100%"';
+
         if (substr($cIcon, 0, 4) == 'http') {
-            return "<img align=\"absmiddle\" src=\"{$cIcon}\">&nbsp;";
+            return "<img align=\"absmiddle\" {$cIconSize} src=\"{$cIcon}\">&nbsp;";
         }
         elseif ($cIcon and strtolower($this->aConfig['iconlib']) == 'bootstrap') {
             return "<span class=\"glyphicon glyphicon-{$cIcon}\"></span>&nbsp;";
         }
         elseif ($cIcon) {
             $cIcon = $this->aConfig['iconlib'] . '/' . $cIcon;
-            return "<img align=\"absmiddle\" height=\"16\" width=\"16\" src=\"{$cIcon}\">&nbsp;";
+            return "<img align=\"absmiddle\" {$cIconSize} src=\"{$cIcon}\">&nbsp;";
         }
 
         return '';
@@ -474,17 +503,22 @@ class Idfix extends Events3Module
         }
 
         if (is_array($aConfig)) {
-            foreach ($aConfig as &$aConfig_element) {
+            foreach ($aConfig as $cElementName => &$aConfig_element) {
+
                 // 1. Get dynamic display values, option elements!!!!
                 if ((is_string($aConfig_element) and (stripos($aConfig_element, '%%') !== false))) {
                     $aConfig_element = $this->DynamicDisplayValues($aConfig_element, $aRecord);
                 }
-                
+
                 // 2. Get normal dynamic values to parse?
                 if (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false)) {
                     $aConfig_element = $this->DynamicValues($aConfig_element, $aRecord);
                 }
-                // 3. Plain array? Recursive action
+                // 3. Special Idfix options array
+                elseif ($cElementName == 'options' and isset($aConfig_element['table'])) {
+                    $aConfig_element = $this->Check4IdfixObjects($aConfig_element);
+                }
+                // 4. Plain array? Recursive action
                 elseif (is_array($aConfig_element)) {
                     $aConfig_element = $this->PostprocesConfig($aConfig_element, $aRecord);
                 }
@@ -493,6 +527,85 @@ class Idfix extends Events3Module
 
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aConfig;
+    }
+
+    /**
+     * IdfixFieldsInputOptionsBase::Check4IdfixObjects()
+     * 
+     * Options supported:
+     *  -table=<tablename>
+     *  
+     *   -display=%Name% (%%SubTypeID%%)
+     *  [-display=<Single FieldName>]  faster option
+     *   -display=   <- defaults to Name
+     * 
+     *   -order=<Valid Fieldname From Table>
+     *   -limit=<number>  maximum number of entries in the list
+     *   -where=<valid where clause>
+     * 
+     * @param mixed $aOptions
+     * @return void
+     */
+    private function Check4IdfixObjects($aOptions)
+    {
+        // Do some static caching.....
+        static $aCache = array();
+        // Caching on only the table name could be insufficient...
+        $cCacheKey = md5(serialize($aOptions));
+        // Check the cache
+        if (isset($aCache[$cCacheKey])) {
+            // Stop static caching to show the impact on performance
+            //return $aCache[$cCacheKey];
+        }
+
+        $this->IdfixDebug->Profiler(__method__, 'start');
+
+        $aReturn = $aOptions;
+        // Really simple, check if this is a special case optionas array
+        // with parameters
+        if (isset($aOptions['table'])) {
+            $cTableName = $aOptions['table'];
+            if (isset($this->Idfix->aConfig['tables'][$cTableName])) {
+                //print_r($aOptions);
+                $aTableConfig = $this->Idfix->aConfig['tables'][$cTableName];
+                // Ok, we're sure we got a valid table
+                $aReturn = array();
+                // Now get a valid trail
+                $aTrail = $this->Trail($this->Idfix->iParent);
+                // This variant is needed for the SQL query
+                $cTrail = implode(',', array_keys($aTrail));
+                $cOrder = (isset($aOptions['order']) ? $aOptions['order'] : '');
+                $iLimit = (integer)(isset($aOptions['limit']) ? $aOptions['limit'] : 0);
+                $aWhere = (isset($aOptions['where']) ? array($aOptions['where']) : array());
+                $aRecords = $this->IdfixStorage->LoadAllRecords($aTableConfig['id'], $cTrail, $cOrder, $aWhere, $iLimit);
+                // Get the display mask and see if it needs postprocessing, if not it should be a fieldname
+                $aOptionsToProces['display'] = $aOptions['display'];
+                $bDisplayNeesdsPP = (strpos($aOptionsToProces['display'], '%') !== false);
+                // Now we have a data set, loop through it and get our options
+                // Indexed ofcourse by the MainID of the Idfix object
+                foreach ($aRecords as $iMainId => $aRow) {
+                    $cDisplayItem = '';
+                    if ($bDisplayNeesdsPP) {
+                        $OptionsProcessed = $this->Idfix->PostprocesConfig($aOptionsToProces, $aRow);
+                        $cDisplayItem = $OptionsProcessed['display'];
+                    }
+                    else {
+                        // It's just a fieldname :-)
+                        $cFieldName = $aOptionsToProces['display'];
+                        if (isset($aRow[$cFieldName])) {
+                            $cDisplayItem = $aRow[$cFieldName];
+                        }
+                    }
+                    $aReturn[$iMainId] = $cDisplayItem;
+                }
+            }
+        }
+        // Store in the static cache
+        $aCache[$cCacheKey] = $aReturn;
+        // Stop profiling
+        $this->IdfixDebug->Profiler(__method__, 'stop');
+
+        return $aReturn;
     }
 
     /**
@@ -787,6 +900,40 @@ class Idfix extends Events3Module
         $aStaticCache[$iTypeId] = $cReturn;
         //$this->IdfixDebug->Profiler(__method__, 'stop');
         return $cReturn;
+    }
+
+    public function Events3IdfixActionInfo(&$output)
+    {
+        // Main Output Array
+        $aTables = array();
+        // Agregated Data
+        $cTableName = $this->aConfig['tablespace'];
+        $cSql = "SELECT TypeID, count(*) as count, count(distinct ParentID) as parents, count(distinct UidCreate) as creators, Min(TSCreate) as ts_first, Max(TSCreate) as ts_last, Max(TSChange) as ts_change FROM {$cTableName} GROUP BY TypeID WITH ROLLUP";
+        $aData = $this->Database->DataQuery($cSql);
+        // Create infopanel for each aggregated data item
+        // because of the ROLLUP we also have a summary!!
+        foreach ($aData as $aRow) {
+            $id = $aRow['TypeID'];
+            $aTableConfig = $this->TableConfigById($id);
+            
+            // No config?? It is the summary!!!
+            $cClass = 'panel-default';
+            if (!isset($aTableConfig['title'])) {
+                $aTableConfig['title'] = 'Summary';
+                $aTableConfig['description'] = 'Information about <strong>all</strong> the records in this tablespace.';
+                $cClass = 'panel-success';
+            }
+            
+            // Items for the template
+            $aTables[$id] = array(
+                'data' => $this->RenderTemplate('ConfigInfoPanel', compact('aRow')),
+                'icon' => $this->GetIconHTML($aTableConfig),
+                'title' => $aTableConfig['title'],
+                'description' => $aTableConfig['description'],
+                'class' => $cClass,
+                );
+        }
+        $output = $this->RenderTemplate('ConfigInfo', compact('aTables'));
     }
 
 }

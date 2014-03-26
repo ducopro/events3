@@ -11,21 +11,21 @@ class IdfixFieldsInputFile extends IdfixFieldsInput
         // size: filesize in bytes
         // hash_name: Name that is used for storing the file on server
         $aValue = $this->aData['__RawValue'];
-        
+
         // Do a quick check for uninitialized values
-        if(is_null($aValue) or !isset($aValue['hash_name'])) {
+        if (is_null($aValue) or !isset($aValue['hash_name'])) {
             $this->aData['__DisplayValue'] = '';
             return;
         }
-        
-        
+
+
         $cValue = (isset($aValue['name'])) ? $aValue['name'] : '';
         $cMimeType = (isset($aValue['type'])) ? $aValue['type'] : '';
         $cUrl = $this->GetFullFilenameAsUrl($aValue);
-        
+
         // Is it a picture ??
         //print_r($aValue);
-        if (!(strpos($cMimeType, 'image/')===false) ){
+        if (!(strpos($cMimeType, 'image/') === false)) {
             $cValue = "<img src=\"{$cUrl}\" alt=\"{$cValue}\" height=\"30\"  \>";
         }
         $cHref = "<a target=\"_blank\" href=\"{$cUrl}\">{$cValue}</a>";
@@ -77,8 +77,8 @@ class IdfixFieldsInputFile extends IdfixFieldsInput
     {
         $cError = '';
         // Does PHP report an error?
-        $this->aData['__ValidationError'] = (boolean) $aFileInfo['error'];
-        
+        $this->aData['__ValidationError'] = (boolean)$aFileInfo['error'];
+
         // Do we exceed the maximum number of bytes set?
         if (isset($this->aData['max'])) {
             $iMax = (integer)($this->aData['max']);
@@ -89,10 +89,10 @@ class IdfixFieldsInputFile extends IdfixFieldsInput
         }
 
         // get the errormessage
-        if ( $this->aData['__ValidationError'] and isset($this->aData['error'])) {
+        if ($this->aData['__ValidationError'] and isset($this->aData['error'])) {
             $cError = $this->aData['error'];
         }
-        
+
         $cError .= $this->SaveFile($aFileInfo);
 
         return $cError;
@@ -100,54 +100,57 @@ class IdfixFieldsInputFile extends IdfixFieldsInput
 
     private function SaveFile($aFileInfo)
     {
-       //print_r($aFileInfo);
-       $cTempFileName = $aFileInfo['tmp_name'];
-       // Hash names are based upon the field and tablename so values will be stored together for tables/fields
-       $aFileInfo['hash_name'] = md5( $this->aData['_name'] .  $this->aData['_tablename'] . $this->Idfix->IdfixConfigSalt ). '/' . $aFileInfo['name'];
-       $cFullFileName = $this->GetFullFileName($aFileInfo);
-       
-       $this->CheckDir($cFullFileName);
-       if(!@copy($cTempFileName, $cFullFileName)) {
-        $this->aData['__ValidationError'] = 1;
-        return $cFullFileName . ' cannot be copied.';
-       }
-       
-       // Strip Tthe info we do not need
-       unset($aFileInfo['error']);
-       unset($aFileInfo['tmp_name']);
-       $this->aData['__SaveValue'] = $aFileInfo;
+        //print_r($aFileInfo);
+        $cTempFileName = $aFileInfo['tmp_name'];
+        // Hash names are based upon the field and tablename so values will be stored together for tables/fields
+        $aFileInfo['hash_name'] = md5($this->aData['_name'] . $this->aData['_tablename'] . $this->Idfix->IdfixConfigSalt) . '/' . $aFileInfo['name'];
+        $cFullFileName = $this->GetFullFileName($aFileInfo);
+
+        $this->CheckDir($cFullFileName);
+        if (!@copy($cTempFileName, $cFullFileName)) {
+            $this->aData['__ValidationError'] = 1;
+            return $cFullFileName . ' cannot be copied.';
+        }
+
+        // Strip Tthe info we do not need
+        unset($aFileInfo['error']);
+        unset($aFileInfo['tmp_name']);
+        $this->aData['__SaveValue'] = $aFileInfo;
     }
-    
-    private function GetFullFileName( $aFileInfo ) {
-      $cFileName = $aFileInfo['hash_name'];
-      $cFilesDir = $this->Idfix->aConfig['filespace'];
-      //$cConfigName = $this->Idfix->ValidIdentifier( $this->Idfix->cConfigName );
-      return $cFilesDir . "/{$cFileName}";
+
+    private function GetFullFileName($aFileInfo)
+    {
+        $cFileName = $aFileInfo['hash_name'];
+        $cFilesDir = $this->Idfix->aConfig['filespace'];
+        //$cConfigName = $this->Idfix->ValidIdentifier( $this->Idfix->cConfigName );
+        return $cFilesDir . "/{$cFileName}";
     }
-    
-    private function GetFullFilenameAsUrl($aFileInfo) {
+
+    private function GetFullFilenameAsUrl($aFileInfo)
+    {
         $cFullFileName = $this->GetFullFileName($aFileInfo);
         $cBasePath = $this->ev3->BasePath;
         $cRelativeFilename = str_ireplace($cBasePath, '', $cFullFileName);
         $cRelativeFilename = trim($cRelativeFilename, '/');
         //print_r(get_defined_vars());
-        return $cRelativeFilename; 
+        return  $this->ev3->BasePathUrl . '/' . $cRelativeFilename;
     }
-    
+
     /**
      * Recursive check for a directory structure
      * 
      * @param mixed $cFullFilename
      * @return
      */
-    private function CheckDir($cFullFilename) {
+    private function CheckDir($cFullFilename)
+    {
         $cDirName = dirname($cFullFilename);
-        if(!is_writable($cDirName)) {
+        if (!is_writable($cDirName)) {
             $this->CheckDir($cDirName);
             mkdir($cDirName);
-        } 
+        }
         return is_writable($cDirName);
     }
-    
+
 
 }

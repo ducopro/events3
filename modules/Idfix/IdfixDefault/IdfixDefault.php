@@ -29,6 +29,7 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aConfig, 'title', 'Untitled configuration');
         $this->SetDefaultValue($aConfig, 'description', 'Description for this untitled configuration');
         $this->SetDefaultValue($aConfig, 'icon', 'book');
+        $this->SetDefaultValue($aConfig, 'iconsize', 16);
         $this->SetDefaultValue($aConfig, '_name', $cConfigName);
         $this->SetDefaultValue($aConfig, 'iconlib', "bootstrap");
 

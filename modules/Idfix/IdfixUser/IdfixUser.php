@@ -100,6 +100,14 @@ class IdfixUser extends Events3Module
             if (count($aRecords) > 0) {
                 $aUserObject = array_shift($aRecords);
                 $this->GetSetUserObject($aUserObject);
+                
+                // Now redirect to the first list page
+                $aTables = $this->Idfix->aConfig['tables'];
+                $aFirstTable = array_shift($aTables);
+                $cTableName = $aFirstTable['_name'];
+                $cUrl = $this->Idfix->GetUrl('',$cTableName,'',1,0,'list');
+                $this->Idfix->Redirect($cUrl);
+                
                 //print_r($aUserObject);
             }
             // Set marker for the login form

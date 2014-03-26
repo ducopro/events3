@@ -25,6 +25,8 @@ class IdfixFieldsInputCheckboxes extends IdfixFieldsInputOptionsBase
         // Create a copy of the data array for the attributes
         $aData = $this->aData;
         $cInput = '';
+        
+            
         foreach ($aData['options'] as $cOptionKey => $cOptionValue)
         {
             // Set correct type

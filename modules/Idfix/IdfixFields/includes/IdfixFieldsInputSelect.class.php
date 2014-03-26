@@ -29,6 +29,7 @@ class IdfixFieldsInputSelect extends IdfixFieldsInputOptionsBase
 
         if (isset($aData['options']) and is_array($aData['options']))
         {
+            
             foreach ($aData['options'] as $cOptionKey => $cOptionValue)
             {
                 // Is this one checked???

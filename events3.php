@@ -41,8 +41,8 @@ error_reporting(0);
 class Events3
 {
     // Path to the Events3 System
-    public $BasePath;
-    public $PublicPath;
+    public $BasePath, $BasePathUrl;
+    public $PublicPath, $PublicPathUrl;
     public $PrivatePath;
     
     // Configuration file
@@ -63,11 +63,15 @@ class Events3
 
     public function __construct($bUnitTestMode = false)
     {
+        
         $this->bTest = $bUnitTestMode;
         $this->BasePath = dirname(__file__);
+        $this->BasePathUrl = '//' . dirname( $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME']);
         $this->PublicPath = $this->BasePath . '/files';
+        $this->PublicPathUrl = str_ireplace( $this->BasePath, $this->BasePathUrl, $this->PublicPath);
         $this->PrivatePath = $this->BasePath . '/../files';
         $this->ConfigFile = dirname(__file__) . '/config/config.ini';
+        //print_r($this);
         // Scan all modules and build the lists
         $this->BuildModuleList();
     }

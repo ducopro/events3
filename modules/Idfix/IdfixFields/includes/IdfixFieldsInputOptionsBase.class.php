@@ -17,12 +17,10 @@ class IdfixFieldsInputOptionsBase extends IdfixFieldsInput
         // Get our values in an array
         $aSelected = $this->GetValueAsArray();
         $aDisplay = array();
-        foreach ($aSelected as $xKey)
-        {
+        foreach ($aSelected as $xKey) {
             $cDisplay = $xKey;
             // If the key is in the options array we get the user friendly display variant
-            if (isset($this->aData['options'][$xKey]))
-            {
+            if (isset($this->aData['options'][$xKey])) {
                 $cDisplay = $this->aData['options'][$xKey];
             }
             $aDisplay[] = $cDisplay;
@@ -44,13 +42,11 @@ class IdfixFieldsInputOptionsBase extends IdfixFieldsInput
         $aValues = array();
         // Our base to work on
         $cValue = $this->GetValue();
-        if (!is_null($cValue))
-        {
-            if (stripos($cValue, ','))
-            {
+        if (!is_null($cValue)) {
+            if (stripos($cValue, ',')) {
                 $aValues = explode(',', $cValue);
-            } elseif (strlen($cValue) > 0)
-            {
+            }
+            elseif (strlen($cValue) > 0) {
                 $aValues[] = $cValue;
 
             }
@@ -60,4 +56,6 @@ class IdfixFieldsInputOptionsBase extends IdfixFieldsInput
         $this->IdfixDebug->Profiler(__method__, 'stop');
         return $aValues;
     }
+
+   
 }

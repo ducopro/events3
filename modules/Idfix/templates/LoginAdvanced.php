@@ -11,13 +11,13 @@
     <div class="panel-heading">
       <h4 class="panel-title">
         <a data-toggle="collapse" data-parent="#accordion" href="#<?php print $cConfigName ?>">
-          <?php print $cConfigName ?>
+          <?php print $aConfig['icon'] ?> <?php print $aConfig['title'] . " ({$cConfigName})" ?>
         </a>
       </h4>
     </div>
     <div id="<?php print $cConfigName ?>" class="panel-collapse collapse <?php print $cClass?>">
       <div class="panel-body">
-        
+        <?php print '<p>' . $aConfig['description'] . '</p>' ?>
         <div class="btn-group">
             <?php foreach( $aEnvironments as $cEnvId => $aEnv):
                 $cDisabled = $aEnv['found'] ? '' : 'disabled="disabled"';

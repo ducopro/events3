@@ -81,6 +81,26 @@ class IdfixUser extends Events3Module
     {
         if (isset($_POST['email'])) {
             $this->Idfix->FlashMessage('New password requested. Please check your email inbox.');
+            $cEmail = $this->Database->quote($_POST['email']);
+            // Find a user record
+            $aWhere = array('Name = ' . $cEmail);
+            $aRecords = $this->IdfixStorage->LoadAllRecords(9999, 0, '', $aWhere, 1);
+            if (count($aRecords) > 0) {
+                // Get the user
+                $aUser = array_shift($aRecords);
+                // Create new password
+                $cNewPassword = substr(md5(time()), 0, 8);
+                // Set it in the user object
+                $aUser['Char_1'] = $cNewPassword;
+                // And save it, it is automagically hashed :-)
+                $this->IdfixStorage->SaveRecord($aUser);
+                // Create a nice link to the loginpage
+                $cLink = $this->Idfix->GetUrl('','','','','','login', array('email'=>$aUser['Name'], 'password'=> $cNewPassword));
+                // Get the body for the mail
+                $cMailBody = $this->Idfix->RenderTemplate('MailForgotPassword', compact('aUser', 'cNewPassword', 'cLink')); // Ok, let's just send it..
+                // Use default subject and configuration
+                $this->IdfixMail->Mail($cMailBody, null, $aUser);
+            }
         }
     }
     /**
@@ -100,14 +120,14 @@ class IdfixUser extends Events3Module
             if (count($aRecords) > 0) {
                 $aUserObject = array_shift($aRecords);
                 $this->GetSetUserObject($aUserObject);
-                
+
                 // Now redirect to the first list page
                 $aTables = $this->Idfix->aConfig['tables'];
                 $aFirstTable = array_shift($aTables);
                 $cTableName = $aFirstTable['_name'];
-                $cUrl = $this->Idfix->GetUrl('',$cTableName,'',1,0,'list');
+                $cUrl = $this->Idfix->GetUrl('', $cTableName, '', 1, 0, 'list');
                 $this->Idfix->Redirect($cUrl);
-                
+
                 //print_r($aUserObject);
             }
             // Set marker for the login form
@@ -132,7 +152,7 @@ class IdfixUser extends Events3Module
      * @param mixed $aUser
      * @return
      */
-    private function GetSetUserObject($aUser = null)
+    public function GetSetUserObject($aUser = null)
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
         $cTableSpace = $this->Idfix->aConfig['tablespace'];
@@ -292,7 +312,6 @@ class IdfixUser extends Events3Module
             if (strlen($cPassword) != strlen($cNewPassword)) {
                 // Not identical, means we changed the password.
                 $aFields['Char_1'] = $cNewPassword;
-                $this->Idfix->FlashMessage('New password is set.');
             }
         }
     }

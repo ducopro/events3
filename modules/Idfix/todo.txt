@@ -1,7 +1,7 @@
 ToDo
 
 
-- Add information page for table statistics
+-add rich text editor - debug display and save values
 - remove file uploads 
 - copy file uploads
 - Add Information system, sum/average/count group by(typeid/ other field)
@@ -17,3 +17,4 @@ Done
 - Add default superuser when new table created
 - Option lists from Idfix elements (From within trail!!)
 - After logging in, show relevant page.
+- Add information page for table statistics

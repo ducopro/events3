@@ -5,7 +5,7 @@ class IdfixFieldsInputTextarea extends IdfixFieldsInput
 
     public function GetEdit()
     {
-       $this->IdfixDebug->Profiler(__method__, 'start');
+        $this->IdfixDebug->Profiler(__method__, 'start');
         // Unique CSS ID
         $cId = $this->GetId();
         // Unique form input element name
@@ -16,7 +16,7 @@ class IdfixFieldsInputTextarea extends IdfixFieldsInput
         $this->SetDataElement('name', $cName);
 
         // Set the value
-        $cValue = $this->Clean( $this->GetValue() );
+        $cValue = $this->Clean($this->GetValue());
 
         // Build the attributelist
         $cAttr = $this->GetAttributes($this->aData);
@@ -32,6 +32,19 @@ class IdfixFieldsInputTextarea extends IdfixFieldsInput
 
 
         $this->aData['__DisplayValue'] = $this->RenderFormElement($this->aData['title'], $this->aData['description'], $cError, $cId, $cInput);
+
+        // Add Rich text editor if needee
+        if (isset($this->aData['rich']) and $this->aData['rich']) {
+           $cJs = "
+             <script src=\"http://js.nicedit.com/nicEdit-latest.js\" type=\"text/javascript\"></script>
+             <script type=\"text/javascript\">bkLib.onDomLoaded(function(){
+                new nicEditor().panelInstance('{$cId}');
+             });</script>
+           ";
+           $this->aData['__DisplayValue'] .= $cJs;
+        }
+
+
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 

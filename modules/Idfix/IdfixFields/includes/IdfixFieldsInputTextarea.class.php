@@ -3,6 +3,24 @@
 class IdfixFieldsInputTextarea extends IdfixFieldsInput
 {
 
+    /**
+     * IdfixFieldsInputTextarea::GetDisplay()
+     * 
+     * If we have a rich text editor, display the value as we intended
+     * 
+     * @return void
+     */
+    public function GetDisplay()
+    {
+        if (isset($this->aData['rich']) and $this->aData['rich']) {
+            $this->aData['__DisplayValue'] = $this->aData['__RawValue'];
+        }
+        else {
+            $this->aData['__DisplayValue'] = $this->Clean($this->aData['__RawValue']);
+        }
+
+    }
+
     public function GetEdit()
     {
         $this->IdfixDebug->Profiler(__method__, 'start');
@@ -15,8 +33,14 @@ class IdfixFieldsInputTextarea extends IdfixFieldsInput
         $this->SetDataElement('id', $cId);
         $this->SetDataElement('name', $cName);
 
-        // Set the value
-        $cValue = $this->Clean($this->GetValue());
+        // Set the value, but do not cvlean if we got a rich text editor
+        if (isset($this->aData['rich']) and $this->aData['rich']) {
+            $cValue = $this->GetValue();
+        }
+        else {
+            $cValue = $this->Clean($this->GetValue());
+        }
+
 
         // Build the attributelist
         $cAttr = $this->GetAttributes($this->aData);
@@ -35,13 +59,13 @@ class IdfixFieldsInputTextarea extends IdfixFieldsInput
 
         // Add Rich text editor if needee
         if (isset($this->aData['rich']) and $this->aData['rich']) {
-           $cJs = "
+            $cJs = "
              <script src=\"http://js.nicedit.com/nicEdit-latest.js\" type=\"text/javascript\"></script>
              <script type=\"text/javascript\">bkLib.onDomLoaded(function(){
                 new nicEditor().panelInstance('{$cId}');
              });</script>
            ";
-           $this->aData['__DisplayValue'] .= $cJs;
+            $this->aData['__DisplayValue'] .= $cJs;
         }
 
 

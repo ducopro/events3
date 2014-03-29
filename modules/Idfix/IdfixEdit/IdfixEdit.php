@@ -49,9 +49,9 @@ class IdfixEdit extends Events3Module
         $cHtmlInputForm = $this->GetHtmlForForm($aTableConfig);
 
 
-        //$this->IdfixDebug->Debug(__method__ . '-> Save pressed', $bSavePressed);
-        //$this->IdfixDebug->Debug(__method__ . '-> Valideren', $this->bValidationMode);
-        //$this->IdfixDebug->Debug(__method__ . '-> Errors', $this->bErrorsDetected);
+        $this->IdfixDebug->Debug(__method__ . '-> Save pressed', $bSavePressed);
+        $this->IdfixDebug->Debug(__method__ . '-> Valideren', $this->bValidationMode);
+        $this->IdfixDebug->Debug(__method__ . '-> Errors', $this->bErrorsDetected);
         $this->IdfixDebug->Debug(__method__ . '-> POST', $_POST);
         $this->IdfixDebug->Debug(__method__ . '-> Datarow', $this->aDataRow);
 

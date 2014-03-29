@@ -139,6 +139,7 @@ class IdfixFieldsBase extends Events3Module
             'confirm',
             'group',
             'permissions',
+            'validate',
             '_NoPP',
             'sql',
             '__RawValue',
@@ -173,8 +174,7 @@ class IdfixFieldsBase extends Events3Module
         //$this->IdfixDebug->Debug(__method__, $cReturn);
         return $cReturn;
     }
-    
-    
+
 
     /**
      * Use this function to set elements in the data array
@@ -227,11 +227,11 @@ class IdfixFieldsBase extends Events3Module
      */
     protected function RenderFormElement($cTitle, $cDescription, $cError, $cId, $cInput)
     {
-        // Default set from the parameterlist 
+        // Default set from the parameterlist
         $aTemplateVars = get_defined_vars();
         // Add the number of columns the input element uis wide
         $aTemplateVars['iColumns'] = $this->aData['cols'];
-                
+
         $return = $this->Idfix->RenderTemplate('EditFormElement', $aTemplateVars);
         return $return;
     }
@@ -285,34 +285,63 @@ class IdfixFieldsInput extends IdfixFieldsBase
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
+
+    /**
+     * IdfixFieldsInput::Validate()
+     * 
+     * This method only triggers the eventhandling system.
+     * Events should do the following:
+     * 1. Check __RawPostValue
+     * 2. If error SET __ValidationError = 1
+     * 3. If error message needs to be displayed: Set __ValidationMessages[]
+     * 
+     * @return
+     */
     protected function Validate()
     {
-        $this->IdfixDebug->Profiler(__method__, 'start');
         $cError = '';
-        if (!is_null($this->aData['__RawPostValue'])) {
-            $cError = $this->ValidateRequired();
 
-            if ($cError) {
-                $this->aData['__ValidationError'] = 1;
+        // Only trigger the event system if really needed!!!
+        if (!is_null($this->aData['__RawPostValue'])) {
+
+            // Go through the validation routine if needed
+            if (isset($this->aData['validate'])) {
+                // Create an empty message structure
+                $this->aData['__ValidationMessages'] = array();
+                // Send in the data ...
+                $this->Idfix->Event('ValidateField', $this->aData);
+                // And check if we have messages
+                if (count($this->aData['__ValidationMessages']) > 0) {
+                    // Render the messages into nice HTML
+                    $cError = $this->RenderValidationMessages($this->aData['__ValidationMessages']);
+                }
             }
-            else {
+
+            // Errors detected??
+            $bErrorsdetected = (isset($this->aData['__ValidationError']) and $this->aData['__ValidationError']);
+            // No erros? Save the value
+            if (!$bErrorsdetected) {
                 $this->aData['__SaveValue'] = $this->aData['__RawPostValue'];
             }
+
         }
-        $this->IdfixDebug->Profiler(__method__, 'stop');
         return $cError;
     }
 
-    protected function ValidateRequired()
+    /**
+     * IdfixFieldsInput::RendervalidationMessages()
+     * 
+     * Give a nicely formatted list of messages. Could be a template later,
+     * but for now, just build a plain list.
+     * 
+     * @param mixed $aList
+     * @return void
+     */
+    private function RenderValidationMessages($aList)
     {
-        $this->IdfixDebug->Profiler(__method__, 'start');
-        $cError = '';
-        if (isset($this->aData['required']) and $this->aData['required'] and !$this->aData['__RawPostValue']) {
-            $cError = $this->aData['required'];
-        }
-        $this->IdfixDebug->Profiler(__method__, 'stop');
-        return $cError;
+        return $this->Idfix->RenderTemplate('EditFormElementErrors', compact('aList'));
     }
+
 
     /**
      * Wrap the input in a group specifying its required

@@ -12,12 +12,15 @@
  $cFormGroupClass = 'form-group col-sm-'.$iColumns;
  if ($cError) {
     $cFormGroupClass .= ' has-error';
-    $cDescription = $cError . '<br />' . $cDescription;
+    //$cDescription = $cError . '<br />' . $cDescription;
  }
  
 ?>
  <div class="<?php print $cFormGroupClass;?>">
    <?php if($cTitle) print "<label for=\"{$cId}\">{$cTitle}</label>";  ?>
    <?php print $cInput; // Full input element ?>
-   <?php if($cDescription) print "<p class=\"help-block\">{$cDescription}</p>";  ?>
+   <p class="help-block">
+       <?php if($cError) print $cError  ?>
+       <?php if($cDescription) print $cDescription;  ?>
+   </p>
 </div>        

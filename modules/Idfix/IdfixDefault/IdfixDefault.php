@@ -199,6 +199,7 @@ class IdfixDefault extends Events3Module
         $this->SetDefaultValue($aConfig, 'icon', 'list');
         $this->SetDefaultValue($aConfig, 'pager', 20);
 
+
         // Default ID
         static $id_counter = 500;
         $id_counter += 10;

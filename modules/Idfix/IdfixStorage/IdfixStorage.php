@@ -212,6 +212,30 @@ class IdfixStorage extends Events3Module
 
         return $cache;
     }
+    
+    /**
+     * Show all information about the columns from the current tablespace
+     * 
+     * @return void
+     */
+    public function GetTableSpaceColumns() {
+        $cTableName = $this->GetTableSpaceName();
+        static $cache = array();
+        if (isset($cache[$cTableName]))
+        {
+            return $cache[$cTableName];
+        }
+
+        $aColumnList = $this->Database->ShowColumns($cTableName);
+        if( count($aColumnList) <= 0) {
+            $aColumnList = $this->GetIdfixColumns();
+        }
+
+        $cache[$cTableName] = $aColumnList;
+
+        return $cache[$cTableName];
+        
+    }
 
 
     /**

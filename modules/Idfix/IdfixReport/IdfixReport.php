@@ -16,15 +16,18 @@
  *          #list
  *          #search
  *          #report
- *              #<FieldName_1>
+ *              #identifier_1
+ *                  -field=<FieldName>
+ *                  -field_expr=<Valid MySql Expression>
  *                  -title=[default from field]
  *                  -description=[default from field]
  *                  -icon=[default from field]
  *                  -type=[avg,sum,count,max,min]
  *                  -distinct=[0,1]
  *                  -group=<FieldName>
+ *                  -group_expr=<Valid MySql Expression>
  *                  -graph=[bar,pie]
- *              #<FieldName_2>
+ *              #identifier_2
  * 
  */
 
@@ -58,16 +61,17 @@ class IdfixReport extends Events3Module
     {
         $aReportPanels = array();
         $aReportConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['report'];
-        foreach ($aReportConfig as $cReportFieldName => $aReportFieldConfig) {
-            $aReportPanels[] = $this->BuildReportPanel($cReportFieldName, $aReportFieldConfig);
+        foreach ($aReportConfig as $cReportIdentifier => $aReportFieldConfig) {
+            $aReportPanels[] = $this->BuildReportPanel($aReportFieldConfig);
         }
         return $this->Idfix->RenderTemplate('Report', compact('aReportPanels'));
     }
 
-    private function BuildReportPanel($cFieldName, $aConfig)
+    private function BuildReportPanel($aConfig)
     {
         // Create the SQL
-        $cSql = $this->BuildReportPanelSql($cFieldName, $aConfig);
+        $cSql = $this->BuildReportPanelSql($aConfig);
+        $this->Idfix->FlashMessage($cSql);
         // Retrieve the data
         $aData = $this->Database->DataQuery($cSql);
         // Is it a single data item or aggregated information?
@@ -75,12 +79,12 @@ class IdfixReport extends Events3Module
         if (count($aData) == 1) {
             $aRow = array_shift($aData);
             $aTemplateVars['sql'] = $cSql;
-            $aTemplateVars['data'] = $aRow['data']; 
+            $aTemplateVars['data'] = $aRow['data'];
             $cDetails = $this->Idfix->RenderTemplate('ReportPanelSingle', $aTemplateVars);
         }
-        elseif (count($aData) > 2) {
+        elseif (count($aData) > 1) {
             $aRollUp = array_pop($aData);
-            $aTemplateVars = compact('aData', 'aRollUp', 'cFieldName', 'aConfig');
+            $aTemplateVars = compact('aData', 'aRollUp', 'aConfig');
             $cDetails = $this->Idfix->RenderTemplate('ReportPanelMulti', $aTemplateVars);
         }
 
@@ -99,20 +103,38 @@ class IdfixReport extends Events3Module
      * @param mixed $aConfig
      * @return
      */
-    private function BuildReportPanelSql($cFieldName, $aConfig)
+    private function BuildReportPanelSql($aConfig)
     {
         // First create the basics
         $cTableName = $this->IdfixStorage->GetTableSpaceName();
         $cFunction = strtoupper($aConfig['type']);
         $cDistinct = $aConfig['distinct'] ? 'DISTINCT' : '';
-        $cSql = "{$cFunction}({$cDistinct} {$cFieldName}) as data FROM {$cTableName}";
-        // Than check for grouping
-        if ($aConfig['group']) {
-            $cGroupName = $aConfig['group'];
-            $cSql = "{$cGroupName} as group," . $cSql . " GROUP BY {$cGroupName} WITH ROLLUP";
+
+        // Do we have a field or expression???
+        // Expressions get precedence
+        $cFieldName = $aConfig['field_expr'];
+        if (!$cFieldName) {
+            $cFieldName = $aConfig['field'];
         }
+        // Same excersise for the group
+        $cGroupName = $aConfig['group_expr'];
+        if (!$cGroupName) {
+            $cGroupName = $aConfig['group'];
+        }
+
+        // Build basic SQL statement. In this stadium it could happen that we do not have
+        // a valid fieldname of expression. Well, that's a shame, but it just means we do not
+        // see any data. It is to the developer to solve the problem
+        $cSql = "{$cFunction}({$cDistinct} {$cFieldName}) as data FROM {$cTableName}";
+
+        // Than check for grouping
+        if ($cGroupName) {
+            $cSql = "{$cGroupName} as separate," . $cSql . " GROUP BY {$cGroupName} WITH ROLLUP";
+        }
+
         return 'SELECT ' . $cSql;
     }
+
     /**
      * Create intelligent defaults for the report configuration
      * These checks are only done once, than the config is cached.
@@ -130,24 +152,52 @@ class IdfixReport extends Events3Module
             foreach ($aConfig['tables'] as $cTableName => &$aTableConfig) {
                 if (isset($aTableConfig['report']) and is_array($aTableConfig['report'])) {
                     // Check the report structure
-                    foreach ($aTableConfig['report'] as $cReportFieldName => &$aReportFieldConfig) {
+                    foreach ($aTableConfig['report'] as $cReportIdentifier => &$aReportFieldConfig) {
+                        // Set the correct fieldname
+                        $cReportFieldName = '';
+                        if (isset($aReportFieldConfig['field'])) {
+                            $cReportFieldName = $aReportFieldConfig['field'];
+                        }
+                        else {
+                            $aReportFieldConfig['field'] = '';
+                        }
+
                         // Get the original field configuration
                         $aFieldConfig = array();
                         if (isset($aTableConfig['fields'][$cReportFieldName])) {
                             $aFieldConfig = $aTableConfig['fields'][$cReportFieldName];
                         }
+
                         // Set some properties from the field configuration
                         $cProperty = 'title';
-                        if (isset($aFieldConfig[$cProperty]) and !isset($aReportFieldConfig[$cProperty])) {
-                            $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
+                        if (!isset($aReportFieldConfig[$cProperty])) {
+                            if (isset($aFieldConfig[$cProperty])) {
+                                $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
+                            }
+                            else {
+                                $aReportFieldConfig[$cProperty] = $cReportIdentifier;
+                            }
                         }
+
+
                         $cProperty = 'description';
-                        if (isset($aFieldConfig[$cProperty]) and !isset($aReportFieldConfig[$cProperty])) {
-                            $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
+                        if (!isset($aReportFieldConfig[$cProperty])) {
+                            if (isset($aFieldConfig[$cProperty])) {
+                                $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
+                            }
+                            else {
+                                $aReportFieldConfig[$cProperty] = '';
+                            }
                         }
+
                         $cProperty = 'icon';
-                        if (isset($aFieldConfig[$cProperty]) and !isset($aReportFieldConfig[$cProperty])) {
-                            $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
+                        if (!isset($aReportFieldConfig[$cProperty])) {
+                            if (isset($aFieldConfig[$cProperty])) {
+                                $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
+                            }
+                            else {
+                                $aReportFieldConfig[$cProperty] = 'dashboard';
+                            }
                         }
                         // Set some other default properties
                         $cProperty = 'type';
@@ -173,6 +223,14 @@ class IdfixReport extends Events3Module
                         if (!isset($aReportFieldConfig[$cProperty])) {
                             $aReportFieldConfig[$cProperty] = '';
                         }
+                        $cProperty = 'field_expr';
+                        if (!isset($aReportFieldConfig[$cProperty])) {
+                            $aReportFieldConfig[$cProperty] = '';
+                        }
+                        $cProperty = 'group_expr';
+                        if (!isset($aReportFieldConfig[$cProperty])) {
+                            $aReportFieldConfig[$cProperty] = '';
+                        }
                         // Is this reportfield a real SQL Column???
                         if (!isset($aColumns[$cReportFieldName])) {
                             // No??? Than delete this reportfield!!!
@@ -186,8 +244,6 @@ class IdfixReport extends Events3Module
                                 $aReportFieldConfig['group'] = '';
                             }
                         }
-
-
                     }
                 }
                 else {
@@ -198,39 +254,4 @@ class IdfixReport extends Events3Module
     }
 
 
-    private function GetReportConfig()
-    {
-        $aTableConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName];
-        $aReportConfig = array();
-        if (isset($aTableConfig['report'])) {
-            $aReportConfig = $aTableConfig['report'];
-        }
-        // Set some defaults from the field
-        $aDefaults = array(
-            'title',
-            'description',
-            'icon');
-        foreach ($aReportConfig as $cReportFieldName => &$aReportFieldConfig) {
-            // Set some intelligent defaults
-            // Get the original field configuration
-            $aFieldConfig = array();
-            if (isset($aTableConfig['fields'][$cReportFieldName])) {
-                $aFieldConfig = $aTableConfig['fields'][$cReportFieldName];
-            }
-            // Set the default properties
-            foreach ($aDefaults as $cProperty) {
-                // We did not set this property???
-                if (!isset($aReportFieldConfig[$cProperty])) {
-                    // First create a default
-                    $aReportFieldConfig[$cProperty] = ''; // And we have it in the default??
-                    if (isset($aFieldConfig[$cProperty])) {
-                        // Than set it in the report
-                        $aReportFieldConfig[$cProperty] = $aFieldConfig[$cProperty];
-                    }
-                }
-            }
-        }
-
-
-    }
 }

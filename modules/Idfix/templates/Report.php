@@ -1,10 +1,10 @@
+<div class="row">
 <?php 
 $iCounter =0;
 foreach( $aReportPanels as $cHtml):
-    $bNewRow =($iCounter%3==0);
-    $iCounter++;
+   $bNewRow =(++$iCounter%3==1);
     if ($bNewRow) {
-        print '<div class="row">';
+        print '</div><div class="row">';
     }
 ?>
 
@@ -12,9 +12,5 @@ foreach( $aReportPanels as $cHtml):
    <?php print $cHtml; ?>
 </div>
 
-<?php 
-    if ($bNewRow) {
-        print '</div>';
-    }
-
-endforeach; ?>
+<?php endforeach; ?>
+</div>

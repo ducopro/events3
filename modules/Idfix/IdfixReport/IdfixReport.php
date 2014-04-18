@@ -6,7 +6,7 @@
  * Shows aggregated information under the list taking the current filtering
  * into account.
  * 
- * FieldNajme and grouping field should be real SQL Columns, otherwise a warning
+ * FieldName and grouping field should be real SQL Columns, otherwise a warning
  * will be displayed.
  * 
  * Configuration Properties
@@ -26,7 +26,7 @@
  *                  -distinct=[0,1]
  *                  -group=<FieldName>
  *                  -group_expr=<Valid MySql Expression>
- *                  -graph=[bar,pie]
+ *                  -graph=[ColumnChart,PieChart,Gauge] Note: These are Google Chart Types
  *              #identifier_2
  * 
  */
@@ -62,12 +62,18 @@ class IdfixReport extends Events3Module
         $aReportPanels = array();
         $aReportConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['report'];
         foreach ($aReportConfig as $cReportIdentifier => $aReportFieldConfig) {
-            $aReportPanels[] = $this->BuildReportPanel($aReportFieldConfig);
+            $aReportPanels[] = $this->BuildReportPanel($aReportFieldConfig, $cReportIdentifier, $this->Idfix->cTableName);
         }
         return $this->Idfix->RenderTemplate('Report', compact('aReportPanels'));
     }
 
-    private function BuildReportPanel($aConfig)
+    /**
+     * Create a single report panel
+     * 
+     * @param mixed $aConfig, report configuration
+     * @return string Rendered HTML for this reportpanel
+     */
+    private function BuildReportPanel($aConfig, $cReportID, $cTableName)
     {
         // Create the SQL
         $cSql = $this->BuildReportPanelSql($aConfig);
@@ -84,7 +90,11 @@ class IdfixReport extends Events3Module
         }
         elseif (count($aData) > 1) {
             $aRollUp = array_pop($aData);
-            $aTemplateVars = compact('aData', 'aRollUp', 'aConfig');
+            // Postproces data to get display values
+            $aData = $this->GetGroupDisplayValues($aData, $aConfig, $cTableName );
+            // TODO
+            $cJs = $this->BuildReportPanelJavascript($aConfig, $aData, $cReportID);
+            $aTemplateVars = compact('aData', 'aRollUp', 'aConfig', 'cJs', 'cReportID');
             $cDetails = $this->Idfix->RenderTemplate('ReportPanelMulti', $aTemplateVars);
         }
 
@@ -95,6 +105,117 @@ class IdfixReport extends Events3Module
             'data' => $cDetails,
             );
         return $this->Idfix->RenderTemplate('ReportPanel', $aTemplateVars);
+    }
+    
+    private function GetGroupDisplayValues($aData, $aConfig, $cTableName ){
+        // Get field configuration for the group
+        $cFieldName = $aConfig['group'];
+        $aTableConfig = $this->Idfix->aConfig['tables'][$cTableName];
+        // No field configuartion? No need to postprocess
+        if (!isset($aTableConfig['fields'][$cFieldName])) {
+            return $aData;
+        }
+        // Ok we're sure to have a configuration
+        $aFieldConfig = $aTableConfig['fields'][$cFieldName];
+        
+        foreach($aData as &$aRow) {
+            // Special case
+            if(is_null($aRow['separate'])) {
+                $aRow['separate'] = 'No Data';
+                continue;
+            }
+            
+            $aFieldConfig['__RawValue'] = $aRow['separate'];
+            $this->Idfix->Event('DisplayField', $aFieldConfig);
+            $aRow['separate'] = $aFieldConfig['__DisplayValue'];
+        }
+        return $aData;
+    }
+
+    /**
+     * Create the javascript needed to render a Google Chart
+     * 
+     * @param mixed $aConfig
+     * @param mixed $aData
+     * @param mixed $cReportID
+     * @return
+     */
+    private function BuildReportPanelJavascript($aConfig, $aData, $cReportID)
+    {
+        // Only return javascript if a graph is selected
+        if (!$aConfig['graph']) {
+            return '';
+        }
+
+        // Check if library needs to be loaded, only once ofcource
+        static $bFirstTime = true;
+        $cLibs = '';
+        if ($bFirstTime) {
+            $bFirstTime = false;
+            $cLibs = '<script type="text/javascript" src="http://www.google.com/jsapi"></script>';
+            $cLibs .= '<script type="text/javascript">google.load(\'visualization\', \'1\');</script>';
+        }
+
+        // Javascript functio name
+        $cFunction = 'draw' . ucfirst($cReportID);
+        // Title of the chart
+        $cTitle = $aConfig['title'];
+        // Type of chart
+        $cType = $aConfig['graph'];
+        // Datastring
+        $cDataString = $this->CreateDataTableString($aData, $cType);
+
+        return "
+      {$cLibs}
+      <script type=\"text/javascript\">
+      google.setOnLoadCallback({$cFunction});
+      function {$cFunction}() {
+        var wrapper = new google.visualization.ChartWrapper({
+          chartType: '{$cType}',
+          dataTable: {$cDataString} ,
+          options: { '-is3D':'true'},
+          containerId: '{$cReportID}'
+        });
+        wrapper.draw();
+      }
+      </script>
+      ";
+
+    }
+
+    /**
+     * Create a special datastring for the googlechart.
+     * We need to support two types of strings.
+     * 
+     * @param mixed $aData
+     * @param string $cType
+     * @return
+     */
+    private function CreateDataTableString($aData, $cType)
+    {
+        $cReturn = "";
+        if ($cType == 'PieChart' or $cType == 'Gauge') {
+            $cReturn = "['' , ''],";
+            foreach ($aData as $aRow) {
+                $cReturn .= "[ '{$aRow['separate']}' , {$aRow['data']}],";
+            }
+            $cReturn = trim($cReturn, ',');
+            $cReturn = "[ {$cReturn} ]";
+        }
+        else {
+            $aTitles = array('');
+            $aValues = array('');
+            foreach ($aData as $aRow) {
+                $aTitles[] = $aRow['separate'];
+                $aValues[]= $aRow['data'];
+            }
+
+            $cTitle = "['" . implode("','", $aTitles) . "']";
+            $cData = "[" . implode(",", $aValues) . "]";
+            $cReturn = "[ {$cTitle} , {$cData} ]";
+        }
+        $this->Idfix->FlashMessage($cReturn);
+        return $cReturn;
     }
 
     /**

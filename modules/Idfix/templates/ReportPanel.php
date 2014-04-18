@@ -8,7 +8,10 @@
     <?php print $data; ?>
   </div>
   
+  <?php if($description): ?>
   <div class="panel-footer">
     <?php print $description; ?>
   </div>
+  <?php endif; ?>
+
 </div>

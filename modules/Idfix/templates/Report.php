@@ -1,3 +1,7 @@
+<script type="text/javascript" src="http://www.google.com/jsapi">
+  google.load('visualization', '1');
+</script>
+
 <div class="row">
 <?php 
 $iCounter =0;

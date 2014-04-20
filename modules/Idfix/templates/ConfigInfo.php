@@ -1,11 +1,11 @@
-<?php $counter = 0; ?>
-
-
-
+<div class="row">
+<?php $iCounter =0; ?>
 <?php foreach( $aTables as $aInfo): 
         extract($aInfo);
-        $newline = ((++$counter%3)==0 );
-        if ( $newline) print '<div class="row">';
+        $bNewRow =(++$iCounter%3==1);
+        if ($bNewRow) {
+          print '</div><div class="row">';
+        }
 ?>
     
     <div class="col col-sm-4">
@@ -25,9 +25,8 @@
         </div>
     </div>
 
-    <?php if ( $newline ) print '</div>'; ?>
 
 
 <?php endforeach; ?>
-
+</div>
 

@@ -27,12 +27,16 @@
  *                  -group=<FieldName>
  *                  -group_expr=<Valid MySql Expression>
  *                  -graph=[ColumnChart,PieChart,Gauge] Note: These are Google Chart Types
+ *                  -info=[0,1] Show panel on the main information page
  *              #identifier_2
  * 
  */
 
 class IdfixReport extends Events3Module
 {
+    // Store the query parameters to be used later to restrict
+    // the dataset we will fetch.
+    private $aDataSetParameters = array();
 
     /**
      * Events
@@ -45,11 +49,50 @@ class IdfixReport extends Events3Module
     {
         $this->CreateDefaults();
     }
+    public function Events3IdfixActionInfoAfter(&$output)
+    {
+        $output .= $this->BuildInfo();
+    }
+    public function Events3IdfixListDataSetAfter($aPackage)
+    {
+        $this->aDataSetParameters = $aPackage;
+    }
 
 
     /**
      * Worker functions
      */
+
+    /**
+     * Show report panels on the main info page 
+     * if the -info property is set
+     *   #report01
+     *      -info=1
+     * 
+     * @return string HTML to add to the info page.
+     * 
+     */
+    private function BuildInfo()
+    {
+        $aReportPanels = array();
+        $cReturn = '';
+        // Check all the tables for report items
+        foreach ($this->Idfix->aConfig['tables'] as $cTableName => $aTableConfig) {
+            // Does it have reports set???
+            if (isset($aTableConfig['report']) and is_array($aTableConfig['report'])) {
+                // Check all the reports
+                foreach ($aTableConfig['report'] as $cReportName => $aReportConfig) {
+                    // Is this a panel to show on the info page????
+                    if (isset($aReportConfig['info']) and $aReportConfig['info']) {
+                        // Create all the panels in an array so we can render them later
+                        $aReportPanels[] = $this->BuildReportPanel($aReportConfig, $cReportName, $cTableName);
+                    }
+                }
+            }
+        }
+        // Render all the panels to a bootstrap row
+        return $this->Idfix->RenderTemplate('Report', compact('aReportPanels'));
+    }
 
 
     /**
@@ -76,8 +119,8 @@ class IdfixReport extends Events3Module
     private function BuildReportPanel($aConfig, $cReportID, $cTableName)
     {
         // Create the SQL
-        $cSql = $this->BuildReportPanelSql($aConfig);
-        $this->Idfix->FlashMessage($cSql);
+        $cSql = $this->BuildReportPanelSql($aConfig, $cTableName);
+        //$this->Idfix->FlashMessage($cSql);
         // Retrieve the data
         $aData = $this->Database->DataQuery($cSql);
         // Is it a single data item or aggregated information?
@@ -91,7 +134,7 @@ class IdfixReport extends Events3Module
         elseif (count($aData) > 1) {
             $aRollUp = array_pop($aData);
             // Postproces data to get display values
-            $aData = $this->GetGroupDisplayValues($aData, $aConfig, $cTableName );
+            $aData = $this->GetGroupDisplayValues($aData, $aConfig, $cTableName);
             // TODO
             $cJs = $this->BuildReportPanelJavascript($aConfig, $aData, $cReportID);
             $aTemplateVars = compact('aData', 'aRollUp', 'aConfig', 'cJs', 'cReportID');
@@ -106,8 +149,9 @@ class IdfixReport extends Events3Module
             );
         return $this->Idfix->RenderTemplate('ReportPanel', $aTemplateVars);
     }
-    
-    private function GetGroupDisplayValues($aData, $aConfig, $cTableName ){
+
+    private function GetGroupDisplayValues($aData, $aConfig, $cTableName)
+    {
         // Get field configuration for the group
         $cFieldName = $aConfig['group'];
         $aTableConfig = $this->Idfix->aConfig['tables'][$cTableName];
@@ -117,14 +161,14 @@ class IdfixReport extends Events3Module
         }
         // Ok we're sure to have a configuration
         $aFieldConfig = $aTableConfig['fields'][$cFieldName];
-        
-        foreach($aData as &$aRow) {
+
+        foreach ($aData as &$aRow) {
             // Special case
-            if(is_null($aRow['separate'])) {
+            if (is_null($aRow['separate'])) {
                 $aRow['separate'] = 'No Data';
                 continue;
             }
-            
+
             $aFieldConfig['__RawValue'] = $aRow['separate'];
             $this->Idfix->Event('DisplayField', $aFieldConfig);
             $aRow['separate'] = $aFieldConfig['__DisplayValue'];
@@ -207,14 +251,14 @@ class IdfixReport extends Events3Module
             $aValues = array('');
             foreach ($aData as $aRow) {
                 $aTitles[] = $aRow['separate'];
-                $aValues[]= $aRow['data'];
+                $aValues[] = $aRow['data'];
             }
 
             $cTitle = "['" . implode("','", $aTitles) . "']";
             $cData = "[" . implode(",", $aValues) . "]";
             $cReturn = "[ {$cTitle} , {$cData} ]";
         }
-        $this->Idfix->FlashMessage($cReturn);
+        //$this->Idfix->FlashMessage($cReturn);
         return $cReturn;
     }
 
@@ -224,7 +268,7 @@ class IdfixReport extends Events3Module
      * @param mixed $aConfig
      * @return
      */
-    private function BuildReportPanelSql($aConfig)
+    private function BuildReportPanelSql($aConfig, $cTableId)
     {
         // First create the basics
         $cTableName = $this->IdfixStorage->GetTableSpaceName();
@@ -243,10 +287,13 @@ class IdfixReport extends Events3Module
             $cGroupName = $aConfig['group'];
         }
 
+        // Now we need a where clause,
+        $cWhere = $this->BuildReportPanelSqlWhere($cTableId);
+
         // Build basic SQL statement. In this stadium it could happen that we do not have
         // a valid fieldname of expression. Well, that's a shame, but it just means we do not
         // see any data. It is to the developer to solve the problem
-        $cSql = "{$cFunction}({$cDistinct} {$cFieldName}) as data FROM {$cTableName}";
+        $cSql = "{$cFunction}({$cDistinct} {$cFieldName}) as data FROM {$cTableName} WHERE {$cWhere}";
 
         // Than check for grouping
         if ($cGroupName) {
@@ -254,6 +301,37 @@ class IdfixReport extends Events3Module
         }
 
         return 'SELECT ' . $cSql;
+    }
+
+    private function BuildReportPanelSqlWhere($cTableName)
+    {
+        $cWhere = '';
+        $aWhere = array();
+
+        //$this->Idfix->FlashMessage($cTableName);
+        if (isset($this->aDataSetParameters['where']) and is_array($this->aDataSetParameters['where'])) {
+            $aWhere = $this->aDataSetParameters['where'];
+        }
+
+        // First stage: Restrict by typeid aka tablename
+        if (isset($this->Idfix->aConfig['tables'][$cTableName]['id'])) {
+            $iTypeID = (integer)$this->Idfix->aConfig['tables'][$cTableName]['id'];
+            $aWhere[] = 'TypeID = ' . $iTypeID;
+        }
+
+        // Second stage: restrict by parent if needed
+        if (isset($this->aDataSetParameters['parent']) and $this->aDataSetParameters['parent']) {
+            $iParentID = (integer)$this->aDataSetParameters['parent'];
+            $aWhere[] = 'ParentID = ' . $iParentID;
+        }
+
+
+        //print_r($this->aDataSetParameters);
+
+        $cWhere = implode(' AND ', $aWhere);
+        // Create a default value
+        $cWhere = $cWhere ? $cWhere : '1';
+        return $cWhere;
     }
 
     /**

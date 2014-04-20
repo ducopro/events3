@@ -213,7 +213,7 @@ class IdfixOtap extends Events3Module
             );
 
         // Add the save button to the toolbar
-        if ($this->cCurrentEnvironment == self::ENV_DEV and $this->Idfix->cAction == 'Editconfig') {
+        if ($this->Idfix->cAction == 'Editconfig') {
             $cFile = $this->GetConfigFileName(self::ENV_DEV, $this->Idfix->cConfigName);
             $cUrl = $this->Idfix->GetUrl('', '', '', 0, 0, 'Saveconfig');
             $cIcon = $this->Idfix->GetIconHTML('save');
@@ -293,7 +293,11 @@ class IdfixOtap extends Events3Module
             $cIcon = $this->Idfix->GetIconHTML('save');
             $cButton = "<a href=\"#\" id= \"save-config\" class=\"btn btn-primary btn-block\" role=\"button\">{$cIcon} Save configuration to server</a>";
 
-            $cFileContent = trim(file_get_contents($cFile));
+            $cFileContent = '';
+            if (file_exists($cFile)) {
+                $cFileContent = trim(file_get_contents($cFile));
+            }
+
             $output = $this->RenderTemplate('EditConfig', compact('cFileContent', 'cUrl', 'cButton'));
         }
     }

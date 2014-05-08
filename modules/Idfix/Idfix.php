@@ -120,6 +120,8 @@ class Idfix extends Events3Module
             $this->GetSetCache($cConfigCacheKey, $this->aConfig);
         }
 
+        // Call an event specifically meant to do setup tasks
+        $this->Event('Init');
 
         // Create the output variable
         $output = '';
@@ -915,7 +917,7 @@ class Idfix extends Events3Module
         foreach ($aData as $aRow) {
             $id = $aRow['TypeID'];
             $aTableConfig = $this->TableConfigById($id);
-            
+
             // No config?? It is the summary!!!
             $cClass = 'panel-default';
             if (!isset($aTableConfig['title'])) {
@@ -923,7 +925,7 @@ class Idfix extends Events3Module
                 $aTableConfig['description'] = 'Information about <strong>all</strong> the records in this tablespace.';
                 $cClass = 'panel-success';
             }
-            
+
             // Items for the template
             $aTables[$id] = array(
                 'data' => $this->RenderTemplate('ConfigInfoPanel', compact('aRow')),

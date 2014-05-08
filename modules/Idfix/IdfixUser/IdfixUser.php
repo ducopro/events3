@@ -8,6 +8,37 @@ class IdfixUser extends Events3Module
     // False login
     private $bGoodLogin = true;
 
+    /**
+     * Check if there is a user object in the session.
+     * If No user session
+     *    - check if we have anonymous access
+     *    - Set up anonymous user object
+     * 
+     * @return void
+     */
+    public function Events3IdfixInit()
+    {
+        // Only act if there is no user information at all
+        // This element is UNSET at logout
+        //if (!isset($_SESSION[__class__])) {
+        if (!$this->IsLoggedIn()) {            
+            // Find a anonymous user object
+            $aWhere = array('SubTypeID = 0');
+            $aRecords = $this->IdfixStorage->LoadAllRecords(9999, 0, '', $aWhere, 1);
+            if (count($aRecords) > 0) {
+                $aUserObject = array_shift($aRecords);
+                $this->GetSetUserObject($aUserObject);
+            }
+        }
+        
+        // If we still do not have a user object, redirect to the login page
+        // But only redirect if we are not already trying to show this page!!!
+        if( !$this->IsLoggedIn() AND $this->Idfix->cAction != 'Loginform') {
+            $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
+            $this->Idfix->Redirect($cUrl);
+        }
+    }
+
 
     /**
      * Unset everything in the navigationbar if we are not logged in
@@ -21,61 +52,77 @@ class IdfixUser extends Events3Module
         if (!$this->IsLoggedIn()) {
             $data['left'] = array();
             $data['right'] = array();
-        }
-        else {
-            // Add logout button to the navbar
+            //echo 'not logged in';
+        } else {
+            // Add login/logout button to the navbar
             $aUser = $this->GetSetUserObject();
             $cUserName = $aUser['UserName'];
-            $cUserType = $aUser['SubTypeID'];
+            $cIcon = $this->Idfix->GetIconHTML('user');
+            $cTooltip = '';
+
+            // Special case for anonymous visitors
+            if ($this->IsAnonymous()) {
+                $cHref = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
+                $cTitle = 'Login';
+                $cTooltip = 'Access this application with username and password.';
+            } else {
+                $cHref = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'logout');
+                $cTitle = 'Logout ' . $cUserName;
+            }
+
             $data['right']['logout'] = array(
-                'title' => 'Logout ' . $cUserName,
-                'tooltip' => $cUserType,
-                'href' => $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'logout'), // top level list
-                'icon' => $this->Idfix->GetIconHTML('user'),
+                'title' => $cTitle,
+                'href' => $cHref,
+                'icon' => $cIcon,
+                'tooltip' => $cTooltip,
                 );
 
         }
     }
+
     /**
-     * Postprocess the output and only show login form
+     * Render the login form
      * 
      * @param mixed $output
      * @return void
      */
-    public function Events3IdfixRender(&$output)
+    public function Events3IdfixActionLoginform(&$output)
     {
-        if (!$this->IsLoggedIn()) {
-            // Render Application Info panel
-            $aTemplateVars = array(
-                'title' => isset($this->Idfix->aConfig['title']) ? $this->Idfix->aConfig['title'] : '',
-                'description' => isset($this->Idfix->aConfig['description']) ? $this->Idfix->aConfig['description'] : '',
-                'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
-                'env' => $this->IdfixOtap->GetEnvironmentAsText(),
-                );
-            $app = $this->Idfix->RenderTemplate('LoginAppInfo', $aTemplateVars);
+        // Render Application Info panel
+        $aTemplateVars = array(
+            'title' => isset($this->Idfix->aConfig['title']) ? $this->Idfix->aConfig['title'] :
+                '',
+            'description' => isset($this->Idfix->aConfig['description']) ? $this->Idfix->
+                aConfig['description'] : '',
+            'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
+            'env' => $this->IdfixOtap->GetEnvironmentAsText(),
+            );
+        $app = $this->Idfix->RenderTemplate('LoginAppInfo', $aTemplateVars);
 
-            // Render login form
-            $aTemplateVars = array(
-                'cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'login'),
-                'bGoodLogin' => $this->bGoodLogin,
-                );
-            $form = $this->Idfix->RenderTemplate('LoginForm', $aTemplateVars);
+        // Render login form
+        $aTemplateVars = array(
+            'cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'login'),
+            'bGoodLogin' => $this->bGoodLogin,
+            );
+        $form = $this->Idfix->RenderTemplate('LoginForm', $aTemplateVars);
 
-            // Render Password form
-            $aTemplateVars = array('cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'resend'), );
-            $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
+        // Render Password form
+        $aTemplateVars = array('cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0,
+                'resend'), );
+        $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
 
-            // Render the advanced tab with a list of configurations to choose from
-            $advanced = 'No other configurations found on this server.';
-            if ($this->IdfixOtap) {
-                $aList = $this->IdfixOtap->GetActiveConfigList();
-                $advanced = $this->Idfix->RenderTemplate('LoginAdvanced', compact('aList'));
-            }
-
-            // Render the tabular container
-            $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app', 'advanced'));
+        // Render the advanced tab with a list of configurations to choose from
+        $advanced = 'No other configurations found on this server.';
+        if ($this->IdfixOtap) {
+            $aList = $this->IdfixOtap->GetActiveConfigList();
+            $advanced = $this->Idfix->RenderTemplate('LoginAdvanced', compact('aList'));
         }
+
+        // Render the tabular container
+        $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password',
+            'app', 'advanced'));
     }
+
 
     public function Events3IdfixActionResend()
     {
@@ -95,9 +142,11 @@ class IdfixUser extends Events3Module
                 // And save it, it is automagically hashed :-)
                 $this->IdfixStorage->SaveRecord($aUser);
                 // Create a nice link to the loginpage
-                $cLink = $this->Idfix->GetUrl('','','','','','login', array('email'=>$aUser['Name'], 'password'=> $cNewPassword));
+                $cLink = $this->Idfix->GetUrl('', '', '', '', '', 'loginform', array('email' => $aUser['Name'],
+                        'password' => $cNewPassword));
                 // Get the body for the mail
-                $cMailBody = $this->Idfix->RenderTemplate('MailForgotPassword', compact('aUser', 'cNewPassword', 'cLink')); // Ok, let's just send it..
+                $cMailBody = $this->Idfix->RenderTemplate('MailForgotPassword', compact('aUser',
+                    'cNewPassword', 'cLink')); // Ok, let's just send it..
                 // Use default subject and configuration
                 $this->IdfixMail->Mail($cMailBody, null, $aUser);
             }
@@ -139,6 +188,9 @@ class IdfixUser extends Events3Module
     public function Events3IdfixActionLogout()
     {
         unset($_SESSION[__class__]);
+        $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
+        $this->Idfix->Redirect($cUrl);
+        
     }
 
     /**
@@ -164,8 +216,7 @@ class IdfixUser extends Events3Module
             if ($aUser['SubTypeID'] == 2) {
                 // An OTAP administrator
                 $cKey = $cConfigName;
-            }
-            elseif ($aUser['SubTypeID'] == 3) {
+            } elseif ($aUser['SubTypeID'] == 3) {
                 // Idfix SuperUser
                 $cKey = '_idfix';
             }
@@ -177,11 +228,9 @@ class IdfixUser extends Events3Module
         // Do we have a superuser???? Always OK!!
         if (isset($_SESSION[__class__]['_idfix'])) {
             $aUser = $_SESSION[__class__]['_idfix'];
-        }
-        elseif (isset($_SESSION[__class__][$cConfigName])) {
+        } elseif (isset($_SESSION[__class__][$cConfigName])) {
             $aUser = $_SESSION[__class__][$cConfigName];
-        }
-        elseif (isset($_SESSION[__class__][$cTableSpace])) {
+        } elseif (isset($_SESSION[__class__][$cTableSpace])) {
             $aUser = $_SESSION[__class__][$cTableSpace];
         }
 
@@ -197,11 +246,9 @@ class IdfixUser extends Events3Module
 
         if ($this->IsSuperUser()) {
             $bAccess = true;
-        }
-        elseif ($this->IsAdministrator()) {
+        } elseif ($this->IsAdministrator()) {
             $bAccess = true;
-        }
-        elseif ($aUser = $this->GetSetUserObject()) {
+        } elseif ($aUser = $this->GetSetUserObject()) {
             $bAccess = !(stripos($aUser['Text_1'], $cPermission) === false);
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
@@ -241,6 +288,13 @@ class IdfixUser extends Events3Module
         }
         return false;
     }
+    public function IsAnonymous()
+    {
+        if ($aUser = $this->GetSetUserObject()) {
+            return ($aUser['SubTypeID'] == 0);
+        }
+        return false;
+    }
 
     /**
      * Configuration settings that can be overruled
@@ -254,7 +308,8 @@ class IdfixUser extends Events3Module
     public function Events3ConfigInit(&$aConfig)
     {
         $cKey = 'IdfixUserDefault_SU_Email';
-        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 'wim.tol.tfg@gmail.com';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] :
+            'wim.tol.tfg@gmail.com';
         $this->$cKey = $aConfig[$cKey];
 
         $cKey = 'IdfixUserDefault_SU_Password';
@@ -287,6 +342,12 @@ class IdfixUser extends Events3Module
      */
     public function Events3IdfixSaveRecord(&$aFields)
     {
+        // Only allow users to create other users with
+        // the same type or lower
+        // So administrators CANNOT create superusers
+        // default is a normal user
+        $iMaxUserTypeAllowed = 1; // Normal user
+        
         // Store the userID in the record
         $aUser = $this->GetSetUserObject();
         if (!is_null($aUser)) {
@@ -299,7 +360,14 @@ class IdfixUser extends Events3Module
             if (!isset($aFields['UidCreate'])) {
                 $aFields['UidCreate'] = $iUserId;
             }
+            $iMaxUserTypeAllowed = (integer) $aUser['SubTypeID'];
+        }
 
+        // Check the usertype
+        if( $aFields['SubTypeID'] > $iMaxUserTypeAllowed) {
+            $aFields['SubTypeID'] = $iMaxUserTypeAllowed;
+            // Inform the user
+            $this->Idfix->FlashMessage('Usermode changed. You are not allowed to create that type of user.', 'warning');
         }
 
         // Specific postprocessing for creating the hashvalue from the password
@@ -356,7 +424,7 @@ class IdfixUser extends Events3Module
 
         return array( // First table: user
                 '__users' => array(
-                'title' => 'Users',
+                'title' => 'User',
                 'description' => 'Accounts to log into the Idfix system for a specific configuration',
                 'id' => '9999',
                 'icon' => 'user',
@@ -386,6 +454,7 @@ class IdfixUser extends Events3Module
                         'required' => 'required',
                         'cols' => '8',
                         'options' => array(
+                            0 => '<strong>Anonymous Access</strong> Login not needed',
                             1 => '<strong>Normal User</strong> Login to just one OTAP environment',
                             2 => '<strong>OTAP Administrator</strong> Administer full OTAP environment',
                             3 => '<strong>Idfix Global Superuser</strong> Administer all <em>Idfix</em> configurations',
@@ -493,8 +562,10 @@ class IdfixUser extends Events3Module
                     $field_name_user = $field_config['title'];
                     $field_name_user = "<em><strong>{$field_name_user}</strong></em>";
                     if (isset($field_config['permissions'])) {
-                        $return[$table_name . '_' . $field_name . '_v'] = $table_name_user . 'View field ' . $field_name_user;
-                        $return[$table_name . '_' . $field_name . '_e'] = $table_name_user . 'Edit field ' . $field_name_user;
+                        $return[$table_name . '_' . $field_name . '_v'] = $table_name_user .
+                            'View field ' . $field_name_user;
+                        $return[$table_name . '_' . $field_name . '_e'] = $table_name_user .
+                            'Edit field ' . $field_name_user;
                         if ($field_config['type'] == 'file') {
                             // Because we are using the public file system, viewing the file means also knowing the url and
                             // the possibility of accessing it.

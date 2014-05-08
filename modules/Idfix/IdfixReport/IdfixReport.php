@@ -103,9 +103,11 @@ class IdfixReport extends Events3Module
     private function BuildReport()
     {
         $aReportPanels = array();
-        $aReportConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['report'];
-        foreach ($aReportConfig as $cReportIdentifier => $aReportFieldConfig) {
-            $aReportPanels[] = $this->BuildReportPanel($aReportFieldConfig, $cReportIdentifier, $this->Idfix->cTableName);
+        if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['report'])) {
+            $aReportConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['report'];
+            foreach ($aReportConfig as $cReportIdentifier => $aReportFieldConfig) {
+                $aReportPanels[] = $this->BuildReportPanel($aReportFieldConfig, $cReportIdentifier, $this->Idfix->cTableName);
+            }
         }
         return $this->Idfix->RenderTemplate('Report', compact('aReportPanels'));
     }

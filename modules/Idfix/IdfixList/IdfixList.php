@@ -174,7 +174,9 @@ class IdfixList extends Events3Module
                 // Default fieldname and Columnname
                 if (is_numeric($cFieldName)) {
                     $cFieldName = $cColumnName;
-                    $cColumnName = (string )@$aTableConfig['fields'][$cFieldName]['title'];
+                    if (isset($aTableConfig['fields'][$cFieldName]['title'])) {
+                       $cColumnName = $aTableConfig['fields'][$cFieldName]['title'];    
+                    }
                 }
                 
                 // If this field is not in the fileslist, skip it.....

@@ -1,8 +1,6 @@
 <?php
 
-class IdfixStorage extends Events3Module
-{
-
+class IdfixStorage extends Events3Module {
 
     /**
      * Event handler that is fired each time a query is send to the database
@@ -11,7 +9,7 @@ class IdfixStorage extends Events3Module
      * @return void
      */
     public function Events3ProfileQuery($aPack) {
-      $this->IdfixDebug->Debug(__method__, $aPack);    
+        $this->IdfixDebug->Debug(__method__, $aPack);
     }
 
     /**
@@ -25,51 +23,46 @@ class IdfixStorage extends Events3Module
         $sql = "DELETE FROM {$cTableSpace} WHERE MainID = " . intval($iMainId);
         return (integer) $this->Database->Query($sql);
     }
+
     /**
      * Save a full record, update if needed
      * 
      * @param mixed $aFields
      * @return
      */
-    public function SaveRecord($aFields)
-    {
+    public function SaveRecord($aFields) {
+        $this->IdfixDebug->Debug(__FUNCTION__, $aFields);
         $cTableSpace = $this->GetTableSpaceName();
         $aFields['TSChange'] = time();
-        
+
         // Call a hook for postprocessing the values
         $this->Idfix->Event('SaveRecord', $aFields);
-        
+
         // Store all the NON-sql columns in the data field
         $aFields = $this->SavePostProcess($aFields);
 
         // Trigger the correcte event
         $this->Idfix->Event('SaveRecord', $aFields);
 
-        if (isset($aFields['MainID']) and $aFields['MainID'])
-        {
-            $iRetval = (integer)$aFields['MainID'];
+        if (isset($aFields['MainID']) and $aFields['MainID']) {
+            $iRetval = (integer) $aFields['MainID'];
             unset($aFields['MainID']);
 
             $this->Database->Update($cTableSpace, $aFields, 'MainID', $iRetval);
-
-        } else
-        {
+        } else {
             $aFields['TSCreate'] = time();
             $iRetval = $this->Database->Insert($cTableSpace, $aFields);
-
         }
         return $iRetval;
-
     }
-    public function LoadRecord($iMainId, $bCache = true)
-    {
+
+    public function LoadRecord($iMainId, $bCache = true) {
 
         $cConfigName = $this->Idfix->cConfigName;
 
         // Static caching
         static $aStaticCache = array();
-        if ($bCache and isset($aStaticCache[$cConfigName][$iMainId]))
-        {
+        if ($bCache and isset($aStaticCache[$cConfigName][$iMainId])) {
             return $aStaticCache[$cConfigName][$iMainId];
         }
 
@@ -77,7 +70,7 @@ class IdfixStorage extends Events3Module
         // Get tablespace and fetch data
         $cTableSpace = $this->GetTableSpaceName();
         $sql = "SELECT * FROM {$cTableSpace} WHERE MainID = " . intval($iMainId);
-        
+
         $aDataRow = $this->Database->DataQuerySingleRow($sql);
 
         $aDataRow = $this->LoadPostProcess($aDataRow);
@@ -88,62 +81,52 @@ class IdfixStorage extends Events3Module
         // Store static cached data
         $aStaticCache[$cConfigName][$iMainId] = $aDataRow;
         return $aDataRow;
-
     }
-    public function LoadAllRecords($iTypeId = null, $iParentId = 0, $cOrder = 'Weight', $aWhere = array(), $cLimit = '')
-    {
+
+    public function LoadAllRecords($iTypeId = null, $iParentId = 0, $cOrder = 'Weight', $aWhere = array(), $cLimit = '') {
         $aReturn = array();
         $cTableSpace = $this->GetTableSpaceName();
         $cSql = "SELECT * FROM {$cTableSpace}";
 
         // Build dynamic where clauses
-        if (is_string($iParentId) and $iParentId)
-        {
+        if (is_string($iParentId) and $iParentId) {
             $aWhere[] = "ParentID IN ( {$iParentId} )";
-        } elseif (is_numeric($iParentId))
-        {
+        } elseif (is_numeric($iParentId)) {
             $aWhere[] = 'ParentID = ' . $iParentId;
         }
 
-        if (!is_NULL($iTypeId))
-        {
+        if (!is_NULL($iTypeId)) {
             $aWhere[] = 'TypeID = ' . $iTypeId;
         }
 
 
         $cWhereClause = implode(' AND ', $aWhere);
-        if ($cWhereClause)
-        {
+        if ($cWhereClause) {
             $cSql .= ' WHERE ' . $cWhereClause;
         }
 
-        if ($cOrder)
-        {
+        if ($cOrder) {
             $cSql .= ' ORDER BY ' . $cOrder;
         }
 
-        if ($cLimit)
-        {
+        if ($cLimit) {
             $cSql .= ' LIMIT ' . $cLimit;
         }
 
         $aData = $this->Database->DataQuery($cSql);
 
         // Postprocess the rows
-        foreach ($aData as $iRowID => $aRow)
-        {
+        foreach ($aData as $iRowID => $aRow) {
             $iMainId = $aRow['MainID'];
             $aReturn[$iMainId] = $this->LoadPostProcess($aRow);
         }
         return $aReturn;
     }
 
-    public function CountRecords($iTypeID, $iParentID = null)
-    {
+    public function CountRecords($iTypeID, $iParentID = null) {
         $cTableSpace = $this->GetTableSpaceName();
         $cSql = "SELECT count(*) FROM {$cTableSpace} WHERE TypeID = {$iTypeID}";
-        if (!is_null($iParentID))
-        {
+        if (!is_null($iParentID)) {
             $cSql .= " AND ParentID = {$iParentID}";
         }
 
@@ -157,32 +140,29 @@ class IdfixStorage extends Events3Module
      * 
      * @return void
      */
-    public function check()
-    {
+    public function check($cTable = '') {
         $bIdFixIsThere = (count($this->Database->ShowTables('idfix')) == 1);
 
-        if (!$bIdFixIsThere)
-        {
+        if (!$bIdFixIsThere) {
             $cSql = $this->GetIdfixTableSql();
 
             $this->Database->Query($cSql);
 
             //echo 'idfix not there';
-
         }
         // Than check the configuration table
-        $cTable = $this->GetTableSpaceName();
+        if (!$cTable) {
+            $cTable = $this->GetTableSpaceName();
+        }
 
         $bTableIsThere = (count($this->Database->ShowTables($cTable)) == 1);
 
-        if (!$bTableIsThere)
-        {
+        if (!$bTableIsThere) {
             $this->Database->Query("CREATE TABLE {$cTable} LIKE idfix");
             // Event is now only used by the User module to create a default SuperUser
             $this->Idfix->Event('CreateTable', $cTable);
         }
     }
-
 
     /**
      * Return the name of the table that is used for storage
@@ -190,8 +170,7 @@ class IdfixStorage extends Events3Module
      * 
      * @return
      */
-    public function GetTableSpaceName()
-    {
+    public function GetTableSpaceName() {
         return $this->Idfix->aConfig['tablespace'];
     }
 
@@ -200,11 +179,9 @@ class IdfixStorage extends Events3Module
      * 
      * @return
      */
-    public function GetIdfixColumns()
-    {
+    public function GetIdfixColumns() {
         static $cache = null;
-        if (!is_null($cache))
-        {
+        if (!is_null($cache)) {
             return $cache;
         }
 
@@ -212,7 +189,7 @@ class IdfixStorage extends Events3Module
 
         return $cache;
     }
-    
+
     /**
      * Show all information about the columns from the current tablespace
      * 
@@ -221,30 +198,26 @@ class IdfixStorage extends Events3Module
     public function GetTableSpaceColumns() {
         $cTableName = $this->GetTableSpaceName();
         static $cache = array();
-        if (isset($cache[$cTableName]))
-        {
+        if (isset($cache[$cTableName])) {
             return $cache[$cTableName];
         }
 
         $aColumnList = $this->Database->ShowColumns($cTableName);
-        if( count($aColumnList) <= 0) {
+        if (count($aColumnList) <= 0) {
             $aColumnList = $this->GetIdfixColumns();
         }
 
         $cache[$cTableName] = $aColumnList;
 
         return $cache[$cTableName];
-        
     }
-
 
     /**
      * Get the basic sql code to create an idfix table
      * 
      * @return string SQL code
      */
-    private function GetIdfixTableSql()
-    {
+    private function GetIdfixTableSql() {
         return "CREATE TABLE IF NOT EXISTS `idfix` (
                   `MainID` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
                   `TypeID` int(10) unsigned DEFAULT NULL,
@@ -282,9 +255,8 @@ class IdfixStorage extends Events3Module
      * @param mixed $aRow
      * @return
      */
-    private function LoadPostProcess($aRow)
-    {
-        $aProps = (array )unserialize($aRow['data']);
+    private function LoadPostProcess($aRow) {
+        $aProps = (array) unserialize($aRow['data']);
         $aRow += $aProps;
         unset($aRow['data']);
         // Add reference to the current configuaration
@@ -300,8 +272,7 @@ class IdfixStorage extends Events3Module
      * @param array $aRow Record to store in the idfix table
      * @return array postprocessed row
      */
-    private function SavePostProcess($aRow)
-    {
+    private function SavePostProcess($aRow) {
         $cTableSpace = $this->GetTableSpaceName();
 
         $aFieldList = $this->Database->ShowColumns($cTableSpace);
@@ -311,10 +282,8 @@ class IdfixStorage extends Events3Module
         // Check all fields. If it's a real field, save it.
         // If it's not a real field add it to the property list
         // and remove it from the fieldlist
-        foreach ($aRow as $cFieldName => $xFieldValue)
-        {
-            if (!isset($aFieldList[$cFieldName]))
-            {
+        foreach ($aRow as $cFieldName => $xFieldValue) {
+            if (!isset($aFieldList[$cFieldName])) {
                 // It's a property!!!!
                 $aProps[$cFieldName] = $xFieldValue;
                 unset($aRow[$cFieldName]);
@@ -324,6 +293,5 @@ class IdfixStorage extends Events3Module
         $aRow['data'] = serialize($aProps);
         return $aRow;
     }
-
 
 }

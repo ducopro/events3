@@ -8,6 +8,7 @@
     <?php print $fileinfo;?><br />
     <?php print $password;?><br />
     <?php print $edit;?><br />
+    <?php print $backup;?><br />
     </div>
   </div>
 </div>

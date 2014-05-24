@@ -94,7 +94,7 @@ class IdfixFilter extends Events3Module
          *      -filter=shared
          *  -table2
          *      -filter=unique
-         */    
+         */
         $cSessionKey = __method__ . $this->Idfix->cTableName . $this->Idfix->iParent;
 
         // Default value for the list, or reset it.
@@ -125,6 +125,8 @@ class IdfixFilter extends Events3Module
         if (isset($this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['search'][$cFieldName])) {
             // Field Configuratiom
             $aSearchConfig = $this->Idfix->aConfig['tables'][$this->Idfix->cTableName]['search'][$cFieldName];
+            // Do some postprocessing
+            $aSearchConfig = $this->Idfix->PostprocesConfig($aSearchConfig);
             // Trigger the standard event for an editfield
             $this->Idfix->Event('EditField', $aSearchConfig);
             // And build the templatevariables
@@ -236,21 +238,22 @@ class IdfixFilter extends Events3Module
 
     }
 
-    function Events3IdfixListDataSet(&$aData) {
+    function Events3IdfixListDataSet(&$aData)
+    {
         // get a reference to the where clauses
         $aWhere = &$aData['where'];
         $aFilters = $this->FilterList();
-        foreach($aFilters as $aSearchConfig) {
+        foreach ($aFilters as $aSearchConfig) {
             $cSqlTemplate = $aSearchConfig['sql'];
-            $cValue = $this->Database->quote( $aSearchConfig['__SaveValue']);
+            $cValue = $this->Database->quote($aSearchConfig['__SaveValue']);
             // Remove the single quotes, it is set in the template
-            $cValue = trim($cValue,"'"); 
+            $cValue = trim($cValue, "'");
             // Add the value to the template
             $cSql = str_ireplace('%value', $cValue, $cSqlTemplate);
             // And add it to the where clauses
             $aWhere[] = $cSql;
         }
-        
+
     }
 
 }

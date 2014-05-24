@@ -1,10 +1,6 @@
 ToDo
-
-
--add rich text editor - debug display and save values
 - remove file uploads 
 - copy file uploads
-- Add Information system, sum/average/count group by(typeid/ other field)
 
 Done
 - Collapsible groups
@@ -18,3 +14,17 @@ Done
 - Option lists from Idfix elements (From within trail!!)
 - After logging in, show relevant page.
 - Add information page for table statistics
+- add rich text editor - debug display and save values
+- Add Information system, sum/average/count group by(typeid/ other field)
+
+**************************************************
+ToFix (Known bugs)
+
+- Backup filename to easy, add checksum.
+- PharData class in TRY block, good error handling please
+
+ToTest
+- Validation messages add up. Reset message array.
+- Display of special characters mangled
+
+Fixed

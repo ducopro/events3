@@ -42,35 +42,50 @@
  * - Creating the directory structure 
  * - Always adding the right environment to the GET-string of the url
  * 
+ * *************************************
+ * *** B A C K U P   system          ***
+ * *************************************
+ * The backup system is integrated in the OTAP module
+ * because of the dependencies on the functionality in this module.
+ * To keep the code as clean as possible the backup code is present
+ * in it's own section in the module file.
+ * Additionally there is an include file for all the routines actually
+ * needed for backing up and restoring to the filesystem and database.
+ * 
  */
+class IdfixOtap extends Events3Module {
 
-class IdfixOtap extends Events3Module
-{
+    // Backup actions
+    const BACKUP_ACTION_NEW = 1;
+    const BACKUP_ACTION_RESTORE = 2;
+    const BACKUP_ACTION_DELETE = 3;
+    const BACKUP_ACTION_UPLOAD = 4;
     // Permissions
     const PERM_ACCESS_CONTROLPANEL = 'otap_access';
     const PERM_DELETE_CONFIG = 'otap_del_config';
-
     // List of environment strings
     const ENV_DEV = 'dev';
     const ENV_TEST = 'test';
     const ENV_ACC = 'accept';
     const ENV_PROD = 'prod';
+
     // List of environments in correct order
     private $aEnvList = array(
-        self::ENV_DEV => 1,
-        self::ENV_TEST => 2,
-        self::ENV_ACC => 3,
-        self::ENV_PROD => 4,
-        );
+       self::ENV_DEV => 1,
+       self::ENV_TEST => 2,
+       self::ENV_ACC => 3,
+       self::ENV_PROD => 4,
+    );
     private $aEnvDescription = array(
-        self::ENV_DEV => 'Development',
-        self::ENV_TEST => 'Test',
-        self::ENV_ACC => 'Acceptance',
-        self::ENV_PROD => 'Production',
-        );
+       self::ENV_DEV => 'Development',
+       self::ENV_TEST => 'Test',
+       self::ENV_ACC => 'Acceptance',
+       self::ENV_PROD => 'Production',
+    );
 
     // The GET variable to look for
     const GET_OTAP = 'otap';
+
     // Current and default environment if nothing is found in URL
     private $cCurrentEnvironment = IdfixOtap::ENV_PROD;
 
@@ -80,20 +95,19 @@ class IdfixOtap extends Events3Module
      * @param mixed $cEnv
      * @return
      */
-    public function GetEnvironmentAsText($cEnv = null)
-    {
+    public function GetEnvironmentAsText($cEnv = null) {
         if (is_null($cEnv)) {
             $cEnv = $this->cCurrentEnvironment;
         }
         return $this->aEnvDescription[$cEnv];
     }
+
     /**
      * Read the correct environment from the url
      * 
      * @return void
      */
-    public function __construct()
-    {
+    public function __construct() {
         parent::__construct();
         // Is there an OTAP direction in the url??
         if (isset($_GET[IdfixOtap::GET_OTAP])) {
@@ -107,8 +121,7 @@ class IdfixOtap extends Events3Module
         }
     }
 
-    public function Events3IdfixGetPermissions(&$aPerm)
-    {
+    public function Events3IdfixGetPermissions(&$aPerm) {
         $aPerm[self::PERM_ACCESS_CONTROLPANEL] = 'Access DTAP Controlpanel';
         $aPerm[self::PERM_DELETE_CONFIG] = 'Delete Idfix Configuration';
     }
@@ -122,8 +135,7 @@ class IdfixOtap extends Events3Module
      * 
      * @return
      */
-    public function GetActiveConfigList()
-    {
+    public function GetActiveConfigList() {
         $aReturn = array();
 
         $aModuleList = glob($this->GetConfigDir(self::ENV_DEV) . '/*.idfix');
@@ -142,11 +154,11 @@ class IdfixOtap extends Events3Module
                 $bEnvActive = (($this->cCurrentEnvironment == $cEnv) and $bConfigActive);
                 $bConfigFilePresent = file_exists($cConfigFileName);
                 $aEnv[$cEnv] = array(
-                    'title' => $this->aEnvDescription[$cEnv],
-                    'active' => $bEnvActive,
-                    'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'login', array('otap' => $cEnv)),
-                    'found' => $bConfigFilePresent,
-                    );
+                   'title' => $this->aEnvDescription[$cEnv],
+                   'active' => $bEnvActive,
+                   'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'login', array('otap' => $cEnv)),
+                   'found' => $bConfigFilePresent,
+                );
 
                 // Now check if we need to load this config to determine the title, description and icon
                 if (!$cConfigDescription and $bConfigFilePresent) {
@@ -156,23 +168,20 @@ class IdfixOtap extends Events3Module
                     $cConfigDescription = (isset($aConfig['description']) ? $aConfig['description'] : '');
                     $cConfigIcon = $this->Idfix->GetIconHTML($aConfig);
                 }
-
             }
 
             $aReturn[$cConfigName] = array(
-                'env' => $aEnv,
-                'active' => $bConfigActive,
-                'title' => $cConfigTitle,
-                'description' => $cConfigDescription,
-                'icon' => $cConfigIcon,
-                );
-
+               'env' => $aEnv,
+               'active' => $bConfigActive,
+               'title' => $cConfigTitle,
+               'description' => $cConfigDescription,
+               'icon' => $cConfigIcon,
+            );
         }
         return $aReturn;
     }
 
-    public function Events3IdfixNavbarAfter(&$data)
-    {
+    public function Events3IdfixNavbarAfter(&$data) {
         // If the user module is enabled and we are running in superuser mode
         // we need to show all the available configurations and links to the controlpanel
         if ($oUserModule = $this->IdfixUser) {
@@ -183,21 +192,21 @@ class IdfixOtap extends Events3Module
                     $cConfigName = basename($cFileName, '.idfix');
                     $bActive = ($this->Idfix->cConfigName == $cConfigName);
                     $aDropdown[$cConfigName] = array(
-                        'title' => $cConfigName,
-                        'href' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'Controlpanel'),
-                        'tooltip' => $cConfigName,
-                        'icon' => $bActive ? $this->Idfix->GetIconHTML('ok') : '',
-                        'active' => $bActive,
-                        'type' => 'normal',
-                        );
+                       'title' => $cConfigName,
+                       'href' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'Controlpanel'),
+                       'tooltip' => $cConfigName,
+                       'icon' => $bActive ? $this->Idfix->GetIconHTML('ok') : '',
+                       'active' => $bActive,
+                       'type' => 'normal',
+                    );
                 }
                 $data['right']['configs'] = array(
-                    'title' => 'Configurations',
-                    'tooltip' => 'Select one of the configurations and show the control panel.',
-                    'href' => '#',
-                    'dropdown' => $aDropdown,
-                    'icon' => $this->Idfix->GetIconHTML('cloud'),
-                    );
+                   'title' => 'Configurations',
+                   'tooltip' => 'Select one of the configurations and show the control panel.',
+                   'href' => '#',
+                   'dropdown' => $aDropdown,
+                   'icon' => $this->Idfix->GetIconHTML('cloud'),
+                );
             }
         }
         // Nothing else to show in production mode
@@ -206,11 +215,11 @@ class IdfixOtap extends Events3Module
         }
 
         $data['right']['environment'] = array(
-            'title' => "<span class=\"badge\">{$this->cCurrentEnvironment}</span>",
-            'tooltip' => 'Agile PHP Cloud Development Platform',
-            'href' => $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'Controlpanel'), // top level list
-            'icon' => '',
-            );
+           'title' => "<span class=\"badge\">{$this->cCurrentEnvironment}</span>",
+           'tooltip' => 'Agile PHP Cloud Development Platform',
+           'href' => $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'Controlpanel'), // top level list
+           'icon' => '',
+        );
 
         // Add the save button to the toolbar
         if ($this->Idfix->cAction == 'Editconfig') {
@@ -229,8 +238,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $aParams
      * @return void
      */
-    public function Events3IdfixGetUrl(&$aParams)
-    {
+    public function Events3IdfixGetUrl(&$aParams) {
         // Maybe we constructed the UIRL manualy
         // In that case we might have specified an OTAP environment
         if (!isset($aParams[self::GET_OTAP])) {
@@ -245,8 +253,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $aData
      * @return void
      */
-    public function Events3IdfixGetConfigFileName(&$aData)
-    {
+    public function Events3IdfixGetConfigFileName(&$aData) {
         // Set it in the return package
         $aData['cFileName'] = $this->GetConfigFileName($this->cCurrentEnvironment, $aData['cConfigName']);
         //print_r($aData);
@@ -262,16 +269,13 @@ class IdfixOtap extends Events3Module
      * @param mixed $aConfig
      * @return void
      */
-    public function Events3IdfixAfterParse(&$aConfig)
-    {
+    public function Events3IdfixAfterParse(&$aConfig) {
         $cCurrentConfig = $this->Idfix->cConfigName;
         $aConfig['tablespace'] = $this->GetTableSpaceName($this->cCurrentEnvironment, $cCurrentConfig);
         $aConfig['filespace'] = $this->GetFilesDirConfig($this->cCurrentEnvironment, $cCurrentConfig);
-
     }
 
-    public function Events3IdfixActionRemoveconfig(&$output)
-    {
+    public function Events3IdfixActionRemoveconfig(&$output) {
         if ($this->Idfix->Access(self::PERM_DELETE_CONFIG)) {
             // Everything we need :-)
             $cConfigName = $this->Idfix->cConfigName;
@@ -285,8 +289,7 @@ class IdfixOtap extends Events3Module
         $this->RedirectToControlPanel();
     }
 
-    public function Events3IdfixActionEditconfig(&$output)
-    {
+    public function Events3IdfixActionEditconfig(&$output) {
         if ($this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
             $cFile = $this->GetConfigFileName(self::ENV_DEV, $this->Idfix->cConfigName);
             $cUrl = $this->Idfix->GetUrl('', '', '', 0, 0, 'Saveconfig');
@@ -308,8 +311,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $output
      * @return void
      */
-    public function Events3IdfixActionSaveconfig(&$output)
-    {
+    public function Events3IdfixActionSaveconfig(&$output) {
         if ($this->IdfixUser and $this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
             if ($this->IdfixUser->IsSuperUser() or $this->IdfixUser->IsAdministrator()) {
                 $config_contents = trim($_POST['config']);
@@ -328,13 +330,13 @@ class IdfixOtap extends Events3Module
      * @param mixed $cConfigName
      * @return void
      */
-    private function DeleteConfigFile($cEnv, $cConfigName)
-    {
+    private function DeleteConfigFile($cEnv, $cConfigName) {
         $cConfigFile = $this->GetConfigFileName($cEnv, $cConfigName);
         if (file_exists($cConfigFile)) {
             unlink($cConfigFile);
         }
     }
+
     /**
      * Delete the upload file structure
      * 
@@ -342,8 +344,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $cConfigName
      * @return void
      */
-    private function DeleteFileSystem($cEnv, $cConfigName)
-    {
+    private function DeleteFileSystem($cEnv, $cConfigName) {
         $cFilesPath = $this->GetFilesDirConfig($cEnv, $cConfigName);
         $iCount = $this->RecurseDelete($cFilesPath);
         if ($iCount) {
@@ -357,19 +358,15 @@ class IdfixOtap extends Events3Module
      * @param mixed $cDir
      * @return void
      */
-    private function RecurseDelete($cDir)
-    {
+    private function RecurseDelete($cDir) {
         static $iCount = 0;
         foreach (glob($cDir . '/*') as $cFile) {
             if (is_dir($cFile)) {
                 $this->RecurseDelete($cFile);
-            }
-
-            else {
+            } else {
                 unlink($cFile);
                 $iCount++;
             }
-
         }
 
         if (is_dir($cDir)) {
@@ -378,8 +375,8 @@ class IdfixOtap extends Events3Module
 
         return $iCount;
     }
-    private function DeleteTableSpace($cEnv, $cConfigName)
-    {
+
+    private function DeleteTableSpace($cEnv, $cConfigName) {
         $cTablename = $this->GetTableSpaceName($cEnv, $cConfigName);
         $this->Database->Query('DROP TABLE ' . $cTablename);
     }
@@ -390,8 +387,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $output We will not use this, use a header redirect to the contyrol panel
      * @return void
      */
-    public function Events3IdfixActionDeploy(&$output)
-    {
+    public function Events3IdfixActionDeploy(&$output) {
         if (!$this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
             return;
         }
@@ -404,12 +400,11 @@ class IdfixOtap extends Events3Module
         // Are we doing up or downstream deployments?????
         // Upstream deployments should only deploy the configuration
         // downstream it is: data only!!
-        $bUpstream = (boolean)($this->aEnvList[$cSourceEnv] < $this->aEnvList[$cTargetEnv]);
+        $bUpstream = (boolean) ($this->aEnvList[$cSourceEnv] < $this->aEnvList[$cTargetEnv]);
 
         if ($bUpstream) {
             $this->CopyConfigFile($cSourceEnv, $cTargetEnv, $cConfigName);
-        }
-        else {
+        } else {
             $this->CopyFileSystem($cSourceEnv, $cTargetEnv, $cConfigName);
             $this->CopyTableSpace($cSourceEnv, $cTargetEnv, $cConfigName);
         }
@@ -418,8 +413,7 @@ class IdfixOtap extends Events3Module
         $this->RedirectToControlPanel();
     }
 
-    private function CopyConfigFile($cSourceEnv, $cTargetEnv, $cConfigName)
-    {
+    private function CopyConfigFile($cSourceEnv, $cTargetEnv, $cConfigName) {
         $cSourceConfigFile = $this->GetConfigFileName($cSourceEnv, $cConfigName);
         $cTargetConfigFile = $this->GetConfigFileName($cTargetEnv, $cConfigName);
         if (file_exists($cTargetConfigFile)) {
@@ -428,8 +422,7 @@ class IdfixOtap extends Events3Module
         copy($cSourceConfigFile, $cTargetConfigFile);
     }
 
-    private function CopyFileSystem($cSourceEnv, $cTargetEnv, $cConfigName)
-    {
+    private function CopyFileSystem($cSourceEnv, $cTargetEnv, $cConfigName) {
         // First delete the old files
         $this->DeleteFileSystem($cTargetEnv, $cConfigName);
         // Get references to the two filestructures...
@@ -437,9 +430,7 @@ class IdfixOtap extends Events3Module
         $cTargetFilesPath = $this->GetFilesDirConfig($cTargetEnv, $cConfigName);
         // And do the recursdive magic
         $this->rcopy($cSourceFilesPath, $cTargetFilesPath);
-
     }
-
 
     /**
      * Recursive function
@@ -450,8 +441,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $dest
      * @return
      */
-    private function rcopy($src, $dest)
-    {
+    private function rcopy($src, $dest) {
         // If source is not a directory stop processing
         if (!is_dir($src))
             return false;
@@ -469,16 +459,14 @@ class IdfixOtap extends Events3Module
         foreach ($i as $f) {
             if ($f->isFile()) {
                 copy($f->getRealPath(), "$dest/" . $f->getFilename());
+            } else
+            if (!$f->isDot() && $f->isDir()) {
+                $this->rcopy($f->getRealPath(), "$dest/$f");
             }
-            else
-                if (!$f->isDot() && $f->isDir()) {
-                    $this->rcopy($f->getRealPath(), "$dest/$f");
-                }
         }
     }
 
-    private function CopyTableSpace($cSourceEnv, $cTargetEnv, $cConfigName)
-    {
+    private function CopyTableSpace($cSourceEnv, $cTargetEnv, $cConfigName) {
         // First delete the old table
         $this->DeleteTableSpace($cTargetEnv, $cConfigName);
         // Get the names for source and target tables
@@ -489,12 +477,9 @@ class IdfixOtap extends Events3Module
         $this->Database->Query("INSERT INTO {$cTarget} SELECT * FROM {$cSource}");
     }
 
-    private function RedirectToControlPanel()
-    {
+    private function RedirectToControlPanel() {
         $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'Controlpanel');
         $this->Idfix->Redirect($cUrl);
-        //header('location: ' . $cUrl);
-        //exit();
     }
 
     /**
@@ -504,8 +489,7 @@ class IdfixOtap extends Events3Module
      * @param mixed $output
      * @return void
      */
-    public function Events3IdfixActionControlpanel(&$output)
-    {
+    public function Events3IdfixActionControlpanel(&$output) {
         $this->IdfixDebug->Profiler(__method__, 'start');
 
         if (!$this->Idfix->Access(self::PERM_ACCESS_CONTROLPANEL)) {
@@ -514,27 +498,26 @@ class IdfixOtap extends Events3Module
         }
 
         $aTemplateVars = array(
-            'title' => $this->Idfix->aConfig['title'],
-            'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
-            self::ENV_DEV => $this->RenderInfoPanel(self::ENV_DEV, 1),
-            self::ENV_TEST => $this->RenderInfoPanel(self::ENV_TEST, 2),
-            self::ENV_ACC => $this->RenderInfoPanel(self::ENV_ACC, 3),
-            self::ENV_PROD => $this->RenderInfoPanel(self::ENV_PROD, 4),
-            );
+           'title' => $this->Idfix->aConfig['title'],
+           'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
+           self::ENV_DEV => $this->RenderInfoPanel(self::ENV_DEV, 1),
+           self::ENV_TEST => $this->RenderInfoPanel(self::ENV_TEST, 2),
+           self::ENV_ACC => $this->RenderInfoPanel(self::ENV_ACC, 3),
+           self::ENV_PROD => $this->RenderInfoPanel(self::ENV_PROD, 4),
+        );
 
         $output = $this->RenderTemplate('ControlPanel', $aTemplateVars);
 
         $this->IdfixDebug->Profiler(__method__, 'stop');
     }
 
-    private function RenderInfoPanel($cEnv, $iVolgorde)
-    {
+    private function RenderInfoPanel($cEnv, $iVolgorde) {
         static $aEnvironmentNames = array(
-            self::ENV_DEV => array('name' => 'Development', 'class' => 'panel-info'),
-            self::ENV_TEST => array('name' => 'Test', 'class' => 'panel-info'),
-            self::ENV_ACC => array('name' => 'Acceptation', 'class' => 'panel-info'),
-            self::ENV_PROD => array('name' => 'Production', 'class' => 'panel-info'),
-            );
+           self::ENV_DEV => array('name' => 'Development', 'class' => 'panel-info'),
+           self::ENV_TEST => array('name' => 'Test', 'class' => 'panel-info'),
+           self::ENV_ACC => array('name' => 'Acceptation', 'class' => 'panel-info'),
+           self::ENV_PROD => array('name' => 'Production', 'class' => 'panel-info'),
+        );
 
         $cConfigFile = $this->GetConfigFileName($cEnv, $this->Idfix->cConfigName);
         $bConfigPresent = file_exists($cConfigFile);
@@ -576,14 +559,15 @@ class IdfixOtap extends Events3Module
             $cHref = $cEnvName;
         }
         $aTemplateVars = array(
-            'title' => $cHref,
-            'class' => $aEnvironmentNames[$cEnv]['class'],
-            'deploy' => $cDeploy,
-            'fileinfo' => $this->RenderInfoFileSystem($cEnv),
-            //'password' => $this->RenderTemplate('Password'),
-            'password' => '',
-            'edit' => $cEditButton,
-            );
+           'title' => $cHref,
+           'class' => $aEnvironmentNames[$cEnv]['class'],
+           'deploy' => $cDeploy,
+           'fileinfo' => $this->RenderInfoFileSystem($cEnv),
+           //'password' => $this->RenderTemplate('Password'),
+           'password' => '',
+           'edit' => $cEditButton,
+           'backup' => $this->GetBackupFullTemplate($cEnv, $this->Idfix->cConfigName),
+        );
 
         return $this->RenderTemplate('ControlPanelItem', $aTemplateVars);
     }
@@ -595,34 +579,33 @@ class IdfixOtap extends Events3Module
      * @param mixed $cEnvTo
      * @return void
      */
-    private function GetDeployButton($cEnvFrom, $cEnvTo, $cName)
-    {
+    private function GetDeployButton($cEnvFrom, $cEnvTo, $cName) {
         $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, $cEnvFrom, $cEnvTo, 0, 0, 'deploy');
         $cButton = "<a  onclick=\"confirm('Are you sure you want to proceed? The target configuration and/or dataset will be destroyed before deployment!')\" href=\"{$cUrl}\" class=\"btn btn-primary btn-block\" role=\"button\">{$cName}</a>";
         return $cButton;
     }
-    private function GetEditButton($cTitle)
-    {
+
+    private function GetEditButton($cTitle) {
         $cIcon = $this->Idfix->GetIconHTML('edit');
         $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'editconfig');
         $cButton = "<a  href=\"{$cUrl}\" class=\"btn btn-default btn-block\" role=\"button\">{$cIcon} {$cTitle}</a>";
         return $cButton;
     }
-    private function GetDeleteButton($cEnv)
-    {
+
+    private function GetDeleteButton($cEnv) {
         $cIcon = $this->Idfix->GetIconHTML('remove');
         $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, $cEnv, '', 0, 0, 'removeconfig');
         $cButton = "<a onclick=\"confirm('Are you sure you want to delete thuis configuration and all of it\'s data?')\" href=\"{$cUrl}\" class=\"btn btn-warning btn-block\" role=\"button\">{$cIcon} Delete Environment (config & data & files)</a>";
         return $cButton;
     }
+
     /**
      * Create a key/Value table with filesystem information
      * 
      * @param mixed $cEnv
      * @return void
      */
-    private function RenderInfoFileSystem($cEnv)
-    {
+    private function RenderInfoFileSystem($cEnv) {
 
         $cConfigName = $this->Idfix->cConfigName;
         $aTable = array();
@@ -630,37 +613,37 @@ class IdfixOtap extends Events3Module
 
         $cPublicPath = $this->ev3->PublicPath;
         $aTable[] = array(
-            'title' => 'Public File System',
-            'class' => (is_dir($cPublicPath) ? 'success' : 'danger'),
-            'info' => $cPublicPath,
-            'description' => '',
-            );
+           'title' => 'Public File System',
+           'class' => (is_dir($cPublicPath) ? 'success' : 'danger'),
+           'info' => $cPublicPath,
+           'description' => '',
+        );
 
         $cFilesPath = $this->GetFilesDirConfig($cEnv, $cConfigName);
         $aTable[] = array(
-            'title' => 'Upload directory',
-            'class' => (is_dir($cFilesPath) ? 'success' : 'danger'),
-            'info' => str_ireplace($cPublicPath, '', $cFilesPath),
-            'description' => '',
-            );
+           'title' => 'Upload directory',
+           'class' => (is_dir($cFilesPath) ? 'success' : 'danger'),
+           'info' => str_ireplace($cPublicPath, '', $cFilesPath),
+           'description' => '',
+        );
 
         $cConfigFile = $this->GetConfigFileName($cEnv, $cConfigName);
         $cHashCode = file_exists($cConfigFile) ? md5_file($cConfigFile) : 'File not found';
         $aTable[] = array(
-            'title' => 'Configuration File',
-            'class' => (file_exists($cConfigFile) ? 'success' : 'danger'),
-            'info' => str_ireplace($cPublicPath, '', $cConfigFile) . '<br />' . $cHashCode,
-            'description' => '',
-            );
+           'title' => 'Configuration File',
+           'class' => (file_exists($cConfigFile) ? 'success' : 'danger'),
+           'info' => str_ireplace($cPublicPath, '', $cConfigFile) . '<br />' . $cHashCode,
+           'description' => '',
+        );
 
         $cTableSpace = $this->GetTableSpaceName($cEnv, $cConfigName);
         $iRecords = $this->Database->CountRecords($cTableSpace);
         $aTable[] = array(
-            'title' => 'Data Table',
-            'class' => count($this->Database->ShowTables($cTableSpace)) > 0 ? 'success' : 'danger',
-            'info' => $cTableSpace . " (#{$iRecords} objects)",
-            'description' => '',
-            );
+           'title' => 'Data Table',
+           'class' => count($this->Database->ShowTables($cTableSpace)) > 0 ? 'success' : 'danger',
+           'info' => $cTableSpace . " (#{$iRecords} objects)",
+           'description' => '',
+        );
         //print_r($this->Database->ShowTables($cTableSpace));
 
         $aTemplateVars = compact('aTable');
@@ -674,13 +657,11 @@ class IdfixOtap extends Events3Module
      * @param array $aVars Template variables (@see Template Module)
      * @return string Rendered template
      */
-    private function RenderTemplate($cTemplateName, $aVars = array())
-    {
+    private function RenderTemplate($cTemplateName, $aVars = array()) {
         $cTemplateFile = dirname(__file__) . "/templates/{$cTemplateName}.php";
         $return = $this->Template->Render($cTemplateFile, $aVars);
         return $return;
     }
-
 
     /**
      * Create the full directory structure for
@@ -690,13 +671,12 @@ class IdfixOtap extends Events3Module
      * 
      * @return void
      */
-    public function SetupDirectoryStructure()
-    {
+    public function SetupDirectoryStructure() {
         $aEnvironments = array(
-            self::ENV_ACC,
-            self::ENV_DEV,
-            self::ENV_PROD,
-            self::ENV_TEST);
+           self::ENV_ACC,
+           self::ENV_DEV,
+           self::ENV_PROD,
+           self::ENV_TEST);
 
         $cDir2Check = $this->GetBaseDir();
         $this->CheckOrCreateDirectory($cDir2Check);
@@ -706,42 +686,220 @@ class IdfixOtap extends Events3Module
             $this->CheckOrCreateDirectory($cDirEnv);
             $this->CheckOrCreateDirectory($cDirEnv . '/config');
             $this->CheckOrCreateDirectory($cDirEnv . '/files');
+            $this->CheckOrCreateDirectory($cDirEnv . '/backup');
         }
     }
-    private function CheckOrCreateDirectory($cDir)
-    {
+
+    private function CheckOrCreateDirectory($cDir) {
         if (!is_dir($cDir)) {
             mkdir($cDir);
         }
     }
 
-    private function GetBaseDir()
-    {
+    private function GetBaseDir() {
         return $this->ev3->PublicPath . '/otap';
     }
-    private function GetConfigDir($cEnv = null)
-    {
+
+    private function GetConfigDir($cEnv = null) {
         $cEnv = ($cEnv) ? $cEnv : $this->cCurrentEnvironment;
         return $this->GetBaseDir() . '/' . $cEnv . '/config';
     }
-    private function GetFilesDir($cEnv = null)
-    {
+
+    private function GetFilesDir($cEnv = null) {
         $cEnv = ($cEnv) ? $cEnv : $this->cCurrentEnvironment;
         return $this->GetBaseDir() . '/' . $cEnv . '/files';
     }
-    private function GetTableSpaceName($cEnv, $cConfigName)
-    {
+
+    private function GetTableSpaceName($cEnv, $cConfigName) {
         $cConfigName = $this->Idfix->ValidIdentifier($cConfigName);
         return 'idfix_otap_' . $cEnv . '_' . $cConfigName;
     }
-    private function GetConfigFileName($cEnv, $cConfigName)
-    {
+
+    private function GetConfigFileName($cEnv, $cConfigName) {
         $cConfigName = $this->Idfix->ValidIdentifier($cConfigName);
         return $this->GetConfigDir($cEnv) . '/' . $cConfigName . '.idfix';
     }
-    private function GetFilesDirConfig($cEnv, $cConfigName)
-    {
+
+    private function GetFilesDirConfig($cEnv, $cConfigName) {
         $cConfigName = $this->Idfix->ValidIdentifier($cConfigName);
         return $this->GetFilesDir($cEnv) . '/' . $cConfigName;
     }
+
+    /*     * **************************
+      B A C K U P    S E C T I O N
+     * *************************** */
+
+    private function GetBackupDir($cEnv = null) {
+        $cEnv = ($cEnv) ? $cEnv : $this->cCurrentEnvironment;
+        return $this->GetBaseDir() . '/' . $cEnv . '/backup';
+    }
+
+    private function GetBackupDirConfig($cEnv, $cConfigName) {
+        $cConfigName = $this->Idfix->ValidIdentifier($cConfigName);
+        return $this->GetBackupDir($cEnv) . '/' . $cConfigName;
+    }
+
+    private function GetBackupDirFiles($cEnv, $cConfigName) {
+        $cDirname = $this->GetBackupDirConfig($cEnv, $cConfigName);
+        $aFiles = (array) glob($cDirname . '/*.*');
+        rsort($aFiles);
+        return $aFiles;
+    }
+
+    private function GetBackupDirFilesDisplay($cEnv, $cConfigName) {
+        $cBasePath = $this->ev3->BasePath;
+        $aFiles = $this->GetBackupDirFiles($cEnv, $cConfigName);
+        $aFilesAsDisplay = array();
+        foreach ($aFiles as $cFileName) {
+
+            $cRelativeFilename = str_ireplace($cBasePath, '', $cFileName);
+            $cRelativeFilename = trim($cRelativeFilename, '/');
+            $cDownUrl = $this->ev3->BasePathUrl . '/' . $cRelativeFilename;
+
+            $aTemplateVars = array(
+               'name' => date('l d F Y (H:i)', (integer) basename($cFileName)),
+               'file' => $cFileName,
+               'delete' => $this->GetBackupUrl($cEnv, $cFileName, self::BACKUP_ACTION_DELETE),
+               'restore' => $this->GetBackupUrl($cEnv, $cFileName, self::BACKUP_ACTION_RESTORE),
+               'download' => $cDownUrl,
+               'size' => (integer) (filesize($cFileName) / 1024) . ' kb.',
+               'delete_icon' => $this->Idfix->GetIconHTML('remove'),
+               'restore_icon' => $this->Idfix->GetIconHTML('open'),
+               'download_icon' => $this->Idfix->GetIconHTML('save'),
+            );
+            $aFilesAsDisplay[] = $this->RenderTemplate('ControlPanelItemBackupListItem', $aTemplateVars);
+        }
+        $aTemplateVars['list'] = $aFilesAsDisplay;
+        return $this->RenderTemplate('ControlPanelItemBackupList', $aTemplateVars);
+    }
+
+    private function GetBackupActions($cEnv, $cConfigName) {
+        $aTemplateVars = array(
+           'new' => $this->GetBackupUrl($cEnv, '', self::BACKUP_ACTION_NEW),
+           'icon_new' => $this->Idfix->GetIconHTML('floppy-save'),
+           'upload' => $this->GetBackupUrl($cEnv, '', self::BACKUP_ACTION_UPLOAD),
+           'icon_upload' => $this->Idfix->GetIconHTML('open'),
+        );
+        return $this->RenderTemplate('ControlPanelItemBackupAction', $aTemplateVars);
+    }
+
+    private function GetBackupFullTemplate($cEnv, $cConfigName) {
+        $aTemplateVars = array(
+           'action' => $this->GetBackupActions($cEnv, $cConfigName),
+           'list' => $this->GetBackupDirFilesDisplay($cEnv, $cConfigName),
+        );
+        return $this->RenderTemplate('ControlPanelItemBackup', $aTemplateVars);
+    }
+
+    private function GetBackupUrl($cEnv, $cFileName, $iAction) {
+        return $this->Idfix->GetUrl('', $cEnv, basename($cFileName), $iAction, null, 'backup');
+    }
+
+    public function Events3IdfixActionBackup(&$output) {
+        $cEnv = $this->Idfix->cTableName;
+        $iAction = $this->Idfix->iObject;
+        $cFileName = $this->Idfix->cFieldName;
+        $cFullFileName = $this->GetBackupDirConfig($cEnv, $this->Idfix->cConfigName) . '/' . $cFileName;
+
+        if (self::BACKUP_ACTION_DELETE == $iAction) {
+            $this->BackupActionDelete($cFullFileName);
+        } elseif (self::BACKUP_ACTION_RESTORE == $iAction) {
+            $this->BackupActionRestore($cFullFileName, $cEnv, $this->Idfix->cConfigName);
+        } elseif (self::BACKUP_ACTION_NEW == $iAction) {
+            $this->BackupActionNew($cEnv);
+        } elseif (self::BACKUP_ACTION_UPLOAD == $iAction) {
+            $this->BackupActionUpload($cEnv);
+        }
+
+
+        $this->RedirectToControlPanel();
+    }
+    
+    private function BackupActionUpload($cEnv) {
+      $cDir = $this->GetBackupDirConfig($cEnv, $this->Idfix->cConfigName);
+      if(isset($_FILES['upload']) AND !$_FILES['upload']['error']) {
+          $cTmpName = $_FILES['upload']['tmp_name'];
+          $cBackupName = $cDir . '/' . $_FILES['upload']['name'];
+          if(file_exists($cTmpName) AND !  file_exists($cBackupName)) {
+              copy($cTmpName, $cBackupName);
+          }
+      }
+      
+      //$this->IdfixDebug->Debug(__FUNCTION__, $_FILES);
+      //$this->Idfix->FlashMessage('Upload');  
+    }
+
+    private function BackupActionDelete($cFullFileName) {
+        if (file_exists($cFullFileName)) {
+            $this->Idfix->FlashMessage($cFullFileName . '<br />This file has been deleted.');
+            unlink($cFullFileName);
+        }
+    }
+
+    private function BackupActionNew($cEnv) {
+        // Create backup directory if it does not exist
+        $cDir = $this->GetBackupDirConfig($cEnv, $this->Idfix->cConfigName);
+        $this->CheckOrCreateDirectory($cDir);
+        // Check the directory we need to compress
+        $cBaseDir = $this->GetFilesDirConfig($cEnv, $this->Idfix->cConfigName);
+        $this->CheckOrCreateDirectory($cBaseDir);
+        // And create the archive name
+        $iTimeStamp = time();
+        $cCheckSum = substr( md5($iTimeStamp . __FUNCTION__ ), 0, 10);
+        $cFullFileName = $cDir . '/' . $iTimeStamp . '_' . $cCheckSum . '.tar';
+
+        // Create tabledump
+        $cDumpFile = $cBaseDir . '/dbdump.txt';
+        $cTablename = $this->GetTableSpaceName($cEnv, $this->Idfix->cConfigName);
+        $this->Database->DumpTableData($cDumpFile, $cTablename);
+
+        // Copy the configurationfile
+        $cSource = $this->GetConfigFileName($cEnv, $this->Idfix->cConfigName);
+        $cTarget = $cBaseDir . '/config.txt';
+        @copy($cSource, $cTarget);
+
+        // And create a tar.gz archive from the complete structure
+        $cPhar = new PharData($cFullFileName);
+        $cPhar->buildFromDirectory($cBaseDir);
+        $cPhar->compress(PHAR::GZ);
+        // Needed if we want to delete the original .tar file
+        unset($cPhar);
+        
+        // Destroy the temporary files
+        unlink($cFullFileName);
+        unlink($cTarget);
+        unlink($cDumpFile);
+    }
+
+    private function BackupActionRestore($cFullFileName, $cEnv, $cConfigName) {
+
+        // Delete the file system
+        $this->DeleteFileSystem($cEnv, $cConfigName);
+        $cFilesDir = $this->GetFilesDirConfig($cEnv, $cConfigName);
+        $this->CheckOrCreateDirectory($cFilesDir);
+
+        // .. and restore form tar.gz, overwriting existing files ... if any ...
+        $cPhar = new PharData($cFullFileName);
+        $cPhar->extractTo($cFilesDir);
+
+        // Now copy the configuration file
+        $cBaseConfigFile = $cFilesDir . '/config.txt';
+        if (file_exists($cBaseConfigFile)) {
+            // Remove original config file
+            $this->DeleteConfigFile($cEnv, $cConfigName);
+            $cConfigFileName = $this->GetConfigFileName($cEnv, $cConfigName);
+            copy($cBaseConfigFile, $cConfigFileName);
+            unlink($cBaseConfigFile);
+        }
+
+        // ... and restore the data
+        $cDumpFile = $cFilesDir . '/dbdump.txt';
+        if (file_exists($cDumpFile)) {
+            $cTablename = $this->GetTableSpaceName($cEnv, $cConfigName);
+            $this->IdfixStorage->check($cTablename);
+            $this->Database->RestoreTableData($cDumpFile, $cTablename);
+            unlink($cDumpFile);
+        }
+    }
+
 }

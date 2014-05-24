@@ -302,7 +302,7 @@ class IdfixFieldsInput extends IdfixFieldsBase
         $cError = '';
 
         // Only trigger the event system if really needed!!!
-        if (!is_null($this->aData['__RawPostValue'])) {
+        if ( isset($this->aData['__RawPostValue']) and !is_null($this->aData['__RawPostValue'])) {
 
             // Go through the validation routine if needed
             if (isset($this->aData['validate'])) {
@@ -387,7 +387,7 @@ class IdfixFieldsInput extends IdfixFieldsBase
 
         }
         // Second is the value from the record
-        elseif (!is_null($this->aData['__RawValue'])) {
+        elseif (isset($this->aData['__RawValue']) AND !is_null($this->aData['__RawValue'])) {
             $cValue = $this->aData['__RawValue'];
         }
         // Third is the optional default value

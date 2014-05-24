@@ -256,7 +256,7 @@ class IdfixDefault extends Events3Module
                         "type" => "virtual",
                         "title" => "{$aChildConfig['title']}",
                         "value" => "{$aChildConfig['title']}",
-                        "icon" => $aChildConfig['icon'],
+                        "icon" => isset($aChildConfig['icon']) ? $aChildConfig['icon'] : 'zoom-in',
                         "href" => "idfix/list/%_config%/{$cChildName}/%MainID%",
                         "href" => $this->oIdfix->GetUrl('%_config%', $cChildName, '', 1, '%MainID%', 'list'),
                         "class" => "btn btn-xs btn-primary",

@@ -44,7 +44,7 @@ class Events3
     public $BasePath, $BasePathUrl;
     public $PublicPath, $PublicPathUrl;
     public $PrivatePath;
-    
+
     // Configuration file
     public $ConfigFile;
     // Singleton pattern
@@ -63,15 +63,14 @@ class Events3
 
     public function __construct($bUnitTestMode = false)
     {
-        
+        $cProtocol = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https' : 'http');
         $this->bTest = $bUnitTestMode;
         $this->BasePath = dirname(__file__);
-        $this->BasePathUrl = '//' . dirname( $_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME']);
+        $this->BasePathUrl = $cProtocol . '://' . dirname($_SERVER['HTTP_HOST'] . $_SERVER['SCRIPT_NAME']);
         $this->PublicPath = $this->BasePath . '/files';
-        $this->PublicPathUrl = str_ireplace( $this->BasePath, $this->BasePathUrl, $this->PublicPath);
+        $this->PublicPathUrl = str_ireplace($this->BasePath, $this->BasePathUrl, $this->PublicPath);
         $this->PrivatePath = $this->BasePath . '/../files';
         $this->ConfigFile = dirname(__file__) . '/config/config.ini';
-        //print_r($this);
         // Scan all modules and build the lists
         $this->BuildModuleList();
     }
@@ -85,8 +84,7 @@ class Events3
      */
     public function Run()
     {
-        if ($this->bDebug)
-        {
+        if ($this->bDebug) {
             error_reporting(E_ALL);
             register_shutdown_function('Events3Shutdown');
         }
@@ -144,12 +142,10 @@ class Events3
         // element by reference and the optional rest by value
 
         // Now create an array with the modules
-        if (isset($this->_aEventList[$sEvent]))
-        {
+        if (isset($this->_aEventList[$sEvent])) {
             $aModuleList = $this->_aEventList[$sEvent];
             $sEventName = 'Events3' . $sEvent;
-            foreach ($aModuleList as $cModulePath)
-            {
+            foreach ($aModuleList as $cModulePath) {
                 $oModule = $this->LoadModule($cModulePath);
                 call_user_func_array(array($oModule, $sEventName), $aNewParams);
             }
@@ -167,26 +163,22 @@ class Events3
         $cModulePath = $cModuleName;
 
         // Is it a plain modulename?
-        if (isset($this->_aModuleList[$cModuleName]))
-        {
+        if (isset($this->_aModuleList[$cModuleName])) {
             $cModulePath = $this->_aModuleList[$cModuleName];
         }
 
         // Lazy loading!!!
-        if (!array_key_exists($cModulePath, $this->_aInstances))
-        {
+        if (!array_key_exists($cModulePath, $this->_aInstances)) {
             $cModuleName = basename($cModulePath);
             $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
-            if (is_readable($cModuleFile))
-            {
+            if (is_readable($cModuleFile)) {
                 include_once $cModuleFile;
                 $this->_aInstances[$cModulePath] = new $cModuleName;
             }
         }
 
         $oModule = null;
-        if ( isset($this->_aInstances[$cModulePath]) and is_object($this->_aInstances[$cModulePath]))
-        {
+        if (isset($this->_aInstances[$cModulePath]) and is_object($this->_aInstances[$cModulePath])) {
             $oModule = $this->_aInstances[$cModulePath];
         }
 
@@ -204,15 +196,12 @@ class Events3
         $sFileName = sys_get_temp_dir() . '/Events3EventCache.' . $iTimeStamp . '.tmp';
 
         // Implement file caching
-        if ($this->bEventFileCache)
-        {
-            if (is_readable($sFileName))
-            {
+        if ($this->bEventFileCache) {
+            if (is_readable($sFileName)) {
                 $aCache = (array )unserialize(file_get_contents($sFileName));
                 $this->_aModuleList = (array )$aCache['modules'];
                 $this->_aEventList = (array )$aCache['events'];
-                if (count($this->_aEventList) > 0)
-                {
+                if (count($this->_aEventList) > 0) {
                     return;
                 }
             }
@@ -221,24 +210,20 @@ class Events3
         // Scan all the module paths recursive for all the packages
         $this->_aModuleList = array();
         $aLibraries = $this->GetModulePaths();
-        foreach ($aLibraries as $sPath)
-        {
+        foreach ($aLibraries as $sPath) {
             $this->_getModuleListRecursive($sPath);
         }
 
         // Now scan all the packages for the events the implement
-        foreach ($this->_aModuleList as $cModulePath)
-        {
+        foreach ($this->_aModuleList as $cModulePath) {
             $cModuleName = basename($cModulePath);
             $cModuleFile = $cModulePath . '/' . $cModuleName . '.php';
             // Create the entry in the main modulelist
             $this->_aModuleList[$cModuleName] = $cModulePath;
             include_once $cModuleFile;
             $aMethods = (array )get_class_methods($cModuleName);
-            foreach ($aMethods as $cMethodName)
-            {
-                if (strpos($cMethodName, 'Events3') === 0)
-                {
+            foreach ($aMethods as $cMethodName) {
+                if (strpos($cMethodName, 'Events3') === 0) {
                     $cEventName = substr($cMethodName, 7);
                     $this->_aEventList[$cEventName][] = $cModulePath;
                 }
@@ -247,8 +232,7 @@ class Events3
         }
 
         // Write file cache
-        if (!$this->bEventFileCache)
-        {
+        if (!$this->bEventFileCache) {
             $aCache = array(
                 'modules' => $this->_aModuleList,
                 'events' => $this->_aEventList,
@@ -263,21 +247,20 @@ class Events3
     private function _getModuleListRecursive($sDir)
     {
         $aList = glob($sDir . '/*', GLOB_ONLYDIR);
-        foreach ($aList as $sPath)
-        {
-            // Check if we need to scan the unittest modules
-            $cModName = basename($sPath);
-            if (!$this->bTest and (substr($cModName, 0, 4) == 'Test'))
-            {
-                continue;
-            }
-            // It is only a module if there is a specific file
-            if (is_readable($sPath . '/' . $cModName . '.php'))
-            {
-                $this->_aModuleList[$cModName] = $sPath;
-            }
+        if (is_array($aList)) {
+            foreach ($aList as $sPath) {
+                // Check if we need to scan the unittest modules
+                $cModName = basename($sPath);
+                if (!$this->bTest and (substr($cModName, 0, 4) == 'Test')) {
+                    continue;
+                }
+                // It is only a module if there is a specific file
+                if (is_readable($sPath . '/' . $cModName . '.php')) {
+                    $this->_aModuleList[$cModName] = $sPath;
+                }
 
-            $this->_getModuleListRecursive($sPath);
+                $this->_getModuleListRecursive($sPath);
+            }
         }
     }
 
@@ -297,8 +280,7 @@ class Events3
      */
     static function GetHandler($bUnitTestMode = false)
     {
-        if (is_null(self::$_oInstance))
-        {
+        if (is_null(self::$_oInstance)) {
             self::$_oInstance = new Events3($bUnitTestMode);
         }
         return self::$_oInstance;
@@ -372,8 +354,7 @@ class Events3TestCase extends Events3Module
     public function __construct()
     {
         parent::__construct();
-        if (is_null(self::$iStartTime))
-        {
+        if (is_null(self::$iStartTime)) {
             self::$iStartTime = microtime(true);
         }
     }
@@ -388,8 +369,7 @@ class Events3TestCase extends Events3Module
     public function assert($bShouldBeTrue, $cMessage = 'Assertion failed')
     {
         self::$iAssertCountTotal++;
-        if (!$bShouldBeTrue)
-        {
+        if (!$bShouldBeTrue) {
             $this->AddAssertFailed($cMessage);
         }
     }
@@ -430,8 +410,7 @@ class Events3TestCase extends Events3Module
     {
         static $bRunOnce = false;
         // We only need to display output one time
-        if ($bRunOnce)
-        {
+        if ($bRunOnce) {
             return;
         }
         $bRunOnce = true;
@@ -446,17 +425,15 @@ class Events3TestCase extends Events3Module
         echo "----------------" . $cLb . $cLb;
 
         echo "{$iTotal} assertions ran in {$iTotalMilliSeconds} m.s." . $cLb;
-        if (self::$iAssertCountFailed)
-        {
+        if (self::$iAssertCountFailed) {
             $iFailed = self::$iAssertCountFailed;
             echo "{$iFailed} of them failed." . $cLb;
-            foreach (self::$oAssertList as $cClassName => $aMessages)
-            {
+            foreach (self::$oAssertList as $cClassName => $aMessages) {
                 echo "{$cLb}## {$cClassName}{$cLb}";
                 echo implode($cLb, $aMessages) . $cLb;
             }
-        } else
-        {
+        }
+        else {
             echo "All tests completed without failures.";
 
         }
@@ -467,8 +444,7 @@ class Events3TestCase extends Events3Module
 function Events3Shutdown()
 {
     $aErrors = error_get_last();
-    if (is_array($aErrors))
-    {
+    if (is_array($aErrors)) {
         echo "<h2>PHP ERROR</h2>-- Error: {$aErrors['type']}\n<br />-- Message: {$aErrors['message']}\n<br />-- File:  {$aErrors['file']}\n<br />-- Line:  {$aErrors['line']}\n<br />";
     }
 }

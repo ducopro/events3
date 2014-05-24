@@ -34,6 +34,8 @@ class IdfixValidate extends Events3Module
         $this->aValidators = $aData['validate'];
         // Create value to check
         $this->xValue = $aData['__RawPostValue'];
+        // Reset the validation message list
+        $this->aMessages = array();
 
         /**
          * Now we can call all the handlers in the same format

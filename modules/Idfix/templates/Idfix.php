@@ -3,6 +3,7 @@
   <head>
     <title>Idfix - Agile Cloud Development</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <!-- Bootstrap -->
     <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
     <!-- Jquery -->

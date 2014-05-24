@@ -27,11 +27,8 @@ class IdfixFieldsInputSelect extends IdfixFieldsInputOptionsBase
         // Create an array with all the selected values
         $aSelected = $this->GetValueAsArray();
 
-        if (isset($aData['options']) and is_array($aData['options']))
-        {
-            
-            foreach ($aData['options'] as $cOptionKey => $cOptionValue)
-            {
+        if (isset($aData['options']) and is_array($aData['options'])) {
+            foreach ($aData['options'] as $cOptionKey => $cOptionValue) {
                 // Is this one checked???
                 $cSelect = (in_array($cOptionKey, $aSelected)) ? 'selected="selected"' : '';
                 $cInput .= "<option {$cSelect} value=\"{$cOptionKey}\">{$cOptionValue}</option>";
@@ -43,14 +40,12 @@ class IdfixFieldsInputSelect extends IdfixFieldsInputOptionsBase
         $cError = $this->Validate();
 
         // The post value can be an array or a single value depending on the multiple attribute
-        $xPost = $this->aData['__RawPostValue'];
-        if (!is_null($xPost))
-        {
-            if (is_array($xPost))
-            {
+        if (isset($this->aData['__RawPostValue']) and !is_null($this->aData['__RawPostValue'])) {
+            $xPost = $this->aData['__RawPostValue'];
+            if (is_array($xPost)) {
                 $this->aData['__SaveValue'] = implode(',', $xPost);
-            } else
-            {
+            }
+            else {
                 $this->aData['__SaveValue'] = trim($xPost);
             }
         }

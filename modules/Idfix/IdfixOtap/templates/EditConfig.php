@@ -52,11 +52,6 @@
 <script src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/theme-xcode.js" type="text/javascript" charset="utf-8"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/ace/1.1.01/mode-yaml.js" type="text/javascript" charset="utf-8"></script>
 
-<!--
-
-<script src="//cdn.jsdelivr.net/ace/1.1.3/mode-javascript.js"></script>
-<script src="//cdn.jsdelivr.net/ace/1.1.3/theme-monokai.js"></script>
--->
 <script type="text/javascript">
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/xcode");

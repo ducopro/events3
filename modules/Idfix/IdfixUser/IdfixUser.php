@@ -21,7 +21,7 @@ class IdfixUser extends Events3Module
         // Only act if there is no user information at all
         // This element is UNSET at logout
         //if (!isset($_SESSION[__class__])) {
-        if (!$this->IsLoggedIn()) {            
+        if (!$this->IsLoggedIn()) {
             // Find a anonymous user object
             $aWhere = array('SubTypeID = 0');
             $aRecords = $this->IdfixStorage->LoadAllRecords(9999, 0, '', $aWhere, 1);
@@ -30,12 +30,19 @@ class IdfixUser extends Events3Module
                 $this->GetSetUserObject($aUserObject);
             }
         }
-        
+
+        // If we are mnot logged in there is still a shortlist of actions we
+        // are allowed to do like accessing the login page, loging in or
+        // resending the password
+        $bWhiteListed = in_array($this->Idfix->cAction, array(
+            'Loginform',
+            'Login',
+            'Resend'));
+
         // If we still do not have a user object, redirect to the login page
         // But only redirect if we are not already trying to show this page!!!
-        if( !$this->IsLoggedIn() AND $this->Idfix->cAction != 'Loginform') {
-            $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
-            $this->Idfix->Redirect($cUrl);
+        if (!$this->IsLoggedIn() and !$bWhiteListed) {
+            $this->RedirectToLogin();
         }
     }
 
@@ -53,7 +60,8 @@ class IdfixUser extends Events3Module
             $data['left'] = array();
             $data['right'] = array();
             //echo 'not logged in';
-        } else {
+        }
+        else {
             // Add login/logout button to the navbar
             $aUser = $this->GetSetUserObject();
             $cUserName = $aUser['UserName'];
@@ -65,7 +73,8 @@ class IdfixUser extends Events3Module
                 $cHref = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
                 $cTitle = 'Login';
                 $cTooltip = 'Access this application with username and password.';
-            } else {
+            }
+            else {
                 $cHref = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'logout');
                 $cTitle = 'Logout ' . $cUserName;
             }
@@ -90,10 +99,8 @@ class IdfixUser extends Events3Module
     {
         // Render Application Info panel
         $aTemplateVars = array(
-            'title' => isset($this->Idfix->aConfig['title']) ? $this->Idfix->aConfig['title'] :
-                '',
-            'description' => isset($this->Idfix->aConfig['description']) ? $this->Idfix->
-                aConfig['description'] : '',
+            'title' => isset($this->Idfix->aConfig['title']) ? $this->Idfix->aConfig['title'] : '',
+            'description' => isset($this->Idfix->aConfig['description']) ? $this->Idfix->aConfig['description'] : '',
             'icon' => $this->Idfix->GetIconHTML($this->Idfix->aConfig),
             'env' => $this->IdfixOtap->GetEnvironmentAsText(),
             );
@@ -107,8 +114,7 @@ class IdfixUser extends Events3Module
         $form = $this->Idfix->RenderTemplate('LoginForm', $aTemplateVars);
 
         // Render Password form
-        $aTemplateVars = array('cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0,
-                'resend'), );
+        $aTemplateVars = array('cPostUrl' => $this->Idfix->GetUrl('', '', '', 0, 0, 'resend'), );
         $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
 
         // Render the advanced tab with a list of configurations to choose from
@@ -119,8 +125,7 @@ class IdfixUser extends Events3Module
         }
 
         // Render the tabular container
-        $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password',
-            'app', 'advanced'));
+        $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app', 'advanced'));
     }
 
 
@@ -142,15 +147,14 @@ class IdfixUser extends Events3Module
                 // And save it, it is automagically hashed :-)
                 $this->IdfixStorage->SaveRecord($aUser);
                 // Create a nice link to the loginpage
-                $cLink = $this->Idfix->GetUrl('', '', '', '', '', 'loginform', array('email' => $aUser['Name'],
-                        'password' => $cNewPassword));
+                $cLink = $this->Idfix->GetUrl('', '', '', '', '', 'loginform', array('email' => $aUser['Name'], 'password' => $cNewPassword));
                 // Get the body for the mail
-                $cMailBody = $this->Idfix->RenderTemplate('MailForgotPassword', compact('aUser',
-                    'cNewPassword', 'cLink')); // Ok, let's just send it..
+                $cMailBody = $this->Idfix->RenderTemplate('MailForgotPassword', compact('aUser', 'cNewPassword', 'cLink')); // Ok, let's just send it..
                 // Use default subject and configuration
                 $this->IdfixMail->Mail($cMailBody, null, $aUser);
             }
         }
+        $this->RedirectToLogin();
     }
     /**
      * Try to login into the system
@@ -190,7 +194,7 @@ class IdfixUser extends Events3Module
         unset($_SESSION[__class__]);
         $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
         $this->Idfix->Redirect($cUrl);
-        
+
     }
 
     /**
@@ -216,7 +220,8 @@ class IdfixUser extends Events3Module
             if ($aUser['SubTypeID'] == 2) {
                 // An OTAP administrator
                 $cKey = $cConfigName;
-            } elseif ($aUser['SubTypeID'] == 3) {
+            }
+            elseif ($aUser['SubTypeID'] == 3) {
                 // Idfix SuperUser
                 $cKey = '_idfix';
             }
@@ -228,9 +233,11 @@ class IdfixUser extends Events3Module
         // Do we have a superuser???? Always OK!!
         if (isset($_SESSION[__class__]['_idfix'])) {
             $aUser = $_SESSION[__class__]['_idfix'];
-        } elseif (isset($_SESSION[__class__][$cConfigName])) {
+        }
+        elseif (isset($_SESSION[__class__][$cConfigName])) {
             $aUser = $_SESSION[__class__][$cConfigName];
-        } elseif (isset($_SESSION[__class__][$cTableSpace])) {
+        }
+        elseif (isset($_SESSION[__class__][$cTableSpace])) {
             $aUser = $_SESSION[__class__][$cTableSpace];
         }
 
@@ -246,9 +253,11 @@ class IdfixUser extends Events3Module
 
         if ($this->IsSuperUser()) {
             $bAccess = true;
-        } elseif ($this->IsAdministrator()) {
+        }
+        elseif ($this->IsAdministrator()) {
             $bAccess = true;
-        } elseif ($aUser = $this->GetSetUserObject()) {
+        }
+        elseif ($aUser = $this->GetSetUserObject()) {
             $bAccess = !(stripos($aUser['Text_1'], $cPermission) === false);
         }
         $this->IdfixDebug->Profiler(__method__, 'stop');
@@ -308,8 +317,7 @@ class IdfixUser extends Events3Module
     public function Events3ConfigInit(&$aConfig)
     {
         $cKey = 'IdfixUserDefault_SU_Email';
-        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] :
-            'wim.tol.tfg@gmail.com';
+        $aConfig[$cKey] = isset($aConfig[$cKey]) ? $aConfig[$cKey] : 'wim.tol.tfg@gmail.com';
         $this->$cKey = $aConfig[$cKey];
 
         $cKey = 'IdfixUserDefault_SU_Password';
@@ -342,36 +350,37 @@ class IdfixUser extends Events3Module
      */
     public function Events3IdfixSaveRecord(&$aFields)
     {
-        // Only allow users to create other users with
-        // the same type or lower
-        // So administrators CANNOT create superusers
-        // default is a normal user
-        $iMaxUserTypeAllowed = 1; // Normal user
-        
-        // Store the userID in the record
-        $aUser = $this->GetSetUserObject();
-        if (!is_null($aUser)) {
-            // Get the UserId
-            $iUserId = $aUser['MainID'];
-            // Set the correct values
-            // Change Id can be set always
-            $aFields['UidChange'] = $iUserId;
-            // Only change the userid for the creator if we have a new record
-            if (!isset($aFields['UidCreate'])) {
-                $aFields['UidCreate'] = $iUserId;
-            }
-            $iMaxUserTypeAllowed = (integer) $aUser['SubTypeID'];
-        }
-
-        // Check the usertype
-        if( $aFields['SubTypeID'] > $iMaxUserTypeAllowed) {
-            $aFields['SubTypeID'] = $iMaxUserTypeAllowed;
-            // Inform the user
-            $this->Idfix->FlashMessage('Usermode changed. You are not allowed to create that type of user.', 'warning');
-        }
-
-        // Specific postprocessing for creating the hashvalue from the password
         if (isset($aFields['TypeID']) and $aFields['TypeID'] == 9999) {
+            // Only allow users to create other users with
+            // the same type or lower
+            // So administrators CANNOT create superusers
+            // default is a normal user
+            $iMaxUserTypeAllowed = 1; // Normal user
+
+            // Store the userID in the record
+            $aUser = $this->GetSetUserObject();
+            if (!is_null($aUser)) {
+                // Get the UserId
+                $iUserId = $aUser['MainID'];
+                // Set the correct values
+                // Change Id can be set always
+                $aFields['UidChange'] = $iUserId;
+                // Only change the userid for the creator if we have a new record
+                if (!isset($aFields['UidCreate'])) {
+                    $aFields['UidCreate'] = $iUserId;
+                }
+                $iMaxUserTypeAllowed = (integer)$aUser['SubTypeID'];
+            }
+
+            // Check the usertype
+            if ($aFields['SubTypeID'] > $iMaxUserTypeAllowed) {
+                $aFields['SubTypeID'] = $iMaxUserTypeAllowed;
+                // Inform the user
+                $this->Idfix->FlashMessage('Usermode changed. You are not allowed to create that type of user.', 'warning');
+            }
+
+            // Specific postprocessing for creating the hashvalue from the password
+
             // Only operate on user records
             $cPassword = $aFields['Char_1'];
             $cNewPassword = $this->CreateHashValue($cPassword);
@@ -562,10 +571,8 @@ class IdfixUser extends Events3Module
                     $field_name_user = $field_config['title'];
                     $field_name_user = "<em><strong>{$field_name_user}</strong></em>";
                     if (isset($field_config['permissions'])) {
-                        $return[$table_name . '_' . $field_name . '_v'] = $table_name_user .
-                            'View field ' . $field_name_user;
-                        $return[$table_name . '_' . $field_name . '_e'] = $table_name_user .
-                            'Edit field ' . $field_name_user;
+                        $return[$table_name . '_' . $field_name . '_v'] = $table_name_user . 'View field ' . $field_name_user;
+                        $return[$table_name . '_' . $field_name . '_e'] = $table_name_user . 'Edit field ' . $field_name_user;
                         if ($field_config['type'] == 'file') {
                             // Because we are using the public file system, viewing the file means also knowing the url and
                             // the possibility of accessing it.
@@ -579,5 +586,10 @@ class IdfixUser extends Events3Module
         return $return;
     }
 
+    private function RedirectToLogin()
+    {
+        $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
+        $this->Idfix->Redirect($cUrl);
+    }
 
 }

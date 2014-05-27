@@ -156,7 +156,7 @@ class IdfixOtap extends Events3Module {
                 $aEnv[$cEnv] = array(
                    'title' => $this->aEnvDescription[$cEnv],
                    'active' => $bEnvActive,
-                   'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'login', array('otap' => $cEnv)),
+                   'url' => $this->Idfix->GetUrl($cConfigName, '', '', 0, 0, 'Loginform', array('otap' => $cEnv)),
                    'found' => $bConfigFilePresent,
                 );
 

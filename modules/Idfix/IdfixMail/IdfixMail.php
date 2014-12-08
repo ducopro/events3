@@ -65,19 +65,33 @@ class IdfixMail extends Events3Module {
     $cBCC = $this->IdfixMailConfigBCC;
 
 
-    // Use the google mail API
-    try {
-      $oMess = new Message();
-      $oMess->addTo($cMailTo);
-      $oMess->setSender($cSendFrom);
-      $oMess->setSubject($cSubject);
-      $oMess->setHtmlBody($cBody);
-      if ($cCC) $oMess->addCc($cCC);
-      if ($cBCC) $oMess->addBcc($cBCC);
-      $oMess->send();
+    if ($tyhis->ev3->GAE_IsPlatform()) {
+      // Use the google mail API
+      try {
+        $oMess = new Message();
+        $oMess->addTo($cMailTo);
+        $oMess->setSender($cSendFrom);
+        $oMess->setSubject($cSubject);
+        $oMess->setHtmlBody($cBody);
+        if ($cCC) $oMess->addCc($cCC);
+        if ($cBCC) $oMess->addBcc($cBCC);
+        $oMess->send();
+      }
+      catch (exception $e) {
+        $this->log($e->getMessage());
+      }
     }
-    catch (exception $e) {
-      $this->log($e->getMessage());
+    else {
+      // Let's set up the correct headers for an HTML mail
+      $headers = "From: {$cSendFrom}\r\n";
+      $headers .= "Reply-To: {$cSendFrom}\r\n";
+      if ($cCC) $headers .= "CC: {$cCC}\r\n";
+      if ($cBCC) $headers .= "BCC: {$cBCC}\r\n";
+      $headers .= "MIME-Version: 1.0\r\n";
+      $headers .= "Content-Type: text/html; charset=ISO-8859-1\r\n";
+
+      // And do some mailing....
+      mail($cMailTo, $cSubject, $cBody, $headers);
     }
 
 

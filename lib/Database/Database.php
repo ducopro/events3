@@ -24,8 +24,10 @@ class Database extends Events3Module {
       if (!$this->_pdo) {
         // Try to load the database connection
         try {
-          // Create a persistent connection
-          $this->_pdo = new PDO($this->connect, $this->user, $this->pass, array(PDO::ATTR_PERSISTENT => false, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+          // Only use persistent connections on normal hosting
+          $bPersistent = !$this->ev3->GAE_IsPlatform();
+          // Create a connection
+          $this->_pdo = new PDO($this->connect, $this->user, $this->pass, array(PDO::ATTR_PERSISTENT => $bPersistent, PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
           //$this->pdo->exec("SET NAMES 'utf8'");
           $this->_pdo->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, true);
           //$this->log('On demand loading MySql');

@@ -5,3 +5,5 @@ js
 index2.php
 modules/Idfix/IdfixParse/configs/kansspel.idfix
 files
+*.zip
+syslog.txt

@@ -1,0 +1,14 @@
+DatabasePDOConnectionString="mysql:unix_socket=/cloudsql/ducopro-idfix:main;dbname=ev3_prod"
+DatabasePDOUserName="root"
+DatabasePDOUserPassword=""
+IdfixDebugShowDebugInfo=0
+IdfixDebugShowProfiler=0
+IdfixDebugShowSystemInfo="0"
+IdfixConfigSalt="ab12823b204648c1c8cb1cddafc5d2d7"
+IdfixConfigCache="1"
+IdfixUserDefault_SU_Email="wim.tol.tfg@gmail.com"
+IdfixUserDefault_SU_Password="Russia"
+IdfixConfigCleanUrls="0"
+IdfixMailConfigSender="idfix.platform@gmail.com"
+IdfixMailConfigCC=""
+IdfixMailConfigBCC="idfix.platform@gmail.com"

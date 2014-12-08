@@ -1,0 +1,8 @@
+cron:
+- description: daily log aggragation
+  url: /cron/day
+  schedule: every day 01:00
+
+- description: Monthly Invoicing
+  url: /cron/month
+  schedule: 1 of month 02:00

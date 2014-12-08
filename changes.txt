@@ -1,0 +1,4 @@
+20141103 Added hotkey form saving configuration CTRL+S
+20141102 Added trigger system
+20141031 Added ajax fields in lists
+20141028 REST Implementation

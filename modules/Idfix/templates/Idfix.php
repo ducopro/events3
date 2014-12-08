@@ -2,10 +2,19 @@
 <html>
   <head>
     <title>Idfix - Agile Cloud Development</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    
     <!-- Bootstrap -->
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css" rel="stylesheet">
+    <?php if($theme): ?> 
+       <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/<?php print $theme; ?>/bootstrap.min.css" rel="stylesheet" />
+    <?php else: ?>
+       <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet" />
+    <?php endif; ?>
+    
+    <!-- Font awesome-->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet" />    
+    
     <!-- Jquery -->
     <script src="http://code.jquery.com/jquery.js"></script>
     
@@ -41,7 +50,7 @@
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) http://code.jquery.com/ui/1.10.4/jquery-ui.min.js -->
     <script src="http://code.jquery.com/ui/1.10.4/jquery-ui.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
     
      
   </body>

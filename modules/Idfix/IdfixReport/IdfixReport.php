@@ -45,11 +45,18 @@ class IdfixReport extends Events3Module
     {
         $output .= $this->BuildReport();
     }
+    public function Events3IdfixActionListdateAfter(&$output)
+    {
+        $output .= $this->BuildReport();
+    }
+
     public function Events3IdfixGetConfigAfter()
     {
+        $this->IdfixDebug->Profiler(__method__ . 'doorlooptest', 'start');
         $this->CreateDefaults();
+        $this->IdfixDebug->Profiler(__method__ . 'doorlooptest', 'stop');
     }
-    public function Events3IdfixActionInfoAfter(&$output)
+    public function Events3IdfixActionInfo(&$output)
     {
         $output .= $this->BuildInfo();
     }

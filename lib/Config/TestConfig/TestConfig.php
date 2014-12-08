@@ -3,9 +3,9 @@
 class TestConfig extends Events3TestCase {
 
     function Events3Test() {
-        /* @var $events3 Events3 */
-        $events3 = Events3::GetHandler();
-        $cFile = $events3->ConfigFile;
+        // Automatic ini-file selection
+        $cFile = $this->ev3->GAE_GetIniFile();
+        
         $this->assert( is_readable($cFile));
         $this->assert( is_writable($cFile));
 

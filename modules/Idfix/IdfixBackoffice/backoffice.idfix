@@ -1,0 +1,409 @@
+-title=Backoffice
+-description=In <strong>ourself</strong> we trust ... <small>So we build <strong><em>our</em></strong> backoffice on <strong><em>our</em></strong> platform</small>
+-icon=http://www.idfixplatform.com/wp-content/uploads/2014/11/logo200.png 
+-iconsize=32
+-theme=cosmo
+
+/*
+ *   -200 subscription
+ *   -100 reseller
+ *     -10 clients
+ *       -40 crmlog
+ *        -20 config
+ *           -30 hitcount
+ *           -40 crmlog
+ *           -50 mail
+ *           -60 invoice
+ *           -70 credit
+ */
+
+#tables
+
+         
+        
+     
+     /*
+     * Resellers
+     */
+     #reseller
+        -id=100
+        -title=Reseller
+        -description=How sales is organized ..
+        -icon=phone-alt
+        -trail=%Id%  (%Name%)
+        #list
+            -_edit
+            -MainID
+            -_clients=Customers
+            -Id
+            -Int_1
+            -Name
+            -RefID
+            -_delete
+        #childs
+            -clients
+        #fields
+            #MainID
+                -title=ID#
+            #Id
+                -title=Reseller name
+                -cols=6
+            #RefID
+                -title=Useraccount
+                -type=select
+                -cols=4
+                #options
+                    -table=__users
+                    -display=%Name% (%UserName%)  
+                    -where=SubTypeID=1  
+            #Int_1
+                -title=Percentage
+                -type=number
+                -value=45
+                -cols=2
+            #Name
+                -title=Telephone
+                -cols=4
+            #Description
+                -title=Bank
+                -cols=4
+            #Char_1
+                -title=Bank account
+                -cols=4
+            #Char_2
+                -title=Email
+                -description=Used to send BCC of invoices    
+        
+     /*
+     * Subscriptions
+     */
+     #subscription
+        -id=200
+        -title=Subscription
+        -description=Packages. Note that all prices are in eurocent.
+        -icon=euro
+        #fields
+            #Name
+                -cols=6
+            #Int_1
+                -title=Monthly Amount
+                -cols=6
+            #Points_Hits
+                -title=Hits included
+                -description=Every access to the configuration is counted.
+                -cols=6
+            #Add_Hits
+                -title= Additional hits
+                -description=Price for every additional hit in eurocent
+                -cols=6    
+            #Points_Data
+                -title=Data included
+                -description=Number of fields defined in the configuration <em><strong>times</strong></em> the number of records in the database
+                -cols=6
+            #Add_Data
+                -title=Additional Data
+                -description=Price for every additional data point in eurocent
+                -cols=6
+            #Points_Storage
+                -title=Storage included    
+                -description=Every storage point is 100 MB.
+                -cols=6 
+            #Add_Storage
+                -title=Additional Storage point
+                -description=Price for every additional storage point in eurocent (=100MB)
+                -cols=6
+        
+
+     /*
+     * Main backoffice clients
+     */
+     #clients
+        -id=10
+        -title=Customer
+        -description=An individual company or a reseller
+        -icon=shopping-cart
+        -trail=%Id%
+        #list
+            -_edit
+            -Id
+            -RefID
+            -_configs
+            -_crmlog
+            -_delete
+        #childs
+            -configs
+            -crmlog
+        #fields
+            #Id
+                -title=Company Name
+                -autofocus=1
+                -cols=3
+            #Contact
+                -title=Name of contact
+                -cols=3
+            #Telephone
+                -title=Telephone number
+                -cols=3    
+            #Name
+                -title=Email
+                -type=email
+                -description=Email contact for administration and Billing
+                -cols=3
+            #Text_1
+                -title=Full address for the invoice
+                -type=textarea
+                -rows=7
+                -rich=1    
+            
+            
+     /*
+     * Configurations
+     */
+     #configs
+        -id=20
+        -title=Config
+        -description=Runtime Environment for an Idfix Configuration
+        -icon=cloud
+        -trail=%Id%
+        #childs
+            -hitcount
+            -crmlog
+            -mail
+            -invoice
+            -credit
+        #list
+            -_edit
+            -Clicktrough=Goto ..
+            -_hitcount
+            -_crmlog
+            -_mail
+            -_invoice
+            -_credit
+            -Name
+            -Int_1
+            -RefID
+            -_delete
+        #fields 
+            #Clicktrough
+                -title=%Id%
+                -description=Click here to go to this config
+                -target=_blank
+                -type=virtual
+                -href=/%Id%/?otap=dev
+                -icon=arrow-right
+                -class=btn btn-xs btn-success
+            #Id
+                -placeholder=Use only lowercase, underscores and numbers
+                -title=Identifier
+                -description=Low level identifier used to create a namespace on the SAAS platform. Do not change this identifier because it will prevent access to the running environment!
+                -cols=4
+                -autofocus=1
+                #validate
+                    -required=Identifier is required!
+            #Name
+                -type=email
+                -placeholder=admin@customer.com
+                -title=OTAP Administrator
+                -description=Email adress used to create an OTAP administrator account
+                -cols=4
+                #validate
+                    -email=A valid email address is needed
+            #SubTypeID
+                -type=checkbox
+                -cols=4
+                -title=Send information email
+                -description=Send this administrator an email on how to use the platform. Note that the password is also used, effectively disabling the current password for this user.
+                -value=1 
+            #RefID
+                -type=checkbox
+                -cols=4
+                -title=Enable Billing
+                -description=If billing is enabled, invoices are automaticly created and send to the email adress from the customer
+                -value=0
+            #Int_1
+                -title=Subscription
+                -type=radios
+                #validate
+                    -required=Please select a subscription model
+                #options
+                    -table=subscription
+                    -display=%Name%                   
+
+     /*
+     * Hitcounters
+     */
+     #hitcount
+        -id=30
+        -title=Daily Hits
+        -description=Aggregated logvalues
+        -icon=globe
+        #list
+            -_edit
+            -Id
+            -SubTypeID
+            -RefID
+            -Int_1
+            -_delete
+        #fields
+            #Id
+                -title=Day
+            #SubTypeID
+                -title=Hits
+            #RefID
+                -title=Storage Points
+            #Int_1
+                -title=Data Points        
+    
+     /*
+     * CRM Log
+     */
+     #crmlog
+        -id=40
+        -title=CRM
+        -description=Log of client interactions
+        -icon=phone
+        #list
+          -_edit
+          -UidChange
+          -TSCreate
+          -Text_1
+        #fields
+            #UidChange
+                -title=Editor
+                -type=select
+                #options
+                    -table=__users
+                    -display=%UserName%
+            #TSCreate
+                -title=Date
+                -type=date
+                -format=Y-m-d H:i:s
+            #Text_1
+                -title=Details
+                -type=textarea
+                -rich=1
+                -rows=20
+
+     /*
+     * Mail tracking
+     */
+     #mail
+        -id=50
+        -title=Mail
+        -description=Keep track of all the electronic communication
+        -icon=envelope
+        -inline=1
+        #list
+            -_edit
+            -TSCreate
+            -RefID
+            -Id
+            -Name
+            -_delete
+        #fields
+            #TSCreate
+                -title=Date
+                -type=date
+                -format=Y-m-d H:i:s
+            #Id
+                -title=Subject
+                -cols=8
+            #SubTypeID
+                -title=Resend mail
+                -type=checkbox  
+                -value=0 
+                -cols=2                
+            #RefID
+                -title=In/Out
+                -type=radios
+                -cols=2
+                -value=1
+                #options
+                    -1=Send
+                    -2=Received
+            
+            #Name
+                -title=Receiver
+                -cols=4
+            #cc
+                -cols=4
+            #bcc
+                -cols=4
+            #Text_1
+                -title=Body
+                -rich=1
+                -type=textarea
+                -rows=20
+             
+                                 
+     /*
+     * Invoices
+     */
+     #invoice
+        -id=60
+        -title=Invoice
+        -description=Billing for clients
+        -icon=folder-open
+        #list
+            -_edit
+            -Id
+            -Bool_1
+            -Text_1
+            -_delete
+        #fields
+            #Id
+                -title=Invoice Reference ID
+                -cols=2
+            #Bool_1
+                -title=Payed?
+                -description=Check this box if the payment was received
+                -type=checkbox
+                -cols=2
+            #Amount
+                -title=Total amount
+                -description=See mail for details on the calculation
+                -cols=2
+                -icon=euro
+            #Name
+                -title=payment details
+                -description=All details nescessary to track back the payment
+                -cols=6
+            #Text_1
+                -title=Calculation
+                -rich=1
+                -type=textarea
+                -rows=20                                    
+                    
+                    
+            
+
+     /*
+     * Reseller credit
+     */
+     #credit
+        -id=70
+        -icon=retweet
+        -title=Credits
+        -description=Sales Bonus for Resellers
+        #fields
+            #Id
+                -title=Invoice Reference ID
+                -cols=2
+            #Percentage
+                -Sales bonus
+                -cols=2
+            #Amount
+                -title=Total amount
+                -description=See mail for details on the calculation
+                -cols=2
+                -icon=euro
+            #Bool_1
+                -title=Payed?
+                -description=Check this box if the payment was made.
+                -type=checkbox
+                -cols=2
+            #Name
+                -title=Payment details
+                -description=All details nescessary to track back the payment
+                -cols=4    
+                                 

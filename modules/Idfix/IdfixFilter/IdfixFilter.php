@@ -153,7 +153,7 @@ class IdfixFilter extends Events3Module
     public function Events3IdfixNavbar(&$aData)
     {
         // Only create this structure when in list mode
-        if ($this->Idfix->cAction !== 'List') {
+        if ( substr($this->Idfix->cAction,0,4) !== 'List') {
             return;
         }
 

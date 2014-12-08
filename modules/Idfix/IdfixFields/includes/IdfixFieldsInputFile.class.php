@@ -1,156 +1,173 @@
 <?php
 
-class IdfixFieldsInputFile extends IdfixFieldsInput
-{
+require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
+use google\appengine\api\cloud_storage\CloudStorageTools;
 
-    public function GetDisplay()
-    {
-        // Array with the complet file information
-        // name: original filename
-        // type: Mimetype
-        // size: filesize in bytes
-        // hash_name: Name that is used for storing the file on server
-        $aValue = $this->aData['__RawValue'];
+class IdfixFieldsInputFile extends IdfixFieldsInput {
 
-        // Do a quick check for uninitialized values
-        if (is_null($aValue) or !isset($aValue['hash_name'])) {
-            $this->aData['__DisplayValue'] = '';
-            return;
-        }
+  public function GetDisplay() {
+    // Array with the complet file information
+    // name: original filename
+    // type: Mimetype
+    // size: filesize in bytes
+    // hash_name: Name that is used for storing the file on server
+    $aValue = $this->aData['__RawValue'];
 
-
-        $cValue = (isset($aValue['name'])) ? $aValue['name'] : '';
-        $cMimeType = (isset($aValue['type'])) ? $aValue['type'] : '';
-        $cUrl = $this->GetFullFilenameAsUrl($aValue);
-
-        // Is it a picture ??
-        //print_r($aValue);
-        if (!(strpos($cMimeType, 'image/') === false)) {
-            $cValue = "<img src=\"{$cUrl}\" alt=\"{$cValue}\" height=\"30\"  \>";
-        }
-        $cHref = "<a target=\"_blank\" href=\"{$cUrl}\">{$cValue}</a>";
-        $this->aData['__DisplayValue'] = $cHref;
+    // Do a quick check for uninitialized values
+    if (is_null($aValue) or !isset($aValue['hash_name'])) {
+      $this->aData['__DisplayValue'] = '';
+      return;
     }
 
-    public function GetEdit()
-    {
-        $this->IdfixDebug->Profiler(__method__, 'start');
-        // Unique CSS ID
-        $cId = $this->GetId();
-        // Unique form input element name
-        $cName = $this->GetName();
-        // Get CSS class for the input element
-        $this->SetCssClass('form-control');
-        $this->SetDataElement('id', $cId);
-        $this->SetDataElement('name', $cName);
 
-        // Build the attributelist
-        $cAttr = $this->GetAttributes($this->aData);
+    $cValue = (isset($aValue['name'])) ? $aValue['name'] : '';
+    $cMimeType = (isset($aValue['type'])) ? $aValue['type'] : '';
+    $cUrl = $this->GetFullFilenameAsUrl($aValue);
+    $cUrl = $aValue['url'];
 
-        // And get a reference to the input element
-        $cInput = "<input {$cAttr}>";
+    // Is it a picture ??
+    //print_r($aValue);
+    if (!(strpos($cMimeType, 'image/') === false)) {
+      $cValue = "<img src=\"{$cUrl}\" alt=\"{$cValue}\" height=\"30\"  \>";
+    }
+    $cHref = "<a target=\"_blank\" href=\"{$cUrl}\">{$cValue}</a>";
+    $this->aData['__DisplayValue'] = $cHref;
+  }
 
-        $cError = '';
+  public function GetEdit() {
+    $this->IdfixDebug->Profiler(__method__, 'start');
+    // Unique CSS ID
+    $cId = $this->GetId();
+    // Unique form input element name
+    $cName = $this->GetName();
+    // Get CSS class for the input element
+    $this->SetCssClass('form-control');
+    $this->SetDataElement('id', $cId);
+    $this->SetDataElement('name', $cName);
 
-        // Now check the PostValue, if the size of the file is set we have got an upload
-        if (isset($this->aData['__RawPostValue']['size']) and $this->aData['__RawPostValue']['size']) {
-            // Basic info fromm the $_FILES array
-            $aFileInfo = $this->aData['__RawPostValue'];
-            // Get any validation messages
-            $cError = $this->ValidateFile($aFileInfo);
-            // Save this file
-            //$this->SaveFile($aFileInfo);
-        }
+    // Build the attributelist
+    $cAttr = $this->GetAttributes($this->aData);
 
-        $this->aData['__DisplayValue'] = $this->RenderFormElement($this->aData['title'], $this->aData['description'], $cError, $cId, $cInput);
-        $this->IdfixDebug->Profiler(__method__, 'stop');
+    // And get a reference to the input element
+    $cInput = "<input {$cAttr}>";
 
+    $cError = '';
+
+    // Now check the PostValue, if the size of the file is set we have got an upload
+    if (isset($this->aData['__RawPostValue']['size']) and $this->aData['__RawPostValue']['size']) {
+      // Basic info fromm the $_FILES array
+      $aFileInfo = $this->aData['__RawPostValue'];
+      // Get any validation messages
+      $cError = $this->ValidateFile($aFileInfo);
+      // Save this file
+      //$this->SaveFile($aFileInfo);
     }
 
-    /**
-     * Check the file upload
-     * 
-     * @param mixed $aFileInfo
-     * @return
-     */
-    protected function ValidateFile($aFileInfo)
-    {
-        $cError = '';
-        // Does PHP report an error?
-        $this->aData['__ValidationError'] = (boolean)$aFileInfo['error'];
+    $this->aData['__DisplayValue'] = $this->RenderFormElement($this->aData['title'], $this->aData['description'], $cError, $cId, $cInput);
+    $this->IdfixDebug->Profiler(__method__, 'stop');
 
-        // Do we exceed the maximum number of bytes set?
-        if (isset($this->aData['max'])) {
-            $iMax = (integer)($this->aData['max']);
-            $iSize = (integer)$aFileInfo['size'];
-            if ($iSize > $iMax) {
-                $this->aData['__ValidationError'] = 1;
-            }
-        }
+  }
 
-        // get the errormessage
-        if ($this->aData['__ValidationError'] and isset($this->aData['error'])) {
-            $cError = $this->aData['error'];
-        }
+  /**
+   * Check the file upload
+   * 
+   * @param mixed $aFileInfo
+   * @return
+   */
+  protected function ValidateFile($aFileInfo) {
+    $cError = '';
+    // Does PHP report an error?
+    $this->aData['__ValidationError'] = (boolean)$aFileInfo['error'];
 
-        $cError .= $this->SaveFile($aFileInfo);
-
-        return $cError;
+    // Do we exceed the maximum number of bytes set?
+    if (isset($this->aData['max']) and intval( $this->aData['max']) ) {
+      $iMax = (integer)($this->aData['max']);
+      $iSize = (integer)$aFileInfo['size'];
+      if ($iSize > $iMax) {
+        $this->aData['__ValidationError'] = 1;
+        $cMax = $this->formatBytes($iMax,0);
+        $cSize = $this->formatBytes($iSize,0);
+        return "File is too big to be uploaded. Maximum size allowed: {$cMax} Current size: {$cSize}";
+      }
     }
 
-    private function SaveFile($aFileInfo)
-    {
-        //print_r($aFileInfo);
-        $cTempFileName = $aFileInfo['tmp_name'];
-        // Hash names are based upon the field and tablename so values will be stored together for tables/fields
-        $aFileInfo['hash_name'] = md5($this->aData['_name'] . $this->aData['_tablename'] . $this->Idfix->IdfixConfigSalt) . '/' . $aFileInfo['name'];
-        $cFullFileName = $this->GetFullFileName($aFileInfo);
-
-        $this->CheckDir($cFullFileName);
-        if (!@copy($cTempFileName, $cFullFileName)) {
-            $this->aData['__ValidationError'] = 1;
-            return $cFullFileName . ' cannot be copied.';
-        }
-
-        // Strip Tthe info we do not need
-        unset($aFileInfo['error']);
-        unset($aFileInfo['tmp_name']);
-        $this->aData['__SaveValue'] = $aFileInfo;
+    // get the errormessage
+    if ($this->aData['__ValidationError'] and isset($this->aData['error'])) {
+      $cError = $this->aData['error'];
     }
 
-    private function GetFullFileName($aFileInfo)
-    {
-        $cFileName = $aFileInfo['hash_name'];
-        $cFilesDir = $this->Idfix->aConfig['filespace'];
-        //$cConfigName = $this->Idfix->ValidIdentifier( $this->Idfix->cConfigName );
-        return $cFilesDir . "/{$cFileName}";
+    $cError .= $this->SaveFile($aFileInfo);
+
+    return $cError;
+  }
+
+  private function SaveFile($aFileInfo) {
+    //print_r($aFileInfo);
+    $cTempFileName = $aFileInfo['tmp_name'];
+    // Hash names are based upon the field and tablename so values will be stored together for tables/fields
+    $aFileInfo['hash_name'] = md5($this->aData['_name'] . $this->aData['_tablename'] . $this->Idfix->IdfixConfigSalt) . '/' . $aFileInfo['name'];
+    $cFullFileName = $this->GetFullFileName($aFileInfo);
+
+    $this->CheckDir($cFullFileName);
+    // GAE Create the file as public readable by default
+    $options = stream_context_create(['gs' => ['acl' => 'public-read']]);
+
+    if (!@copy($cTempFileName, $cFullFileName, $options)) {
+      $this->aData['__ValidationError'] = 1;
+      return $cFullFileName . ' cannot be copied.';
     }
 
-    private function GetFullFilenameAsUrl($aFileInfo)
-    {
-        $cFullFileName = $this->GetFullFileName($aFileInfo);
-        $cBasePath = $this->ev3->BasePath;
-        $cRelativeFilename = str_ireplace($cBasePath, '', $cFullFileName);
-        $cRelativeFilename = trim($cRelativeFilename, '/');
-        //print_r(get_defined_vars());
-        return  $this->ev3->BasePathUrl . '/' . $cRelativeFilename;
-    }
+    // Now also create the public url
+    $aFileInfo['url'] = CloudStorageTools::getPublicUrl($cFullFileName, false);
+    // Strip Tthe info we do not need
+    unset($aFileInfo['error']);
+    unset($aFileInfo['tmp_name']);
+    $this->aData['__SaveValue'] = $aFileInfo;
+    //$this->log(print_r($aFileInfo, true));
+  }
 
-    /**
-     * Recursive check for a directory structure
-     * 
-     * @param mixed $cFullFilename
-     * @return
-     */
-    private function CheckDir($cFullFilename)
-    {
-        $cDirName = dirname($cFullFilename);
-        if (!is_writable($cDirName)) {
-            $this->CheckDir($cDirName);
-            mkdir($cDirName);
-        }
-        return is_writable($cDirName);
+  private function GetFullFileName($aFileInfo) {
+    $cFileName = $aFileInfo['hash_name'];
+    $cFilesDir = $this->Idfix->aConfig['filespace'];
+    //$cConfigName = $this->Idfix->ValidIdentifier( $this->Idfix->cConfigName );
+    return $cFilesDir . "/{$cFileName}";
+  }
+
+  private function GetFullFilenameAsUrl($aFileInfo) {
+    $cFullFileName = $this->GetFullFileName($aFileInfo);
+    $cBasePath = $this->ev3->BasePath;
+    $cRelativeFilename = str_ireplace($cBasePath, '', $cFullFileName);
+    $cRelativeFilename = trim($cRelativeFilename, '/');
+    //print_r(get_defined_vars());
+    return $this->ev3->BasePathUrl . '/' . $cRelativeFilename;
+  }
+
+  /**
+   * Recursive check for a directory structure
+   * 
+   * @param mixed $cFullFilename
+   * @return
+   */
+  private function CheckDir($cFullFilename) {
+    $cDirName = dirname($cFullFilename);
+    if (!is_writable($cDirName)) {
+      $this->CheckDir($cDirName);
+      mkdir($cDirName);
     }
+    return is_writable($cDirName);
+  }
+
+  private function formatBytes($size, $precision = 2) {
+    $base = log($size) / log(1024);
+    $suffixes = array(
+      '',
+      ' kb',
+      ' MB',
+      ' GB',
+      ' TB');
+
+    return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
+  }
 
 
 }

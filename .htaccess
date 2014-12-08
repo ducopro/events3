@@ -2,6 +2,9 @@
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule idfix/(.*)$ index.php?idfix=$1 [QSA,NC,L]
-RewriteRule event/(.*)$ index.php?event=$1 [QSA,NC,L]
+RewriteRule ^(.*)$ index.php/$1?%{QUERY_STRING} [L]
+
+#RewriteRule idfix/(.*)$ index.php?idfix=$1 [QSA,NC,L]
+#RewriteRule event/(.*)$ index.php?event=$1 [QSA,NC,L]
+#ewriteRule (.*)$ index.php [QSA,NC,L]
 </IfModule>

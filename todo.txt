@@ -1,0 +1,127 @@
+*************
+** NEW:
+*************
+
+- Bootstrap javascript modal instead of alert()
+
+- Plugin subsystem
+
+- Meer validatiehandlers
+
+- Data export
+   CSV
+   XML
+   JSON
+
+Nieuwe property: logo voor spashscreen
+
+- website structuur uitdenken in gdocs+
+
+- Video over ajax mogelijkheden
+- Logo integreren ipv book icon als default logo 
+  
+- documentatie van de options/table keuzelijst
+
+- After deleting a config send message to old administrator that for privacy reasons
+  every trace of the config has been deleted.
+
+- Resend invoices
+ 
+  
+
+
+- Delete en copy actions in de background uitvoeren
+
+- Backups
+    - Download
+    - Upload
+
+- syslog meldingen voor storingen    
+  
+    
+- Controleer all file functies van PHP (caching)
+
+    
+
+*************
+** TEST:
+*************
+- cron hook per maand aanmaken
+- Add cron job for monthly consolidation
+
+- Triggers
+        - specify eventhandlers that can call URLS with data objects from the config
+
+- Backups
+    - Aanmaken testen
+    - restore testen
+    
+
+
+- Show cost on infopanel
+  Do we have access control for the infopanel?
+
+*************
+** DONE:
+*************
+- Otap
+    - Na deployment target environment cache reset
+    - weer gewijzigd. Retest.  
+
+- Pagetimer in index.php alleen tonen als we een google admin zijn
+- Hans bellen voor afspraak
+- Profiler informatie van de event handlers direct uit events3 halen en calls naar de profiler verwijderen
+- URL GET variabelen voor tonen profiler en debugger persistent maken
+- PHOTOSHOP LOGO
+- Loginscherm
+    - headers voor statische pagina versturen
+    - GetCachedParse function verwijderen
+    - Lijst met configuraties verwijderen    
+    - Linksboven href naar info panel bij niet ingelogde gebruikers verwijderen
+BUG
+    - After editing cache is not cleared
+    
+- Admin console for the superuser 
+    - Check access logs and billing information by config
+    - MySql maintainance
+
+- Mail handler
+
+- Add cron job for daily consolidation into backoffice
+    - leave 3 month history
+
+- Remove stats tables    
+
+Backoffice
+    - Delete configs and all related files, backups, tables and environments    
+
+- Blacklist some fields in editing form: MainID, TypeID etc. etc.
+- iconsize for normal icons
+- uploads en donwload van gewone velden inregelen
+- Als er niet met een deagdelijke url gehit wordt op de site dan zonder
+  pardon doorsturen naar www.idfixplatdfiorm.com.
+  Niet naar index.php, dus ook niet zomaar de sql server benaderen.
+
+
+- robots.txt inrichten zodat google de site niet om het uur crawled
+- verwijzingen naar idfix_refence_maual van website halen???
+
+- formatteer timestamps, dates formatted if timestamp detected
+  #TSCreate
+    -type=date
+    -format=Y-m-d
+
+- IdfixDefault
+  Inherit individual properties from lists like _edit
+- REST in progress
+  - Login with username and hashcode
+- Different bootstrap themes
+
+- Ajax handler implemeteren
+  - In list hook:ajax ipv hook:display
+  - Hook:ajax laat in de fieldsengine standaard hook:display zien voor backwards compatibility
+  - React on config: -ajax=1
+  - Test implementatie voor checkbox maken
+  - Reusable ajax save handler in new module IdfixAjax
+
+- CTRL+S hotkey for saving in config editor

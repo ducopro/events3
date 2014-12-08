@@ -8,84 +8,90 @@
  * 
  */
 
-class IdfixAction extends Events3Module
-{
+class IdfixAction extends Events3Module {
 
-    public function Events3IdfixActionCopy(&$output)
-    {
-        // First check access!!!!
-        if ($this->Idfix->Access($this->Idfix->cTableName . '_c')) {
+  public function Events3IdfixActionCopy(&$output) {
+    // First check access!!!!
+    if ($this->Idfix->Access($this->Idfix->cTableName . '_c')) {
 
-            $record = $this->IdfixStorage->LoadRecord($this->Idfix->iObject);
+      $record = $this->IdfixStorage->LoadRecord($this->Idfix->iObject);
 
-            // if the default "Name" field is used, indicate that this is in
-            // fact a copy
-            if (isset($record['Name'])) {
-                $record['Name'] .= ' ' . '(copy)';
-            }
+      // if the default "Name" field is used, indicate that this is in
+      // fact a copy
+      if (isset($record['Name'])) {
+        $record['Name'] .= ' ' . '(copy)';
+      }
 
-            $this->CopyRecurse($record, $record['ParentID']);
-            //_asterix_runtime_copy_recurse($record, $record['ParentID'], $config_name);
-        }
-
-        // Goto the last known page of the list
-        $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
-        //$cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
-        //header('location: ' . $cUrl);
-        $this->Idfix->Redirect($cUrl);
+      $this->CopyRecurse($record, $record['ParentID']);
+      //_asterix_runtime_copy_recurse($record, $record['ParentID'], $config_name);
     }
 
-    private function CopyRecurse($record, $parent_id)
-    {
-        $main_id = (integer)$record['MainID'];
-        unset($record['MainID']);
-        $record['ParentID'] = $parent_id;
+    // Goto the last known page of the list
+    $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
+    //$cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
+    //header('location: ' . $cUrl);
+    $this->Idfix->Redirect($cUrl);
+  }
 
-        //$new_main_id = asterix_api_save($record, $config_name);
-        $new_main_id = $this->IdfixStorage->SaveRecord($record);
+  private function CopyRecurse($record, $parent_id) {
+    $main_id = (integer)$record['MainID'];
+    unset($record['MainID']);
+    $record['ParentID'] = $parent_id;
 
-        // Now get all child records
-        //$childs = asterix_api_load_all($config_name, null, $main_id);
-        $childs = $this->IdfixStorage->LoadAllRecords(null, $main_id);
+    //$new_main_id = asterix_api_save($record, $config_name);
+    $new_main_id = $this->IdfixStorage->SaveRecord($record);
 
-        foreach ($childs as $child_id => $child_record) {
-            // Don't process our base record and the copy of it!!!
-            //_asterix_runtime_copy_recurse($child_record, $new_main_id, $config_name);
-            $this->CopyRecurse($child_record, $new_main_id);
-        }
+    // Now get all child records
+    //$childs = asterix_api_load_all($config_name, null, $main_id);
+    $childs = $this->IdfixStorage->LoadAllRecords(null, $main_id);
 
+    foreach ($childs as $child_id => $child_record) {
+      // Don't process our base record and the copy of it!!!
+      //_asterix_runtime_copy_recurse($child_record, $new_main_id, $config_name);
+      $this->CopyRecurse($child_record, $new_main_id);
     }
 
+  }
 
-    /**
-     * 
-     * 
-     * D E L E T E
-     * 
-     * 
-     */
-    public function Events3IdfixActionDelete(&$output)
-    {
-        // First check access!!!!
-        if ($this->Idfix->Access($this->Idfix->cTableName . '_d')) {
-            $this->DeleteRecurse($this->Idfix->iObject);
-        }
 
-        // Goto the last known page of the list
-        $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
-        //header('location: ' . $cUrl);
-        $this->Idfix->Redirect($cUrl);
-
+  /**
+   * 
+   * 
+   * D E L E T E
+   * 
+   * 
+   */
+  public function Events3IdfixActionDelete(&$output) {
+    // First check access!!!!
+    if ($this->Idfix->Access($this->Idfix->cTableName . '_d')) {
+      $this->DeleteRecurse($this->Idfix->iObject);
     }
 
-    private function DeleteRecurse($iParentId)
-    {
-        $aRecords = $this->IdfixStorage->LoadAllRecords(null, $iParentId);
-        foreach ($aRecords as $iMainId => $aRow) {
-            $this->DeleteRecurse($iMainId);
-        }
+    // Goto the last known page of the list
+    $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
+    //header('location: ' . $cUrl);
+    $this->Idfix->Redirect($cUrl);
 
-        $this->IdfixStorage->DeleteRecord($iParentId);
+  }
+
+  /**
+   * IdfixAction::DeleteRecurse()
+   * 
+   * We call this method from the rest services because we already did 
+   * the access checking
+   * 
+   * @param integer $iParentId
+   * @return void
+   */
+  public function DeleteRecurse($iParentId) {
+    $iCount = 1;
+    $aRecords = $this->IdfixStorage->LoadAllRecords(null, $iParentId);
+    foreach ($aRecords as $iMainId => $aRow) {
+      $iCount += $this->DeleteRecurse($iMainId);
     }
+
+    $this->IdfixStorage->DeleteRecord($iParentId);
+    return $iCount;
+  }
 
 }

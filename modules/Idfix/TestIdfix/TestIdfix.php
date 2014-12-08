@@ -5,6 +5,7 @@ class TestIdfix extends Events3TestCase
 
     public function Events3Test()
     {
+       
         /* @var $idfix Idfix*/
         $idfix = $this->load('Idfix');
         $this->assert(is_a($idfix, 'Idfix'));

@@ -30,7 +30,7 @@ class TestEvents3 extends Events3TestCase {
         $this->assert( is_object( $oModule->session ) );
         
         // Test the file directories
-        $this->assert( is_writable( $events3->PublicPath  ));
+        $this->assert( is_writable( $events3->PublicPath   ));
         $this->assert( is_writable( $events3->PrivatePath  ));
         
     }

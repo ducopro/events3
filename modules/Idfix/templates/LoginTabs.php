@@ -11,7 +11,7 @@
             <ul class="nav nav-tabs">
               <li class="active"><a href="#login" data-toggle="tab">Login</a></li>
               <li><a href="#resend" data-toggle="tab">Forgot password?</a></li>
-              <li><a href="#advanced" data-toggle="tab">Advanced</a></li>
+
             </ul>
             
             <!-- Tab panes -->
@@ -24,9 +24,7 @@
                  <?php print $password;?>
               </div>
               
-              <div class="tab-pane" id="advanced">
-                 <?php print $advanced;?>
-              </div>
+            
             </div>
             
        </div>

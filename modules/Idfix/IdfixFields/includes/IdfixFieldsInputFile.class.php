@@ -1,12 +1,9 @@
 <?php
 
-require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
-use google\appengine\api\cloud_storage\CloudStorageTools;
-
 class IdfixFieldsInputFile extends IdfixFieldsInput {
 
   public function GetDisplay() {
-    // Array with the complet file information
+    // Array with the complete file information
     // name: original filename
     // type: Mimetype
     // size: filesize in bytes
@@ -23,7 +20,7 @@ class IdfixFieldsInputFile extends IdfixFieldsInput {
     $cValue = (isset($aValue['name'])) ? $aValue['name'] : '';
     $cMimeType = (isset($aValue['type'])) ? $aValue['type'] : '';
     $cUrl = $this->GetFullFilenameAsUrl($aValue);
-    $cUrl = $aValue['url'];
+    $cUrl = $aValue['url']; // gae added
 
     // Is it a picture ??
     //print_r($aValue);
@@ -80,13 +77,13 @@ class IdfixFieldsInputFile extends IdfixFieldsInput {
     $this->aData['__ValidationError'] = (boolean)$aFileInfo['error'];
 
     // Do we exceed the maximum number of bytes set?
-    if (isset($this->aData['max']) and intval( $this->aData['max']) ) {
+    if (isset($this->aData['max']) and intval($this->aData['max'])) {
       $iMax = (integer)($this->aData['max']);
       $iSize = (integer)$aFileInfo['size'];
       if ($iSize > $iMax) {
         $this->aData['__ValidationError'] = 1;
-        $cMax = $this->formatBytes($iMax,0);
-        $cSize = $this->formatBytes($iSize,0);
+        $cMax = $this->formatBytes($iMax, 0);
+        $cSize = $this->formatBytes($iSize, 0);
         return "File is too big to be uploaded. Maximum size allowed: {$cMax} Current size: {$cSize}";
       }
     }
@@ -109,16 +106,26 @@ class IdfixFieldsInputFile extends IdfixFieldsInput {
     $cFullFileName = $this->GetFullFileName($aFileInfo);
 
     $this->CheckDir($cFullFileName);
-    // GAE Create the file as public readable by default
-    $options = stream_context_create(['gs' => ['acl' => 'public-read']]);
 
-    if (!@copy($cTempFileName, $cFullFileName, $options)) {
+
+    if ($this->ev3->GAE_IsPlatform()) {
+      // GAE Create the file as public readable by default
+      $options = stream_context_create(['gs' => ['acl' => 'public-read']]);
+      $bIsGoodCopy = @copy($cTempFileName, $cFullFileName, $options);
+      // Now also create the public url
+      require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
+      $aFileInfo['url'] = google\appengine\api\cloud_storage\CloudStorageTools::getPublicUrl($cFullFileName, false);
+    }
+    else {
+      $bIsGoodCopy = @copy($cTempFileName, $cFullFileName);
+      $aFileInfo['url'] = $this->GetFullFilenameAsUrl($aFileInfo);
+    }
+
+    if (!$bIsGoodCopy) {
       $this->aData['__ValidationError'] = 1;
       return $cFullFileName . ' cannot be copied.';
     }
 
-    // Now also create the public url
-    $aFileInfo['url'] = CloudStorageTools::getPublicUrl($cFullFileName, false);
     // Strip Tthe info we do not need
     unset($aFileInfo['error']);
     unset($aFileInfo['tmp_name']);

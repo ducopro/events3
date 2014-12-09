@@ -48,13 +48,13 @@ class Idfix extends Events3Module {
 
     // Default values from the url
     $cCommand = substr(parse_url(urldecode($_SERVER['PATH_INFO']), PHP_URL_PATH), 1);
-    $this->log(get_defined_vars());
+    //$this->log(get_defined_vars());
     if (!$cCommand) {
       return;
     }
 
     // What do we need to do?
-    $aInput = (array) explode('/', $cCommand);
+    $aInput = (array )explode('/', $cCommand);
 
     // This way we have some intelligent defaults
     // which may be empty of course
@@ -75,7 +75,9 @@ class Idfix extends Events3Module {
       'theme' => (isset($this->aConfig['theme']) ? $this->aConfig['theme'] : ''),
       'content' => $content,
       'navbar' => $navbar,
-      'messages' => $messages));
+      'messages' => $messages,
+      'javascript' => $this->GetSetClientTaskUrl(),
+      ));
     echo $cBodyContent;
     //$this->IdfixDebug->Profiler(__method__, 'stop');
   }
@@ -337,19 +339,19 @@ class Idfix extends Events3Module {
    */
   public function GetListViews($cTablename = '') {
     static $cache = array();
-    $cTablename = ($cTablename ? $cTablename : $this->cTableName);    
-    if(!isset($this->aConfig['tables'][$cTablename])) {
+    $cTablename = ($cTablename ? $cTablename : $this->cTableName);
+    if (!isset($this->aConfig['tables'][$cTablename])) {
       return array();
     }
-    
+
     // Check static cache
-    if(isset($cache[$cTablename])) {
+    if (isset($cache[$cTablename])) {
       return $cache[$cTablename];
     }
 
-    $this->IdfixDebug->Profiler(__method__, 'start');    
-    
-    
+    $this->IdfixDebug->Profiler(__method__, 'start');
+
+
     $cDefault = 'list';
     $cValidViewTypes = ';;list;;date;;map;;';
 
@@ -377,7 +379,7 @@ class Idfix extends Events3Module {
       $aReturn['date'] = array(
         'title' => 'Calendar',
         'action' => 'listdate',
-        'url' => $this->GetUrl('',  $cTablename, '', 0, null, 'listdate'),
+        'url' => $this->GetUrl('', $cTablename, '', 0, null, 'listdate'),
         'icon' => 'calendar');
       // Make it the default in certain cases ....
       if ($bDateViewSet) {
@@ -399,7 +401,7 @@ class Idfix extends Events3Module {
       $aReturn['map'] = array(
         'title' => 'Map',
         'action' => 'map',
-        'url' => $this->GetUrl('',  $cTablename, '', 0, null, 'map'),
+        'url' => $this->GetUrl('', $cTablename, '', 0, null, 'map'),
         'icon' => 'map-marker');
       // Make it the default in certain cases ....
       if ($bMapViewSet) {
@@ -902,7 +904,6 @@ class Idfix extends Events3Module {
 
       // Prefix the key
       $cKey = 'configcache_' . $cKey;
-      //$this->log($cKey);
 
       // Remove the key form the cache
       if ($bDelete) {
@@ -912,17 +913,10 @@ class Idfix extends Events3Module {
       // Try to get a value from the cache
       elseif (is_null($xValue)) {
         $xValue = $this->ev3->CacheGet($cKey);
-        // GAE
-        // Check if there is a value
-        //if (isset($_SESSION[self::CACHE_KEY][$cKey])) {
-        // Than set the return value
-        //$xValue = unserialize($_SESSION[self::CACHE_KEY][$cKey]);
-        //}
       }
       // OK, we must set the cache
       else {
         $this->ev3->CacheSet($cKey, $xValue);
-        //$_SESSION[self::CACHE_KEY][$cKey] = serialize($xValue);
       }
     }
 
@@ -1028,14 +1022,14 @@ class Idfix extends Events3Module {
     $aConfig = $this->TableConfigById($iTypeId);
     $aConfig = $this->PostprocesConfig($aConfig, $aRecord);
     $cTableName = $aConfig['_name'];
-    
+
     if (isset($aConfig['trail']) and $aConfig['trail']) {
       $cTitle = $aConfig['trail'];
     }
     else {
       $cTitle = $aConfig['title'] . ' ' . $aRecord['MainID'];
     }
-    
+
     // Get the correct default view by tablename
     $aViews = $this->GetListViews($cTableName);
     $cDefaultAction = $aViews['default']['action'];
@@ -1112,6 +1106,48 @@ class Idfix extends Events3Module {
         );
     }
     $output = $this->RenderTemplate('ConfigInfo', compact('aTables'));
+  }
+
+  /**
+   * Sometimes we need to do some background processing.
+   * 
+   * But if we do it during the rendering process for the client,
+   * it just takes too long.
+   * 
+   * We have a task system in Google App Engine. And of course
+   * we have a CURL library.
+   * 
+   * But it's all a lot of work. And on top of that, we need to be
+   * in the current session!!!!
+   * 
+   * There's a very simple solution. Create a url and let the client
+   * trigger it for us. That way we know we're in the session and it's very
+   * easy to set up.
+   * 
+   * Jquery already has a nice $.get() method for that.
+   * 
+   * This function is a little pushqueu where we can set a couple of url's
+   * Than they are rendered as javascript en send to the client.
+   *  
+   * @param string $cUrl
+   * @return void
+   */
+  public function GetSetClientTaskUrl($cUrl = '') {
+    if ($cUrl) {
+      $_SESSION[__method__][] = $cUrl;
+    }
+    else {
+      $cJavaScript = '';
+      // Render javascript
+      if (isset($_SESSION[__method__]) and is_array($_SESSION[__method__]) and count($_SESSION[__method__]) > 0) {
+        foreach ($_SESSION[__method__] as $cUrl) {
+          $cJavaScript .= "$.get(\"{$cUrl}\");\r\n";
+        }
+        $cJavaScript = "<script type=\"text/javascript\">\r\n{$cJavaScript}</script>";
+        //unset($_SESSION[__method__]);
+      }
+      return $cJavaScript;
+    }
   }
 
 }

@@ -1,7 +1,5 @@
 <?php
 
-use \google\appengine\api\mail\Message;
-
 class IdfixMail extends Events3Module {
   public $IdfixMailConfigSender, $IdfixMailConfigCC, $IdfixMailConfigBCC;
 
@@ -65,10 +63,10 @@ class IdfixMail extends Events3Module {
     $cBCC = $this->IdfixMailConfigBCC;
 
 
-    if ($tyhis->ev3->GAE_IsPlatform()) {
+    if ($this->ev3->GAE_IsPlatform()) {
       // Use the google mail API
       try {
-        $oMess = new Message();
+        $oMess = new google\appengine\api\mail\Message();
         $oMess->addTo($cMailTo);
         $oMess->setSender($cSendFrom);
         $oMess->setSubject($cSubject);

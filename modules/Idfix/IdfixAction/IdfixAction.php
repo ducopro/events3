@@ -64,13 +64,32 @@ class IdfixAction extends Events3Module {
   public function Events3IdfixActionDelete(&$output) {
     // First check access!!!!
     if ($this->Idfix->Access($this->Idfix->cTableName . '_d')) {
-      $this->DeleteRecurse($this->Idfix->iObject);
+      // Only delete top level object
+      $this->IdfixStorage->DeleteRecord($this->Idfix->iObject);
+      // Now create a url for deleting the children
+      $cTaskUrl = $this->Idfix->GetUrl('','','',$this->Idfix->iObject,null,'deletechildren');
+      // And set is as an asynchronous client call
+      $this->Idfix->GetSetClientTaskUrl($cTaskUrl);
+
     }
 
     // Goto the last known page of the list
     $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
     //header('location: ' . $cUrl);
     $this->Idfix->Redirect($cUrl);
+
+  }
+  public function Events3IdfixActionDeletechildren(&$output) {
+    $this->log('Recursive deletion of children in background: start ');
+    // First check access!!!!
+    if ($this->Idfix->Access($this->Idfix->cTableName . '_d')) {
+      $iCount = $this->DeleteRecurse($this->Idfix->iObject);
+      $this->log('Recursive deletion of children in background: ' . $iCount);
+    }
+$this->log('Recursive deletion of children in background: stop ');
+    // This one is called as a background proces.
+    // So, just exit
+    //exit();
 
   }
 

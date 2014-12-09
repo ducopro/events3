@@ -77,7 +77,7 @@ class IdfixEdit extends Events3Module {
     // For GAE we need a temporary URL, because of the file uploads
     if ($this->ev3->GAE_IsPlatform()) {
       require_once 'google/appengine/api/cloud_storage/CloudStorageTools.php';
-      $options = ['gs_bucket_name' => 'ev3'];
+      $options = array('gs_bucket_name' => 'ev3');
       $cUploadUrl = google\appengine\api\cloud_storage\CloudStorageTools::createUploadUrl($cPostUrl, $options);
 
     }

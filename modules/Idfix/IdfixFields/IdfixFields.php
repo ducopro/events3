@@ -322,6 +322,9 @@ class IdfixFieldsInput extends IdfixFieldsBase {
   public function GetDisplay() {
     $this->IdfixDebug->Profiler(__method__, 'start');
     $this->aData['__DisplayValue'] = $this->Clean($this->aData['__RawValue']);
+    if(isset($this->aData['template'])) {
+      $this->aData['__DisplayValue'] = $this->aData['template'];
+    }
     $this->IdfixDebug->Profiler(__method__, 'stop');
   }
 

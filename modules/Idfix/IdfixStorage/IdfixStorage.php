@@ -86,6 +86,11 @@ class IdfixStorage extends Events3Module {
 
 
     }
+
+    // Call a hook for triggering a post action
+    $aFields['MainID'] = $iRetval;
+    $this->Idfix->Event('SaveRecordDone', $aFields);
+
     return $iRetval;
   }
 

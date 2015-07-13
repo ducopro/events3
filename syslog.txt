@@ -8897,3 +8897,55 @@ Your temporary password: <strong>1170659f</strong></p>
 20150227:134432-Removed filesystem: C:\uniserv\UniServer\www\events3/files/otap/prod/files/chantal
 20150227:134432-Removed: C:\uniserv\UniServer\www\events3/files/otap/prod/config/chantal.idfix
 20150227:134432-Background backup handler: Environmenr:prod Action:2 Config:chantal
+20150713:144614-onepp/__users/0/0/0/Saveconfig
+20150713:144614-Cache Deleteded for configcache_oneppdev
+20150713:144617-onepp/site/0/0/2/list
+20150713:144618-onepp/site/0/0/2/list
+20150713:144619-onepp/site/0/3/2/edit
+20150713:144620-onepp/site/0/3/2/edit
+20150713:181411-onepp/sales/0/1/0/list
+20150713:181411-onepp/sales/0/1/0/list
+20150713:181418-onepp/site/0/3/2/edit
+20150713:181418-onepp/site/0/3/2/edit
+20150713:181418-onepp/site/0/0/2/list
+20150713:181419-onepp/site/0/0/2/list
+20150713:181419-onepp/column/0/0/5/list
+20150713:181419-onepp/column/0/0/5/list
+20150713:181424-onepp/sales/0/1/0/list
+20150713:181425-onepp/sales/0/1/0/list
+20150713:181438-onepp/sales/0/0/0/edit
+20150713:181438-onepp/sales/0/0/0/edit
+20150713:181455-onepp/sales/0/0/0/edit
+20150713:181455-TriggerEvent::insert
+20150713:181455-inline redirect to: http://localhost/events3/onepp/sales/0/1/0/List?otap=dev&sort=Weight/d
+20150713:181455-processed inline redirect to: /onepp/sales/0/1/0/List?otap=dev&sort=Weight/d
+20150713:181455-onepp/sales/0/1/0/List
+20150713:181455-onepp/sales/0/0/0/edit
+20150713:181459-onepp/site/0/0/9/list
+20150713:181459-onepp/site/0/0/9/list
+20150713:181501-onepp/site/0/0/9/edit
+20150713:181501-onepp/site/0/0/9/edit
+20150713:181531-onepp/site/0/0/9/edit
+20150713:181531-TriggerEvent::insert
+20150713:181531-inline redirect to: http://localhost/events3/onepp/site/0/0/9/List?otap=dev&sort=Weight/d
+20150713:181531-processed inline redirect to: /onepp/site/0/0/9/List?otap=dev&sort=Weight/d
+20150713:181531-onepp/site/0/0/9/List
+20150713:181531-onepp/site/0/0/9/edit
+20150713:181535-onepp/section/0/0/10/list
+20150713:181535-onepp/section/0/0/10/list
+20150713:181539-onepp/section/0/0/10/edit
+20150713:181539-onepp/section/0/0/10/edit
+20150713:181546-onepp/section/0/0/10/edit
+20150713:181546-TriggerEvent::insert
+20150713:181546-inline redirect to: http://localhost/events3/onepp/section/0/0/10/List?otap=dev&sort=Weight/d
+20150713:181546-processed inline redirect to: /onepp/section/0/0/10/List?otap=dev&sort=Weight/d
+20150713:181546-onepp/section/0/0/10/List
+20150713:181546-onepp/section/0/0/10/edit
+20150713:181549-onepp/section/0/11/10/edit
+20150713:181549-onepp/section/0/11/10/edit
+20150713:181600-onepp/section/0/11/10/edit
+20150713:181600-TriggerEvent::update
+20150713:181600-inline redirect to: http://localhost/events3/onepp/section/0/0/10/List?otap=dev&sort=Weight/d
+20150713:181600-processed inline redirect to: /onepp/section/0/0/10/List?otap=dev&sort=Weight/d
+20150713:181600-onepp/section/0/0/10/List
+20150713:181601-onepp/section/0/11/10/edit

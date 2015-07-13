@@ -25,6 +25,14 @@
  */
 
 class IdfixListmap extends Events3Module {
+  // Calculate the center and maximum and minimum lat and long
+  // That way we can center the map and set a correct zoom level
+  private $fLatMax = 0.0;
+  private $fLatMin = 0.0;
+  private $fLatCenter = 0.0;
+  private $fLongMax = 0.0;
+  private $fLongMin = 0.0;
+  private $fLongCenter = 0.0;
 
   // Permission PreProcessing
   private $bViewDeleteButton = false;
@@ -108,28 +116,57 @@ class IdfixListmap extends Events3Module {
     // because we need the MainID of every row as a parentID
     $this->IdfixList->PreloadChildCounters($this->aViewWhiteList, $aDataSet);
 
-    $aData['js'] = $this->CreateMarkers($aDataSet, $cMapField , $aMapConfig);
+    $aData = $this->CreateMarkers($aDataSet, $cMapField, $aMapConfig, $aTableConfig);
 
+
+    $this->log($aData);
   }
 
   /**
-   * Create all the javascript for building a map with markers
+   * Create all the javascriptdata for building a map with markers
+
+   * ['Bondi Beach', -33.890542, 151.274856, 4],
+   * ['Coogee Beach', -33.923036, 151.259052, 5],
+   * ['Cronulla Beach', -34.028249, 151.157507, 3],
+   * ['Manly Beach', -33.80010128657071, 151.28747820854187, 2],
+   * ['Maroubra Beach', -33.950198, 151.259302, 1]
+
    * 
    * @param mixed $aDataSet
    * @param mixed $cFieldName
    * @param mixed $cDisplay
    * @return
    */
-  private function CreateMarkers($aDataSet, $cFieldName, $aMapConfig) {
-   $cReturn = '';
-   foreach($aDataSet as $iMainId => $aRecord) {
-      if($aRecord[$cFieldName]) {
-         $aPPMapConfig = $this->Idfix->PostprocesConfig($aMapConfig, $aRecord);
-         $cTooltip = $aPPMapConfig['display'];
+  private function CreateMarkers($aDataSet, $cFieldName, $aMapConfig, $aTableConfig) {
+    $cJsData = '';
+    $cPopupData = '';
+
+
+    foreach ($aDataSet as $iMainId => $aRecord) {
+      if ($aRecord[$cFieldName]) {
+        //$aPPMapConfig = $this->Idfix->PostprocesConfig($aMapConfig, $aRecord);
+        //$cTooltip = $aPPMapConfig['display'];
+        $aPosition = unserialize($aRecord[$cFieldName]);
+        $fLat = (float)$aPosition['lat'];
+        $fLong = (float)$aPosition['long'];
+        $cTooltip = $aPosition['value'];
+        if ($fLat and $fLong) {
+          $cJsData .= "['{$cTooltip}', {$fLat}, {$fLong}, {$iMainId}],\n";
+        }
+        // Make popup code
+        $cPopupData .= $this->GetDisplayItem($aRecord, $aTableConfig);
       }
-   }
-   
-   return $cReturn;
+    }
+    // Strip the last newline and comma
+    $cJsData = substr($cJsData, 0, strlen($cJsData) - 2);
+
+    // Build the list of elements for the main template
+    $aTemplateVars = array(
+      'js' => $cJsData,
+      'popup' => $cPopupData,
+      );
+    //$this->log($cJsData);
+    return $aTemplateVars;
   }
 
 
@@ -139,8 +176,6 @@ class IdfixListmap extends Events3Module {
     // And postprocess it for the display item
     $aTableConfig = $this->Idfix->PostprocesConfig($aTableConfig, $aRecord);
 
-    // What do we need to show??
-    $cDisplayData = $aTableConfig['date']['display'];
 
     // Edit button
     $cEditButton = '';
@@ -197,14 +232,13 @@ class IdfixListmap extends Events3Module {
 
     // And return the fully rendered item
     $aTemplateVars = array(
-      'display' => $cDisplayData,
       'edit' => $cEditButton,
       'copy' => $cCopyButton,
       'delete' => $cDeleteButton,
       'title' => $aTableConfig['title'],
       'icon' => $this->Idfix->GetIconHTML($aTableConfig),
       'data' => $aList,
-      'uid' => 'date-item-' . $aRecord['MainID'],
+      'uid' => 'map-item-' . $aRecord['MainID'],
       );
 
     return $this->Idfix->RenderTemplate('ActionListmapMainItem', $aTemplateVars);

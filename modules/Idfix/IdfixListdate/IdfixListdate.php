@@ -182,7 +182,10 @@ class IdfixListdate extends Events3Module {
       $iStopTimeStamp = $iStartTimeStamp + (7 * 24 * 60 * 60);
     }
     $aWhere[] = $cFieldName . ' >= ' . $iStartTimeStamp;
-    $aWhere[] = $cFieldName . ' <= ' . $iStopTimeStamp;
+    $aWhere[] = $cFieldName . ' < ' . $iStopTimeStamp;
+
+    $this->IdfixDebug->Debug(__METHOD__, date('Y-m-d H:i:s', $iStartTimeStamp) . ' until ' . date('Y-m-d H:i:s', $iStopTimeStamp));
+
 
     // Create a PACKAGE for the eventhandler
     $aPack = array(
@@ -249,7 +252,7 @@ class IdfixListdate extends Events3Module {
    * @return void
    */
   private function SetFirstDay() {
-    if ($this->Idfix->iObject) {
+    if ($this->Idfix->iObject > 1) {
       $iTime = $this->Idfix->iObject;
     }
     else {
@@ -257,7 +260,7 @@ class IdfixListdate extends Events3Module {
     }
 
     // Count back to midnight ...
-    $this->iFirstDayOfView = strtotime('midnight', $iTime);
+    $iTime = strtotime('midnight', $iTime);
 
     if ($this->cView == 'week') {
       $bIsMonday = (boolean)(date('N', $iTime) == 1);
@@ -270,7 +273,9 @@ class IdfixListdate extends Events3Module {
       $this->iFirstDayOfView = strtotime('first day of', $iTime);
     }
 
-
+    //$this->IdfixDebug->Debug(__METHOD__, get_defined_vars());
+    //$this->IdfixDebug->Debug(__METHOD__, date('Y-m-d H:i:s', $this->iFirstDayOfView) );
+    
   }
 
   /**
@@ -396,7 +401,7 @@ class IdfixListdate extends Events3Module {
       }
     }
 
-    $this->IdfixDebug->Debug('FilleCalendar', get_defined_vars());
+    //$this->IdfixDebug->Debug('FilleCalendar', get_defined_vars());
     return $aCalender;
   }
 

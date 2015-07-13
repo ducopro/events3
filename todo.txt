@@ -2,6 +2,8 @@
 ** NEW:
 *************
 
+- delete triggers
+
 - Bootstrap javascript modal instead of alert()
 
 - Plugin subsystem

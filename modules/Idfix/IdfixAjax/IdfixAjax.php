@@ -3,12 +3,6 @@
 class IdfixAjax extends Events3Module {
 
   public function Events3IdfixActionAjaxupdate(&$output) {
-    //$this->log('In ajax handler');
-    //$this->log($_SERVER['PATH_INFO']);
-    //$this->log($_GET);
-    //$this->log($_POST);
-    //$this->log($_SESSION);
-
     // Wat moeten we doen?
     // 1. Check permissions
     //    - Edit table allowed???
@@ -27,7 +21,6 @@ class IdfixAjax extends Events3Module {
           $cPermission = $this->Idfix->cTableName . '_' . $this->Idfix->cFieldName . '_e';
           $bAccess = $this->Idfix->Access($cPermission);
         }
-
 
         // Depending on the the rights we need to display the edit element or the view element
         if ($bAccess) {
@@ -48,16 +41,15 @@ class IdfixAjax extends Events3Module {
           // If there is a value to save, we need to keep it....
           // If there are no errors ofcourse
           if (!$bError and isset($aFieldConfig['__SaveValue'])) {
+            // Get fuill data record, if we do not do that values from
+            // the data blob are lost if we only set 1 value.
+            $aRecord = $this->IdfixStorage->LoadRecord($this->Idfix->iObject);
+            // Add the new value
+            $aRecord[$this->Idfix->cFieldName] = $aFieldConfig['__SaveValue'];
             // Now save it
-            $aRecord = array(
-              'MainID' => $this->Idfix->iObject,
-              $this->Idfix->cFieldName => $aFieldConfig['__SaveValue'],
-              );
             $this->IdfixStorage->SaveRecord($aRecord);
-            //$this->aDataRow[$cFieldName] = $aFieldConfig['__SaveValue'];
           }
         }
-
 
       }
     }

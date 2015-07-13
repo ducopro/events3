@@ -244,7 +244,7 @@ class Database extends Events3Module {
       $stmt = $this->pdo->prepare($cSql);
       $stmt->setFetchMode(PDO::FETCH_ASSOC);
       $stmt->execute(array_values($aParams));
-      $this->ProfileQuery($stmt->queryString);
+      $this->ProfileQuery($stmt->queryString, $aParams);
       //$this->IdfixDebug->Debug(__METHOD__, $stmt);
       //$this->IdfixDebug->Debug(__METHOD__, $retval);
       //$this->IdfixDebug->Debug(__METHOD__, $this->pdo);
@@ -281,7 +281,7 @@ class Database extends Events3Module {
    * @param string $cSql The SQL we send to the data engine
    * @return void
    */
-  private function ProfileQuery($cSql = '') {
+  private function ProfileQuery($cSql = '', $aParams = array()) {
     static $iStart = 0;
     static $iCum = 0;
     if (!$cSql) {
@@ -295,6 +295,7 @@ class Database extends Events3Module {
         'time' => $iThroughPut,
         'total' => $iCum,
         'sql' => $cSql,
+        'params' => $aParams,
         );
       $ev3 = Events3::GetHandler();
       $ev3->Raise('ProfileQuery', $aPack);

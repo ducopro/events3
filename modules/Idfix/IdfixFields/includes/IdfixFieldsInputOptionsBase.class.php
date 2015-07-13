@@ -40,7 +40,7 @@ class IdfixFieldsInputOptionsBase extends IdfixFieldsInput {
     }
     $cDisplay = implode(', ', $aDisplay);
     $this->aData['__DisplayValue'] = $cDisplay;
-    $this->IdfixDebug->Debug(__method__, get_defined_vars());
+    //$this->IdfixDebug->Debug(__method__, get_defined_vars());
     $this->IdfixDebug->Profiler(__method__, 'stop');
   }
 

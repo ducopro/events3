@@ -20,14 +20,19 @@ class IdfixStorage extends Events3Module {
    */
   public function DeleteRecord($iMainId) {
     $cTableSpace = $this->GetTableSpaceName();
-    
+
     // First load the record, than call the delete event
-    // WT: Added for the tyrigger module
+    // WT: Added for the trigger module
     $aRecord = $this->LoadRecord($iMainId);
-    $this->Idfix->Event('Delete', $aRecord);
-    
-    $sql = "DELETE FROM {$cTableSpace} WHERE MainID = " . intval($iMainId);
-    return (integer)$this->Database->Query($sql);
+
+    $iReturn = 0;
+    if (isset($aRecord['MainID']) and $aRecord['MainID'] == $iMainId) {
+      $this->Idfix->Event('Delete', $aRecord);
+      $sql = "DELETE FROM {$cTableSpace} WHERE MainID = " . intval($iMainId);
+      $iReturn = (integer)$this->Database->Query($sql);
+
+    }
+    return $iReturn;
   }
 
   /**
@@ -66,7 +71,7 @@ class IdfixStorage extends Events3Module {
     if (isset($aFields['MainID']) and $aFields['MainID']) {
       // Call an event
       $this->Idfix->Event('Update', $aOldFields);
-      
+
       $iRetval = (integer)$aFields['MainID'];
       unset($aFields['MainID']);
       $this->Database->Update($cTableSpace, $aFields, 'MainID', $iRetval);
@@ -74,7 +79,7 @@ class IdfixStorage extends Events3Module {
     else {
       $aFields['TSCreate'] = time();
       $iRetval = $this->Database->Insert($cTableSpace, $aFields);
-            
+
       // Call an event
       $aOldFields['MainID'] = $iRetval;
       $this->Idfix->Event('Insert', $aOldFields);
@@ -346,26 +351,26 @@ class IdfixStorage extends Events3Module {
    * @return void
    */
   private function _ChildCount($xTypeID, $xParentID, $bPreLoad = false) {
-     static $aChildCount = array();
-     $cTablename = $this->GetTableSpaceName();
-     
-     // Do the preloading
-     if($bPreLoad) {
-        $cSql = "SELECT TypeID, ParentID, count(*) as count FROM {$cTablename} WHERE ParentID IN ({$xParentID}) AND TypeID IN ({$xTypeID}) GROUP BY 1,2";
-        $aCounter = $this->Database->DataQuery($cSql);
-        //$this->IdfixDebug->Debug(__METHOD__, $aCounter);
-        foreach($aCounter as $aData) {
-            $aChildCount[$aData['TypeID']][$aData['ParentID']] = $aData['count'];
-        }
-        return;
-     }
-     
-     $iReturn = 0;
-     if(isset($aChildCount[$xTypeID][$xParentID])) {
-        $iReturn = $aChildCount[$xTypeID][$xParentID];
-     }
-     
-     return $iReturn;
+    static $aChildCount = array();
+    $cTablename = $this->GetTableSpaceName();
+
+    // Do the preloading
+    if ($bPreLoad) {
+      $cSql = "SELECT TypeID, ParentID, count(*) as count FROM {$cTablename} WHERE ParentID IN ({$xParentID}) AND TypeID IN ({$xTypeID}) GROUP BY 1,2";
+      $aCounter = $this->Database->DataQuery($cSql);
+      //$this->IdfixDebug->Debug(__METHOD__, $aCounter);
+      foreach ($aCounter as $aData) {
+        $aChildCount[$aData['TypeID']][$aData['ParentID']] = $aData['count'];
+      }
+      return;
+    }
+
+    $iReturn = 0;
+    if (isset($aChildCount[$xTypeID][$xParentID])) {
+      $iReturn = $aChildCount[$xTypeID][$xParentID];
+    }
+
+    return $iReturn;
   }
 
 }

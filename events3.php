@@ -71,7 +71,7 @@ class Events3 {
   public function __construct($bUnitTestMode = false) {
     $iStart = microtime(true);
     session_start();
-    
+
     $cProtocol = ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') ? 'https' : 'http');
     $this->bTest = $bUnitTestMode;
     $this->BasePath = dirname(__file__);
@@ -232,6 +232,9 @@ class Events3 {
   public function CacheDelete($cKey) {
     return $this->_cache($cKey, null, true);
   }
+  public function CacheReset() {
+    return $this->_cache('stub', null, 'reset');
+  }
 
   /**
    * We need a wrapper for memcache because the cache is shared by
@@ -260,7 +263,13 @@ class Events3 {
     }
 
     // Get or set or remove depending on the data
-    if ($bDelete) {
+    if ($bDelete === 'reset') {
+      // only reset session cache. memcache can be reset from the operating system
+      // session cache needs to be flushed at certain times.
+      // Maybe after logging in or so ...      
+      $_SESSION[__method__] = array();
+    }
+    elseif ($bDelete) {
       if ($this->GAE_IsPlatform()) {
         $oCacheRef->delete($cKey);
       }
@@ -324,7 +333,7 @@ class Events3 {
       foreach ($aMethods as $cMethodName) {
         if (strpos($cMethodName, 'Events3') === 0) {
           $cEventName = substr($cMethodName, 7);
-          $this->_aEventList[$cEventName][] = $cModulePath;
+          $this->_aEventList[$cEventName][] = $cModuleName;
         }
       }
 

@@ -1,3 +1,8 @@
+20141210 Delete children in background process
+20141210 Codebase again suitable for traditional hosting
+20141210 Clean urls can be mixed with [idfix=] style
+20141210 Task system replace by javascript $get()
+20141210 Inline redirection. No webserver redirect needed.
 20141103 Added hotkey form saving configuration CTRL+S
 20141102 Added trigger system
 20141031 Added ajax fields in lists

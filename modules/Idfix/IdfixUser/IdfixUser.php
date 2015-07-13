@@ -43,10 +43,7 @@ class IdfixUser extends Events3Module {
       'Resend',
       )) and count($_POST) > 0);
 
-    $bWhiteListedAlways = in_array($this->Idfix->cAction, array(
-      'Loginform',
-      'Pushtask',
-      ));
+    $bWhiteListedAlways = in_array($this->Idfix->cAction, array('Loginform'));
 
     //$this->log(print_r(get_defined_vars(), true));
     // If we still do not have a user object, redirect to the login page
@@ -174,17 +171,15 @@ class IdfixUser extends Events3Module {
       $aWhere = array('Name = ' . $cEmail, 'Char_1 = ' . $cPassword);
       $aRecords = $this->IdfixStorage->LoadAllRecords(9999, 0, '', $aWhere, 1);
       if (count($aRecords) > 0) {
+        // Get the unique user record
         $aUserObject = array_shift($aRecords);
         $this->GetSetUserObject($aUserObject);
-
         // Now redirect to the first list page
         $aTables = $this->Idfix->aConfig['tables'];
         $aFirstTable = array_shift($aTables);
         $cTableName = isset($aFirstTable['_name']) ? $aFirstTable['_name'] : '';
         $cUrl = $this->Idfix->GetUrl('', $cTableName, '', 1, 0, 'list');
-        $this->Idfix->Redirect($cUrl);
-
-        //print_r($aUserObject);
+        $this->Idfix->RedirectInline($cUrl);
       }
       // Set marker for the login form
       $this->bGoodLogin = $this->IsLoggedIn();
@@ -194,10 +189,13 @@ class IdfixUser extends Events3Module {
   }
 
   public function Events3IdfixActionLogout() {
+    // Reset the session cache
+    $this->ev3->CacheReset();
+    // reset data from this module, effectively removing the userdata
     unset($_SESSION[__class__]);
+    // And go back to the loginform
     $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
-    $this->Idfix->Redirect($cUrl);
-
+    $this->Idfix->RedirectInline($cUrl);
   }
 
   /**
@@ -612,7 +610,7 @@ class IdfixUser extends Events3Module {
 
   private function RedirectToLogin() {
     $cUrl = $this->Idfix->GetUrl($this->cConfigName, '', '', 0, 0, 'loginform');
-    $this->Idfix->Redirect($cUrl);
+    $this->Idfix->RedirectInline($cUrl);
   }
 
   /**
@@ -647,9 +645,9 @@ class IdfixUser extends Events3Module {
         //$this->log('Login from hash NOK');
         // Not realy clean, but check if this is a rest call.
         // If it is, set a different http response code and exit
-        if( isset($aCommand[6]) and strtolower($aCommand[6])=='rest') {
-            http_response_code(401); // Unauthorized
-            exit();
+        if (isset($aCommand[6]) and strtolower($aCommand[6]) == 'rest') {
+          http_response_code(401); // Unauthorized
+          exit();
         }
       }
     }
@@ -682,7 +680,7 @@ class IdfixUser extends Events3Module {
       if (!$bReturn) {
         $cEncryptedPasswordFromUrl = $this->CreateHashValue($cHashFromUrl);
         $cEncryptedPassword = $aUser['Char_1'];
-        $bReturn = (boolean) ($cEncryptedPassword == $cEncryptedPasswordFromUrl);
+        $bReturn = (boolean)($cEncryptedPassword == $cEncryptedPasswordFromUrl);
       }
 
       //$this->log($cHashBase);
@@ -703,7 +701,7 @@ class IdfixUser extends Events3Module {
    */
   private function GetUserObjectByName($cUsername) {
     //$aUser = $this->ev3->CacheGet(__method__);
-    $aUser= null;
+    $aUser = null;
     if (!$aUser) {
       $aWhere = array("Name = '{$cUsername}'");
       $aRecords = $this->IdfixStorage->LoadAllRecords(9999, 0, '', $aWhere, 1);

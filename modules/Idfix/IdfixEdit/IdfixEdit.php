@@ -69,7 +69,7 @@ class IdfixEdit extends Events3Module {
       $cUrl = $this->Idfix->GetSetLastListPage($cTableName);
       //$cUrl = $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iLastPage, null, 'list');
       //header('location: ' . $cUrl);
-      $this->Idfix->Redirect($cUrl);
+      $this->Idfix->RedirectInline($cUrl);
     }
 
     $cPostUrl = $this->Idfix->GetUrl($cConfigName, $cTableName, '', $iMainID, null, 'edit');

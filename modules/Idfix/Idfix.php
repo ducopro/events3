@@ -1,7 +1,7 @@
 <?php
 
 /**
- * The Idfix module is the dispathhing engine for building
+ * The Idfix module is the dispatching engine for building
  * a modular system.
  * 
  */
@@ -43,12 +43,25 @@ class Idfix extends Events3Module {
    * @param string $cIdfixCommands, Commandline parameters tos use instead of the values from $_GET
    * @return void
    */
-  public function Events3Run() {
+  public function Events3Run($cUrl = '') {
     //$this->IdfixDebug->Profiler(__method__, 'start');
 
-    // Default values from the url
-    $cCommand = substr(parse_url(urldecode($_SERVER['PATH_INFO']), PHP_URL_PATH), 1);
-    //$this->log(get_defined_vars());
+    // Where does our URL path come from?????
+    if ($cUrl) {
+      // In case we need a redirect inline
+      $cCommand = substr(parse_url(urldecode($cUrl), PHP_URL_PATH), 1);
+    }
+    elseif (isset($_GET['idfix'])) {
+      // In case we do not support mod_rewrite ...
+      $cCommand = trim($_GET['idfix'], '/');
+    }
+    else {
+      // Defaults from the command line
+      $cUrl = (isset($_SERVER['PATH_INFO']) ? $_SERVER['PATH_INFO'] : $_SERVER['REQUEST_URI']);
+      $cCommand = substr(parse_url(urldecode($cUrl), PHP_URL_PATH), 1);
+    }
+
+    $this->log($cCommand);
     if (!$cCommand) {
       return;
     }
@@ -66,6 +79,20 @@ class Idfix extends Events3Module {
     $cAction = (string )array_shift($aInput);
 
     $content = $this->Render($cConfigName, $cTableName, $cFieldName, $iObject, $iParent, $cAction, $aInput);
+
+    /**
+     * If we do an inline redirect it is possible to hit this method twice.
+     * So we only need the output the first time we are here
+     * 
+     * We need this construction because iof we do an exit() after the redirect
+     * we don't trigger the correct framework code anymore.'
+     */
+    static $bFirstTimeHere = true;
+    if (!$bFirstTimeHere) {
+      return;
+    }
+    $bFirstTimeHere = false;
+
     $navbar = $this->RenderNavBar();
     // Get all the rendered messages
     $messages = $this->FlashMessage();
@@ -188,6 +215,44 @@ class Idfix extends Events3Module {
       exit(0);
     }
   }
+
+  /**
+   * Instead doing a redirect on webserver level,
+   * start a process all over from the script.
+   * 
+   * It's easier on the server and it does not do
+   * a 302 redirect.
+   * 
+   * Use it instead of: Redirect
+   * 
+   * @param string $cUrl
+   * @return void
+   */
+  public function RedirectInline($cUrl) {
+    // Proces the url and see if we have clean urls
+    // enabled or disabled
+    $aUrl = parse_url($cUrl);
+    $aQuery = array();
+    parse_str($aUrl['query'], $aQuery);
+    $bCleanUrls = !(boolean)(isset($aQuery['idfix']) and $aQuery['idfix']);
+
+    $this->log('inline redirect to: ' . $cUrl);
+
+    if ($bCleanUrls) {
+      $cUrl = str_replace($this->ev3->BasePathUrl, '', $cUrl);
+    }
+    else {
+      $cUrl = $aQuery['idfix'];
+    }
+
+
+    $this->log('processed inline redirect to: ' . $cUrl);
+
+    // Run the handler again
+    $this->Events3Run($cUrl);
+  }
+
+
   /**
    * Isfix event handler for the navigation bar
    * 
@@ -389,19 +454,12 @@ class Idfix extends Events3Module {
 
     // Check if we are going to make the Google maps View available
     $bMapViewSet = (boolean)(isset($aTableConfig['view']) and $aTableConfig['view'] == 'map');
-    $bMapConfigSet = (boolean)(isset($aTableConfig['map']));
-    $bMapFieldAvailable = false;
-    foreach ($aTableConfig['fields'] as $cFieldName => $aFieldConfig) {
-      if ($aFieldConfig['type'] == 'map') {
-        $bMapFieldAvailable = true;
-        break;
-      }
-    }
-    if ($bMapConfigSet or $bMapFieldAvailable or $bMapViewSet) {
+    $bMapFieldAvailable = (boolean)(isset($aTableConfig['map']['field']) AND $aTableConfig['map']['field']);
+    if ($bMapFieldAvailable) {
       $aReturn['map'] = array(
         'title' => 'Map',
-        'action' => 'map',
-        'url' => $this->GetUrl('', $cTablename, '', 0, null, 'map'),
+        'action' => 'listmap',
+        'url' => $this->GetUrl('', $cTablename, '', 0, null, 'listmap'),
         'icon' => 'map-marker');
       // Make it the default in certain cases ....
       if ($bMapViewSet) {
@@ -497,7 +555,14 @@ class Idfix extends Events3Module {
     $cQueryString = urldecode($cQueryString);
     //$cQueryString = implode('&',$aAttributes);
 
-    $cUrl = $this->ev3->BasePathUrl . $cPath . '?' . $cQueryString;
+    // Do we need to emit a clean url or a basic version with the path as attribute??
+    $bEmitCleanUrls = (boolean)!isset($_GET['idfix']);
+    if ($bEmitCleanUrls) {
+      $cUrl = $this->ev3->BasePathUrl . $cPath . '?' . $cQueryString;
+    }
+    else {
+      $cUrl = $this->ev3->BasePathUrl . "/index.php?idfix={$cPath}&{$cQueryString}";
+    }
 
 
     $this->IdfixDebug->Profiler(__method__, 'stop');
@@ -1144,7 +1209,7 @@ class Idfix extends Events3Module {
           $cJavaScript .= "$.get(\"{$cUrl}\");\r\n";
         }
         $cJavaScript = "<script type=\"text/javascript\">\r\n{$cJavaScript}</script>";
-        //unset($_SESSION[__method__]);
+        $_SESSION[__method__] = array();
       }
       return $cJavaScript;
     }

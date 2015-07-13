@@ -33,14 +33,14 @@
     
     <div class="container-fluid">
       
-      <div class="row">
+      <div class="row" id="container-row-messages">
         <div class="col-lg-10 col-lg-offset-1">
            <?php echo $messages; ?>
         </div>
       </div>
       
-      <div class="row">
-        <div class="col-lg-10 col-lg-offset-1">
+      <div class="row" id="container-row-content">
+        <div class="col-lg-10 col-lg-offset-1" id="container-row-content-col">
            <?php echo $content; ?>
         </div>
       </div>

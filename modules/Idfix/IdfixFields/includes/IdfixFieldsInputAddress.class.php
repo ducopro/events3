@@ -107,8 +107,9 @@ function setup_gm_address( input_id ) {
     var place = autocomplete.getPlace();
     if (place.geometry) {
       var location = place.geometry.location;
+      console.log(location);
       document.getElementById( input_id + '_lat' ).value = place.geometry.location.k ;
-      document.getElementById( input_id + '_long' ).value = place.geometry.location.B ;
+      document.getElementById( input_id + '_long' ).value = place.geometry.location.D ;
     }  
   });
 }

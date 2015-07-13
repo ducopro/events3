@@ -30,7 +30,7 @@ class IdfixAction extends Events3Module {
     $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
     //$cUrl = $this->Idfix->GetUrl('', '', '', $iLastPage, $this->Idfix->iParent, 'list');
     //header('location: ' . $cUrl);
-    $this->Idfix->Redirect($cUrl);
+    $this->Idfix->RedirectInline($cUrl);
   }
 
   private function CopyRecurse($record, $parent_id) {
@@ -67,7 +67,7 @@ class IdfixAction extends Events3Module {
       // Only delete top level object
       $this->IdfixStorage->DeleteRecord($this->Idfix->iObject);
       // Now create a url for deleting the children
-      $cTaskUrl = $this->Idfix->GetUrl('','','',$this->Idfix->iObject,null,'deletechildren');
+      $cTaskUrl = $this->Idfix->GetUrl('', '', '', $this->Idfix->iObject, null, 'deletechildren');
       // And set is as an asynchronous client call
       $this->Idfix->GetSetClientTaskUrl($cTaskUrl);
 
@@ -76,7 +76,7 @@ class IdfixAction extends Events3Module {
     // Goto the last known page of the list
     $cUrl = $this->Idfix->GetSetLastListPage($this->Idfix->cTableName);
     //header('location: ' . $cUrl);
-    $this->Idfix->Redirect($cUrl);
+    $this->Idfix->RedirectInline($cUrl);
 
   }
   public function Events3IdfixActionDeletechildren(&$output) {
@@ -86,11 +86,10 @@ class IdfixAction extends Events3Module {
       $iCount = $this->DeleteRecurse($this->Idfix->iObject);
       $this->log('Recursive deletion of children in background: ' . $iCount);
     }
-$this->log('Recursive deletion of children in background: stop ');
+    $this->log('Recursive deletion of children in background: stop ');
     // This one is called as a background proces.
     // So, just exit
-    //exit();
-
+    exit(0);
   }
 
   /**

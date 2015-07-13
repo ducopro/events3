@@ -1,9 +1,3 @@
-<div style="overflow: hidden;">
-   <a  style="white-space:nowrap;" href= "#" data-toggle="modal" data-target="#<?php print $uid; ?>">
-     <?php print $display; ?>
-   </a>
-</div>
-
 <!-- Modal <?php print $uid; ?>-->
 <div class="modal" id="<?php print $uid; ?>" tabindex="-1" role="dialog" aria-labelledby="label-<?php print $uid; ?>" aria-hidden="true">
   <div class="modal-dialog">

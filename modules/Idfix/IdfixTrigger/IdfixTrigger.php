@@ -30,9 +30,9 @@ class IdfixTrigger extends Events3Module {
     }
 
     // Get the salt needed for a signature
-    $cSalt = ( (isset($this->Idfix->aConfig['triggers']['salt'])) ?  $this->Idfix->aConfig['triggers']['salt'] : ''  );
-    $cSignature = md5( $this->Idfix->cConfigName . $this->IdfixOtap->cCurrentEnvironment . $cName . $aData['MainID'] . $cSalt);
-    
+    $cSalt = ((isset($this->Idfix->aConfig['triggers']['salt'])) ? $this->Idfix->aConfig['triggers']['salt'] : '');
+    $cSignature = md5($this->Idfix->cConfigName . $this->IdfixOtap->cCurrentEnvironment . $cName . $aData['MainID'] . $cSalt);
+
     // Add some system info to the packet
     $aSystemInfo = array(
       'config' => $this->Idfix->cConfigName,
@@ -40,7 +40,7 @@ class IdfixTrigger extends Events3Module {
       'field' => $this->Idfix->cTableName,
       'caller' => (strtolower($this->Idfix->cAction) == 'rest' ? 'REST' : 'UI'),
       'trigger' => $cName,
-      'url' => $cUrl, // Needed by the second level pushtask process
+      'url' => $cUrl, // Needed by the second level task process
       'environment' => $this->IdfixOtap->cCurrentEnvironment,
       'signature' => $cSignature,
 
@@ -48,13 +48,10 @@ class IdfixTrigger extends Events3Module {
     $aData[__class__] = $aSystemInfo;
     $this->log2($aData);
 
-    // Create a memcache key based on the MainID
-    $cMemCacheKey = $this->CreateKeyName($aData['MainID']);
-    $this->ev3->CacheSet($cMemCacheKey, $aData);
-    $this->log2($cMemCacheKey);
-
-    // Create a pushtask
-    $this->IdfixTask->CreateTask('', '', '', $aData['MainID'], 0, 'trigger');
+    // New task system
+    $_SESSION[__class__][$aData['MainID']] = $aData;
+    $cUrl = $this->Idfix->GetUrl('', '', '', $aData['MainID'], null, 'Triggertask');
+    $this->Idfix->GetSetClientTaskUrl($cUrl);
 
   }
 
@@ -70,20 +67,17 @@ class IdfixTrigger extends Events3Module {
 
 
   /**
-   * This event is triggerd by the PushTask system
+   * This event is triggerd by a background client task
    * and does the calling of the external url
    * 
    * @return void
    */
-  public function Events3IdfixPushtaskTrigger() {
+  public function Events3IdfixActionTriggertask() {
     $this->log2('Entry');
-    // The communication between the first and second process is
-    // by way of the memcache system
-    $cMemCacheKey = $this->CreateKeyName($this->Idfix->iObject);
-    $aPacket = $this->ev3->CacheGet($cMemCacheKey);
-    // Clear it, we just need it once
-    $this->ev3->CacheDelete($cMemCacheKey);
 
+    $aPacket = (array )$_SESSION[__class__][$this->Idfix->iObject];
+    unset($_SESSION[__class__][$this->Idfix->iObject]);
+    
     // Check if we realy have a good packet to send
     if (isset($aPacket[__class__]['url'])) {
       $this->log2('Packet found');
@@ -93,13 +87,14 @@ class IdfixTrigger extends Events3Module {
       $this->log2($cUrl);
 
       $data = http_build_query($aPacket);
-      $context = array('http' => array('method' => 'POST', 'content' => $data) );
+      $context = array('http' => array('method' => 'POST', 'content' => $data));
       $context = stream_context_create($context);
       $result = file_get_contents($cUrl, false, $context);
-      $this->log2($result);
+      //$this->log2($result);
 
     }
     $this->log2('Exit');
+    exit(0);
   }
 
   /**
@@ -142,9 +137,9 @@ class IdfixTrigger extends Events3Module {
   }
 
   public function log2($cTxt) {
-    //$aBt = debug_backtrace(false);
-    //$cFunction = $aBt[1]['function'];
-    //parent::log($cFunction . '::' . print_r($cTxt, true));
+    $aBt = debug_backtrace(false);
+    $cFunction = $aBt[1]['function'];
+    parent::log($cFunction . '::' . print_r($cTxt, true));
   }
 
 }

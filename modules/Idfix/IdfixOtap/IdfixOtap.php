@@ -605,7 +605,7 @@ class IdfixOtap extends Events3Module {
 
   private function RedirectToControlPanel() {
     $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, '', '', 0, 0, 'Controlpanel');
-    $this->Idfix->Redirect($cUrl);
+    $this->Idfix->RedirectInline($cUrl);
   }
 
   /**
@@ -693,9 +693,9 @@ class IdfixOtap extends Events3Module {
       //'password' => $this->RenderTemplate('Password'),
       'password' => '',
       'edit' => $cEditButton,
-      'backup' => '',
+      //'backup' => '',
       // Backups switched off due to ZipArchive issues on GAE
-      //'backup' => $this->GetBackupFullTemplate($cEnv, $this->Idfix->cConfigName),
+      'backup' => $this->GetBackupFullTemplate($cEnv, $this->Idfix->cConfigName),
       );
 
     $this->IdfixDebug->Profiler(__method__, 'stop');
@@ -744,7 +744,13 @@ class IdfixOtap extends Events3Module {
     if ($bResetCache) {
       $this->ev3->CacheDelete($cCacheKey);
     }
-    $aTable = $this->ev3->CacheGet($cCacheKey);
+
+    $aTable = '';
+    // Only use caching on Google App Engine because of poor file performance
+    if ($this->ev3->GAE_IsPlatform()) {
+      $aTable = $this->ev3->CacheGet($cCacheKey);
+    }
+
 
     // Build the table if it isnt there
     if (!is_array($aTable)) {
@@ -899,18 +905,21 @@ class IdfixOtap extends Events3Module {
     $aFilesAsDisplay = array();
     foreach ($aFiles as $cFileName) {
 
-      //$cRelativeFilename = str_ireplace($cBasePath, '', $cFileName);
-      //$cRelativeFilename = trim($cRelativeFilename, '/');
-      //$cDownUrl = $this->ev3->BasePathUrl . '/' . $cRelativeFilename;
-      //$cDownUrl = CloudStorageTools::getPublicUrl( $cFileName, false);
+      $cRelativeFilename = str_ireplace($cBasePath, '', $cFileName);
+      $cRelativeFilename = trim($cRelativeFilename, '/');
+      $cDownUrl = $this->ev3->BasePathUrl . '/' . $cRelativeFilename;
+      if ($this->ev3->GAE_IsPlatform()) {
+        $cDownUrl = CloudStorageTools::getPublicUrl($cFileName, false);
+      }
+
 
       $aTemplateVars = array(
         'name' => date('l d F Y (H:i)', (integer)basename($cFileName)),
         'file' => $cFileName,
         'delete' => $this->GetBackupUrl($cEnv, $cFileName, self::BACKUP_ACTION_DELETE),
         'restore' => $this->GetBackupUrl($cEnv, $cFileName, self::BACKUP_ACTION_RESTORE),
-        'download' => $this->GetBackupUrl($cEnv, $cFileName, self::BACKUP_ACTION_DOWNLOAD),
-        //'download' => $cDownUrl,
+        //'download' => $this->GetBackupUrl($cEnv, $cFileName, self::BACKUP_ACTION_DOWNLOAD),
+        'download' => $cDownUrl,
         'size' => (integer)(@filesize($cFileName) / 1024) . ' kb.',
         'delete_icon' => $this->Idfix->GetIconHTML('remove'),
         'restore_icon' => $this->Idfix->GetIconHTML('open'),
@@ -961,14 +970,14 @@ class IdfixOtap extends Events3Module {
 
     // Some actions need to be scheduled
     if ($iAction == self::BACKUP_ACTION_NEW or $iAction == self::BACKUP_ACTION_RESTORE) {
-      // Only create a background task
-      // Calls: Events3IdfixPushtaskBackup()
-      $this->IdfixTask->CreateTask($this->Idfix->cConfigName, $cEnv, $cFileName, $iAction, 0, 'backup');
-      $this->log('Pushtask created');
+      // Create background task
+      $cUrl = $this->Idfix->GetUrl($this->Idfix->cConfigName, $cEnv, $cFileName, $iAction, 0, 'Backuptask');
+      $this->Idfix->GetSetClientTaskUrl($cUrl);
+      $this->log('Backgroundtask created');
     }
     else {
-      // Call the pushtaskhandler direct
-      $this->Events3IdfixPushtaskBackup();
+      // Call the taskhandler direct
+      $this->Events3IdfixActionBackuptask();
     }
     $this->RedirectToControlPanel();
 
@@ -980,7 +989,7 @@ class IdfixOtap extends Events3Module {
    * 
    * @return void
    */
-  public function Events3IdfixPushtaskBackup() {
+  public function Events3IdfixActionBackuptask() {
     $cEnv = $this->Idfix->cTableName;
     $iAction = $this->Idfix->iObject;
     $cFileName = $this->Idfix->cFieldName;

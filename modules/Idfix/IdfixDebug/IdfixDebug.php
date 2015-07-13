@@ -111,7 +111,7 @@ class IdfixDebug extends Events3Module {
         round(((float)microtime(true) - $this->fStart) * 1000, 2),
         $messages[$type],
         $message,
-        '<pre>' .print_r($vars, true).'</pre>',
+        '<pre>' . print_r($vars, true) . '</pre>',
         );
     }
     $this->Profiler(__method__, 'stop');
@@ -134,16 +134,15 @@ class IdfixDebug extends Events3Module {
 
     if ($this->IdfixDebugShowSystemInfo) {
       $this->IdfixDebugShowDebugInfo = true;
-      $this->Debug('$_Session', $_SESSION);
+      $this->Debug('memory_get_peak_usage()', memory_get_peak_usage() / 1024 / 1024);
+      $this->Debug('memory_get_usage()', memory_get_usage() / 1024 / 1024);
       $this->Debug('$_GET', $_GET);
       $this->Debug('$_POST', $_POST);
       $this->Debug('$_Files', $_FILES);
       $this->Debug('$_Server', $_SERVER);
       $this->Debug('get_include_files', get_included_files());
-      $this->Debug('memory_get_peak_usage()', memory_get_peak_usage()/1024/1024 );
-      $this->Debug('memory_get_usage()', memory_get_usage()/1024/1024);
+      $this->Debug('$_Session', $_SESSION);
     }
-
 
 
     $header = array(

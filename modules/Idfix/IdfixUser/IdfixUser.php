@@ -124,8 +124,8 @@ class IdfixUser extends Events3Module {
     $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
 
     // Cache the shit ..
-    header("Cache-Control: no-transform,public,max-age=300,s-maxage=900");
-    header("Pragma: cache");
+    //header("Cache-Control: no-transform,public,max-age=300,s-maxage=900");
+    //header("Pragma: cache");
     // Render the tabular container
     $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app'));
   }

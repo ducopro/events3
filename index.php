@@ -17,7 +17,7 @@ $Events3 = Events3::GetHandler();
 
 // Set some properties. Note that these are the default settings
 // and only displayed for demonstrating the basic configuration of the handler
-$Events3->bDebug = false;
+$Events3->bDebug = true;
 
 // Run all the event handlers
 $Events3->Run();

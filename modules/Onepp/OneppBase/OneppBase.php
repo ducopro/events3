@@ -83,7 +83,7 @@ class OneppBase extends Events3Module {
 
       // And save it as a cache file
       $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id']);
-      
+
       file_put_contents($cCacheFile, $cFullPage);
       $fTime = round((microtime(true) - $iStart) * 1000, 2);
       $this->Idfix->FlashMessage('Cached OnePP Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
@@ -134,21 +134,87 @@ class OneppBase extends Events3Module {
   private function CreateFullBody($aSiteRecord, $aSections) {
     $cSection = '';
     foreach ($aSections as $iSectionID => $aSectionInfo) {
-       $aSectionInfo['_identifier'] = $this->GetSectionIdentifier($aSectionInfo);
-       $cSectionType = $aSectionInfo['Char_1'];
+      $aSectionInfo['_styles'] = $this->CreateStyles($aSectionInfo);
+      $aSectionInfo['_identifier'] = $this->GetSectionIdentifier($aSectionInfo);
+      $cSectionType = $aSectionInfo['Char_1'];
 
-       // Get the block content
-       $aSectionInfo['_content'] = '';
-       $aColumns = $this->IdfixStorage->LoadAllRecords(40, $iSectionID, 'Weight');
-       $cColumnTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_column_{$cSectionType}.php";
-       foreach( $aColumns as $iColumnId => $aColumnInfo) {
-         $aSectionInfo['_content'] .= $this->Template->Render($cColumnTemplate, $aColumnInfo);
-       }
-       
-       $cTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_{$cSectionType}.php";
-       $cSection .= $this->Template->Render( $cTemplate, $aSectionInfo);
+      // Get the block content
+      $aSectionInfo['_content'] = '';
+      $aColumns = $this->IdfixStorage->LoadAllRecords(40, $iSectionID, 'Weight');
+      $cColumnTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_column_{$cSectionType}.php";
+      $iColumnCount = count($aColumns);
+      foreach ($aColumns as $iColumnId => $aColumnInfo) {
+        $aColumnInfo['_columns'] = $this->GetColumnClasses($aSectionInfo['BG_column_width'], $aColumnInfo['Int_2'], $aColumnInfo['Int_1'], $iColumnCount);
+        $aSectionInfo['_content'] .= $this->Template->Render($cColumnTemplate, $aColumnInfo);
+      }
+
+      $cTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_{$cSectionType}.php";
+      $cSection .= $this->Template->Render($cTemplate, $aSectionInfo);
     }
     $this->log(get_defined_vars());
     return $cSection;
+  }
+
+  private function GetColumnClasses($iDefaultWidth, $iColumWidth, $iColumnOffset, $iColumnCount) {
+    // Calculate in intelligent column widt default based on the number of columns
+    $iCalculatedDefault = 4;
+    if($iColumnCount) {
+      $iCalculatedDefault = (integer) floor(12/$iColumnCount);
+      
+    }
+    // Make integers
+    $iDefaultWidth = (integer) $iDefaultWidth;
+    $iColumWidth = (integer) $iColumWidth;
+    $iColumnOffset = (integer) $iColumnOffset;
+    // Check all values
+    $iDefaultWidth = (($iDefaultWidth < 1 or $iDefaultWidth > 12) ? 4 : $iDefaultWidth);
+    $iColumWidth = ( ($iColumWidth>0 and $iColumWidth<=12) ? $iColumWidth: $iDefaultWidth);
+    //Set classes
+    $cClasses = 'col-lg-'.$iColumWidth;
+    if($iColumnOffset and $iColumnOffset <=12) {
+      $cClasses .= ' col-lg-offset-'.$iColumnOffset;
+    }
+    return $cClasses;
+  }
+  /**
+   * Create the generic styles for the section
+   * 
+   * @param mixed $aSection
+   * @return
+   */
+  private function CreateStyles($aSection) {
+    $cStyles = '';
+
+    // First check if we need a rule for the background color
+    // Does it start with a hash and is the number bigger than 0
+    $cColorCode = $aSection['BG_color'];
+    $bIsHex = (boolean)(substr($cColorCode, 0, 1) == '#');
+    $bIsColor = (boolean)(int)substr($cColorCode, 1);
+    if ($bIsHex and $bIsColor) {
+      $cStyles .= "background-color:{$cColorCode};\n";
+    }
+    else {
+      $cStyles .= "background-color:none;\n";
+    }
+
+    // Check if we have a backgrounnd image
+    $cUpload = isset($aSection['BG_picture']) ? $aSection['BG_picture'] : '';
+    $cUrl = $aSection['BG_Url'];
+    $cBackground = $cUrl ? $cUrl : ($cUpload ? $cUpload : '');
+    if ($cBackground) {
+      $cStyles .= "background-image:url({$cBackground});\n";
+    }
+    else {
+      $cStyles .= "background-image:none;\n";
+    }
+
+    // Check if we need a height. It is always in EM
+    $iHeight = (integer)$aSection['BG_height'];
+    if ($iHeight) {
+      $cStyles .= "height:{$iHeight}em;\n";
+    }
+
+    return $cStyles;
+
   }
 }

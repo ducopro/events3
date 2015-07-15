@@ -4,7 +4,7 @@
 }
 </style>
 
-<section id="<?php print $_identifier; ?>">
+<section class="bg-primary" id="<?php print $_identifier; ?>">
   <div class="container">
       <div class="row">
       <?php print $_content; ?>

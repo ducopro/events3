@@ -1,4 +1,4 @@
-<div class="col-lg-8 col-lg-offset-2 text-center">
+<div class="<?php print $_columns; ?> text-center">
   <h2 class="section-heading"><?php print $Id; ?></h2>
 <hr class="light">  
   <?php if( strip_tags($Text_1)): ?>

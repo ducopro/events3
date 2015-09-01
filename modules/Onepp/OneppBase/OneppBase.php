@@ -30,9 +30,11 @@ class OneppBase extends Events3Module {
       if (file_exists($cCacheFile)) {
         echo file_get_contents($cCacheFile);
       }
+      else{
+        //echo $cCacheFile;
+      }
       exit;
     }
-    //echo 'hello';
   }
 
 
@@ -155,6 +157,17 @@ class OneppBase extends Events3Module {
     return $cSection;
   }
 
+  /**
+   * OneppBase::GetColumnClasses()
+   * 
+   * Set the correct column classes and calculate some intelligent default values.
+   * 
+   * @param mixed $iDefaultWidth
+   * @param mixed $iColumWidth
+   * @param mixed $iColumnOffset
+   * @param mixed $iColumnCount
+   * @return
+   */
   private function GetColumnClasses($iDefaultWidth, $iColumWidth, $iColumnOffset, $iColumnCount) {
     // Calculate in intelligent column widt default based on the number of columns
     $iCalculatedDefault = 4;
@@ -167,7 +180,7 @@ class OneppBase extends Events3Module {
     $iColumWidth = (integer) $iColumWidth;
     $iColumnOffset = (integer) $iColumnOffset;
     // Check all values
-    $iDefaultWidth = (($iDefaultWidth < 1 or $iDefaultWidth > 12) ? 4 : $iDefaultWidth);
+    $iDefaultWidth = (($iDefaultWidth < 1 or $iDefaultWidth > 12) ? $iCalculatedDefault : $iDefaultWidth);
     $iColumWidth = ( ($iColumWidth>0 and $iColumWidth<=12) ? $iColumWidth: $iDefaultWidth);
     //Set classes
     $cClasses = 'col-lg-'.$iColumWidth;
@@ -189,7 +202,7 @@ class OneppBase extends Events3Module {
     // Does it start with a hash and is the number bigger than 0
     $cColorCode = $aSection['BG_color'];
     $bIsHex = (boolean)(substr($cColorCode, 0, 1) == '#');
-    $bIsColor = (boolean)(int)substr($cColorCode, 1);
+    $bIsColor = (boolean)substr($cColorCode, 1);
     if ($bIsHex and $bIsColor) {
       $cStyles .= "background-color:{$cColorCode};\n";
     }
@@ -198,11 +211,11 @@ class OneppBase extends Events3Module {
     }
 
     // Check if we have a backgrounnd image
-    $cUpload = isset($aSection['BG_picture']) ? $aSection['BG_picture'] : '';
+    $cUpload = isset($aSection['BG_picture']) ? $aSection['BG_picture']['url'] : '';
     $cUrl = $aSection['BG_Url'];
     $cBackground = $cUrl ? $cUrl : ($cUpload ? $cUpload : '');
     if ($cBackground) {
-      $cStyles .= "background-image:url({$cBackground});\n";
+      $cStyles .= "background-image:url({$cBackground});\nbackground-size: cover;\n";
     }
     else {
       $cStyles .= "background-image:none;\n";

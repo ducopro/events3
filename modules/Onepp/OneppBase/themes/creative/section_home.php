@@ -1,10 +1,9 @@
 <style>
-
-header {
+#<?php print $_identifier; ?> {
    <?php print $_styles; ?>
 }
-
 </style>
-<header>
+
+<header id="<?php print $_identifier; ?>">
   <?php print $_content; ?>
 </header>

@@ -20,17 +20,31 @@ class OneppBase extends Events3Module {
     $cCommand = substr(parse_url(urldecode($cUrl), PHP_URL_PATH), 1);
     $aInput = (array )explode('/', $cCommand);
     $cOneppIdentifier = (string )array_shift($aInput);
-    $cSubdomain = (string )array_shift($aInput);
+    $cSubdomain = (string )$this->Idfix->ValidIdentifier(array_shift($aInput));
     $cOtap = (string )array_shift($aInput);
 
     //echo $cUrl;
 
     if ($cOneppIdentifier == 'oneppv') {
       $cCacheFile = $this->GetCacheFileName($cSubdomain, $cOtap);
+
+      /**
+       * If the cached file is not available we try to create it here.
+       */
+      if (!file_exists($cCacheFile)) {
+        // Get the unique number of the site ..
+        $aSites = $this->IdfixStorage->LoadAllRecords(20, null, '', array("Id = '{$cSubdomain}'"), 1);
+        if (count($aSites) == 1) {
+          $aSite = array_shift($aSites);
+          $iSiteId = (integer)$aSite['Id'];
+          $this->CreateWebsite($iSiteId, $cOtap);
+        }
+      }
+
       if (file_exists($cCacheFile)) {
         echo file_get_contents($cCacheFile);
       }
-      else{
+      else {
         //echo $cCacheFile;
       }
       exit;
@@ -45,13 +59,48 @@ class OneppBase extends Events3Module {
     if ($this->IsCorrectConfig()) {
       // Select the unique ID
       $iId = $aRecord['MainID'];
-      // Create a trail from parent ID's
-      $aTrail = $this->Idfix->Trail($iId);
-      // And get the websiteid
-      $iWebSiteId = (integer)array_search(20, $aTrail);
-      // Now generate this site all over again
-      $this->CreateWebsite($iWebSiteId);
+      // And destroy the cachefile
+      $this->DestroyCacheFile($iId);
+
+      /**
+       * No need for this anymore 
+       * 
+       *       // Create a trail from parent ID's
+       *       $aTrail = $this->Idfix->Trail($iId);
+       *       // And get the websiteid
+       *       $iWebSiteId = (integer)array_search(20, $aTrail);
+       *       
+       *       // Now generate this site all over again
+       *       $this->CreateWebsite($iWebSiteId);
+       */
     }
+  }
+
+  /**
+   * Just give us an ID and the corresponding cachefile will be destroyed
+   * 
+   * @param mixed $iTrailId
+   * @return void
+   */
+  private function DestroyCacheFile($iId) {
+    // Create a trail from parent ID's
+    $aTrail = $this->Idfix->Trail($iId);
+    // And get the websiteid
+    $iWebSiteId = (integer)array_search(20, $aTrail);
+    // Full websiterecord
+    $aSiteRecord = $this->IdfixStorage->LoadRecord($iWebSiteId, false);
+    // Subdomain
+    $cSubDomain = $aSiteRecord['Id'];
+    // Now get the name of the cachefile, The otap environment will be detected automatic
+    $cCacheFile = $this->GetCacheFileName($cSubDomain);
+    if(file_exists($cCacheFile)){
+      unlink($cCacheFile);
+      $this->Idfix->FlashMessage('Cached OnePP Website Deleted: ' . $cCacheFile );
+    }
+    else {
+      $this->Idfix->FlashMessage('Cached OnePP Website Not Found: ' . $cCacheFile , 'warning');
+    }
+
   }
 
   /**
@@ -63,7 +112,7 @@ class OneppBase extends Events3Module {
     return (boolean)($this->Idfix->cConfigName == 'onepp');
   }
 
-  private function CreateWebsite($iSiteId) {
+  private function CreateWebsite($iSiteId, $cOtap = '') {
     $aSiteRecord = $this->IdfixStorage->LoadRecord($iSiteId, false);
     if (isset($aSiteRecord['MainID'])) {
       $iStart = microtime(true);
@@ -83,12 +132,19 @@ class OneppBase extends Events3Module {
       $aSiteRecord['_sections'] = $cFullBody;
       $cFullPage = $this->Template->Render($cTemplate, $aSiteRecord);
 
+      // Add a footer to tell us when it was generated
+      $fTime = round((microtime(true) - $iStart) * 1000, 2);
+      $cDate = date('Y-m-d H:i:s');
+      $cFooter = 'Cached OnePP Website Created: ' . $cCacheFile . "  (in {$fTime} ms.) (at {$cDate})";
+      $cFooter = "/n/n<!-- {$cFooter} !>";
+      $cFullPage .= $cFooter;
+      
       // And save it as a cache file
-      $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id']);
+      $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id'], $cOtap);
 
       file_put_contents($cCacheFile, $cFullPage);
-      $fTime = round((microtime(true) - $iStart) * 1000, 2);
-      $this->Idfix->FlashMessage('Cached OnePP Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
+      
+      //$this->Idfix->FlashMessage('Cached OnePP Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
     }
   }
 
@@ -109,7 +165,7 @@ class OneppBase extends Events3Module {
   }
 
   private function GetSectionIdentifier($aSectionInfo) {
-    return $this->Idfix->ValidIdentifier($aSectionInfo['Menu']) . $aSectionInfo['MainID'];
+    return $this->Idfix->ValidIdentifier('div_' . $aSectionInfo['Menu']) . $aSectionInfo['MainID'];
   }
 
   private function GetCacheFileName($cSubdomainID, $cOtap = '') {
@@ -153,7 +209,7 @@ class OneppBase extends Events3Module {
       $cTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_{$cSectionType}.php";
       $cSection .= $this->Template->Render($cTemplate, $aSectionInfo);
     }
-    $this->log(get_defined_vars());
+    //$this->log(get_defined_vars());
     return $cSection;
   }
 
@@ -169,23 +225,23 @@ class OneppBase extends Events3Module {
    * @return
    */
   private function GetColumnClasses($iDefaultWidth, $iColumWidth, $iColumnOffset, $iColumnCount) {
-    // Calculate in intelligent column widt default based on the number of columns
+    // Calculate in intelligent column width default based on the number of columns
     $iCalculatedDefault = 4;
-    if($iColumnCount) {
-      $iCalculatedDefault = (integer) floor(12/$iColumnCount);
-      
+    if ($iColumnCount) {
+      $iCalculatedDefault = (integer)floor(12 / $iColumnCount);
+
     }
     // Make integers
-    $iDefaultWidth = (integer) $iDefaultWidth;
-    $iColumWidth = (integer) $iColumWidth;
-    $iColumnOffset = (integer) $iColumnOffset;
+    $iDefaultWidth = (integer)$iDefaultWidth;
+    $iColumWidth = (integer)$iColumWidth;
+    $iColumnOffset = (integer)$iColumnOffset;
     // Check all values
     $iDefaultWidth = (($iDefaultWidth < 1 or $iDefaultWidth > 12) ? $iCalculatedDefault : $iDefaultWidth);
-    $iColumWidth = ( ($iColumWidth>0 and $iColumWidth<=12) ? $iColumWidth: $iDefaultWidth);
+    $iColumWidth = (($iColumWidth > 0 and $iColumWidth <= 12) ? $iColumWidth : $iDefaultWidth);
     //Set classes
-    $cClasses = 'col-lg-'.$iColumWidth;
-    if($iColumnOffset and $iColumnOffset <=12) {
-      $cClasses .= ' col-lg-offset-'.$iColumnOffset;
+    $cClasses = 'col-lg-' . $iColumWidth;
+    if ($iColumnOffset and $iColumnOffset <= 12) {
+      $cClasses .= ' col-lg-offset-' . $iColumnOffset;
     }
     return $cClasses;
   }
@@ -200,9 +256,9 @@ class OneppBase extends Events3Module {
 
     // First check if we need a rule for the background color
     // Does it start with a hash and is the number bigger than 0
-    $cColorCode = $aSection['BG_color'];
+    $cColorCode = trim($aSection['BG_color']);
     $bIsHex = (boolean)(substr($cColorCode, 0, 1) == '#');
-    $bIsColor = (boolean)substr($cColorCode, 1);
+    $bIsColor = (boolean)(substr($cColorCode, 1, 3) != '000');
     if ($bIsHex and $bIsColor) {
       $cStyles .= "background-color:{$cColorCode};\n";
     }

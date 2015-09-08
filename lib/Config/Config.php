@@ -2,7 +2,8 @@
 
 class Config extends Events3Module {
 
-  public function Events3PreRun() {
+  public function Events3Driver() {
+  //public function Events3PreRun() {
     /* @var $events3 Events3 */
     $events3 = Events3::GetHandler();
 

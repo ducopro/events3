@@ -454,7 +454,7 @@ class Idfix extends Events3Module {
 
     // Check if we are going to make the Google maps View available
     $bMapViewSet = (boolean)(isset($aTableConfig['view']) and $aTableConfig['view'] == 'map');
-    $bMapFieldAvailable = (boolean)(isset($aTableConfig['map']['field']) AND $aTableConfig['map']['field']);
+    $bMapFieldAvailable = (boolean)(isset($aTableConfig['map']['field']) and $aTableConfig['map']['field']);
     if ($bMapFieldAvailable) {
       $aReturn['map'] = array(
         'title' => 'Map',
@@ -776,6 +776,9 @@ class Idfix extends Events3Module {
         $aTableConfig = $this->Idfix->aConfig['tables'][$cTableName];
         // Ok, we're sure we got a valid table
         $aReturn = array();
+        if (isset($aOptions['optional']) and $aOptions['optional']) {
+          $aReturn[0] = '&lt;None&gt;';
+        }
         // Now get a valid trail, but also add 0 for top level objects
         $aTrail = $this->Trail($this->Idfix->iParent);
         $aTrail[0] = 0;

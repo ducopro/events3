@@ -151,7 +151,7 @@ class IdfixStorage extends Events3Module {
     if ($cLimit) {
       $cSql .= ' LIMIT ' . $cLimit;
     }
-
+    //echo $cSql;
     $aData = $this->Database->DataQuery($cSql);
 
     // Postprocess the rows

@@ -37,7 +37,8 @@
 </head>
 
 <body id="page-top">
-
+    <?php print $_styles; ?>
+    
     <?php print $_nav; ?>
     
     <?php print $_sections; ?>

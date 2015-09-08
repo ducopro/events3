@@ -112,6 +112,9 @@ class Events3 {
       ini_set('display_errors', '1');
       register_shutdown_function('Events3Shutdown');
     }
+
+    // Initialize Drivers
+    $this->Raise('Driver');
     // Initialize modules
     $this->Raise('PreRun');
     // Basic functionality
@@ -134,6 +137,8 @@ class Events3 {
   public function Test() {
     error_reporting(E_ALL);
 
+    // Initialize Drivers
+    $this->Raise('Driver');
     // Initialize modules
     $this->Raise('PreRun');
     // Initialize testing (optional)
@@ -248,51 +253,28 @@ class Events3 {
    */
   private function _cache($cKey, $xData = null, $bDelete = false) {
     //return null;
-    // Used only on AppEngine
-    static $oCacheRef = null;
     // return value of this method
     $xReturnValue = null;
 
-    if ($this->GAE_IsPlatform() and is_null($oCacheRef)) {
-      $oCacheRef = new Memcache;
-    }
-
-    // Add Version on AppEngine
-    if (isset($_SERVER['CURRENT_VERSION_ID']) and $_SERVER['CURRENT_VERSION_ID']) {
-      $cKey .= $_SERVER['CURRENT_VERSION_ID'];
+    if($this->bDebug){
+      return $xReturnValue;
     }
 
     // Get or set or remove depending on the data
     if ($bDelete === 'reset') {
       // only reset session cache. memcache can be reset from the operating system
       // session cache needs to be flushed at certain times.
-      // Maybe after logging in or so ...      
+      // Maybe after logging in or so ...
       $_SESSION[__method__] = array();
     }
     elseif ($bDelete) {
-      if ($this->GAE_IsPlatform()) {
-        $oCacheRef->delete($cKey);
-      }
-      else {
-        unset($_SESSION[__method__][$cKey]);
-      }
+      unset($_SESSION[__method__][$cKey]);
     }
     elseif (is_null($xData)) {
-      if ($this->GAE_IsPlatform()) {
-        $xReturnValue = $oCacheRef->get($cKey);
-      }
-      else {
-        $xReturnValue = @$_SESSION[__method__][$cKey];
-      }
+      $xReturnValue = @$_SESSION[__method__][$cKey];
     }
     else {
-      if ($this->GAE_IsPlatform()) {
-        $xReturnValue = $oCacheRef->set($cKey, $xData);
-      }
-      else {
-        $_SESSION[__method__][$cKey] = $xData;
-      }
-
+      $_SESSION[__method__][$cKey] = $xData;
     }
 
     return $xReturnValue;

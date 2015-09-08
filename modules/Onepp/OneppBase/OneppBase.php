@@ -28,24 +28,11 @@ class OneppBase extends Events3Module {
     if ($cOneppIdentifier == 'oneppv') {
       $cCacheFile = $this->GetCacheFileName($cSubdomain, $cOtap);
 
-      /**
-       * If the cached file is not available we try to create it here.
-       */
-      if (!file_exists($cCacheFile)) {
-        // Get the unique number of the site ..
-        $aSites = $this->IdfixStorage->LoadAllRecords(20, null, '', array("Id = '{$cSubdomain}'"), 1);
-        if (count($aSites) == 1) {
-          $aSite = array_shift($aSites);
-          $iSiteId = (integer)$aSite['Id'];
-          $this->CreateWebsite($iSiteId, $cOtap);
-        }
-      }
-
       if (file_exists($cCacheFile)) {
         echo file_get_contents($cCacheFile);
       }
       else {
-        //echo $cCacheFile;
+        echo $cCacheFile;
       }
       exit;
     }
@@ -59,49 +46,18 @@ class OneppBase extends Events3Module {
     if ($this->IsCorrectConfig()) {
       // Select the unique ID
       $iId = $aRecord['MainID'];
-      // And destroy the cachefile
-      $this->DestroyCacheFile($iId);
 
-      /**
-       * No need for this anymore 
-       * 
-       *       // Create a trail from parent ID's
-       *       $aTrail = $this->Idfix->Trail($iId);
-       *       // And get the websiteid
-       *       $iWebSiteId = (integer)array_search(20, $aTrail);
-       *       
-       *       // Now generate this site all over again
-       *       $this->CreateWebsite($iWebSiteId);
-       */
+      //Create a trail from parent ID's
+      $aTrail = $this->Idfix->Trail($iId);
+      // And get the websiteid
+      $iWebSiteId = (integer)array_search(20, $aTrail);
+
+      // Now generate this site all over again
+      $this->CreateWebsite($iWebSiteId);
+
     }
   }
 
-  /**
-   * Just give us an ID and the corresponding cachefile will be destroyed
-   * 
-   * @param mixed $iTrailId
-   * @return void
-   */
-  private function DestroyCacheFile($iId) {
-    // Create a trail from parent ID's
-    $aTrail = $this->Idfix->Trail($iId);
-    // And get the websiteid
-    $iWebSiteId = (integer)array_search(20, $aTrail);
-    // Full websiterecord
-    $aSiteRecord = $this->IdfixStorage->LoadRecord($iWebSiteId, false);
-    // Subdomain
-    $cSubDomain = $aSiteRecord['Id'];
-    // Now get the name of the cachefile, The otap environment will be detected automatic
-    $cCacheFile = $this->GetCacheFileName($cSubDomain);
-    if(file_exists($cCacheFile)){
-      unlink($cCacheFile);
-      $this->Idfix->FlashMessage('Cached OnePP Website Deleted: ' . $cCacheFile );
-    }
-    else {
-      $this->Idfix->FlashMessage('Cached OnePP Website Not Found: ' . $cCacheFile , 'warning');
-    }
-
-  }
 
   /**
    * Check if we are running in the context of the correct config
@@ -118,11 +74,12 @@ class OneppBase extends Events3Module {
       $iStart = microtime(true);
       // Load all sections, we need 'm multiple times
       $aSections = $this->IdfixStorage->LoadAllRecords(30, $iSiteId, 'Weight');
+      //print_r(count($aSections));
       // We postprocess the menu-items a little... so do it here
       $aSiteRecord['_menu'] = $this->GetMenuLinks($aSections);
       $aSiteRecord['_nav'] = $this->GetNavigation($aSiteRecord);
       $aSiteRecord['_assets'] = $this->GetAssetDirUrl($aSiteRecord['Theme']);
-
+      $aSiteRecord['_styles'] = $this->GetSupportColorStyles($aSiteRecord['SupportColor'], $aSiteRecord['Theme']);
 
       $cFullBody = $this->CreateFullBody($aSiteRecord, $aSections);
       $cThemeDir = $this->GetThemeDirectory($aSiteRecord['Theme']);
@@ -132,19 +89,19 @@ class OneppBase extends Events3Module {
       $aSiteRecord['_sections'] = $cFullBody;
       $cFullPage = $this->Template->Render($cTemplate, $aSiteRecord);
 
+      $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id'], $cOtap);
+
       // Add a footer to tell us when it was generated
       $fTime = round((microtime(true) - $iStart) * 1000, 2);
       $cDate = date('Y-m-d H:i:s');
-      $cFooter = 'Cached OnePP Website Created: ' . $cCacheFile . "  (in {$fTime} ms.) (at {$cDate})";
-      $cFooter = "/n/n<!-- {$cFooter} !>";
+      $cFooter = "Cached OnePP Website Created in {$fTime} ms. at {$cDate}";
+      $cFooter = "\n\n<!-- {$cFooter} -->";
       $cFullPage .= $cFooter;
-      
-      // And save it as a cache file
-      $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id'], $cOtap);
 
+      // And save it as a cache file
       file_put_contents($cCacheFile, $cFullPage);
-      
-      //$this->Idfix->FlashMessage('Cached OnePP Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
+
+      $this->Idfix->FlashMessage('Cached OnePP Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
     }
   }
 
@@ -153,7 +110,7 @@ class OneppBase extends Events3Module {
   }
 
 
-  private function GetMenuLinks(&$aSections) {
+  private function GetMenuLinks($aSections) {
     $aLinks = array();
     foreach ($aSections as $iSectionId => $aSectionInfo) {
       // Do we have a menu item?
@@ -165,7 +122,8 @@ class OneppBase extends Events3Module {
   }
 
   private function GetSectionIdentifier($aSectionInfo) {
-    return $this->Idfix->ValidIdentifier('div_' . $aSectionInfo['Menu']) . $aSectionInfo['MainID'];
+    //print_r($aSectionInfo);
+    return $this->Idfix->ValidIdentifier('div_' . $aSectionInfo['Menu'] . $aSectionInfo['MainID']);
   }
 
   private function GetCacheFileName($cSubdomainID, $cOtap = '') {
@@ -181,7 +139,9 @@ class OneppBase extends Events3Module {
   private function GetAssetDirUrl($cThemeName) {
     //return $this->GetThemeDirectory($cThemeName) . 'assets/';
     $cBaseDir = dirname(__file__) . "/themes/{$cThemeName}/assets/";
-    return str_ireplace($this->ev3->BasePath, $this->ev3->BasePathUrl, $cBaseDir);
+    $cUrl = str_ireplace($this->ev3->BasePath, $this->ev3->BasePathUrl, $cBaseDir);
+    $cUrl = str_replace('\\', '/', $cUrl);
+    return $cUrl;
   }
 
   private function GetNavigation($aSiteRecord) {
@@ -192,8 +152,11 @@ class OneppBase extends Events3Module {
   private function CreateFullBody($aSiteRecord, $aSections) {
     $cSection = '';
     foreach ($aSections as $iSectionID => $aSectionInfo) {
+      $aSectionInfo['_site'] = $aSiteRecord;
       $aSectionInfo['_styles'] = $this->CreateStyles($aSectionInfo);
       $aSectionInfo['_identifier'] = $this->GetSectionIdentifier($aSectionInfo);
+      $aSectionInfo['Description'] = $this->PostProcesColumnHref($aSectionInfo['Description'], $aSectionInfo['Section']);
+
       $cSectionType = $aSectionInfo['Char_1'];
 
       // Get the block content
@@ -202,10 +165,19 @@ class OneppBase extends Events3Module {
       $cColumnTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_column_{$cSectionType}.php";
       $iColumnCount = count($aColumns);
       foreach ($aColumns as $iColumnId => $aColumnInfo) {
+        $aColumnInfo['_smi'] = $this->GetSocialMediaIcons($aColumnInfo);
+        $aColumnInfo['Description'] = $this->PostProcesColumnHref($aColumnInfo['Description'], $aColumnInfo['Section']);
+        $aColumnInfo['_image'] = $this->GetPictureUrl($aColumnInfo);
         $aColumnInfo['_columns'] = $this->GetColumnClasses($aSectionInfo['BG_column_width'], $aColumnInfo['Int_2'], $aColumnInfo['Int_1'], $iColumnCount);
+        $aColumnInfo['_columncount'] = $iColumnCount;
+        $aColumnInfo['_columnwidth'] = (int)$aColumnInfo['Int_2'];
+        $aColumnInfo['_section'] = $aSectionInfo;
+        $aColumnInfo['_site'] = $aSiteRecord;
         $aSectionInfo['_content'] .= $this->Template->Render($cColumnTemplate, $aColumnInfo);
       }
 
+
+      $aSectionInfo['_columncount'] = $iColumnCount;
       $cTemplate = $this->GetThemeDirectory($aSiteRecord['Theme']) . "section_{$cSectionType}.php";
       $cSection .= $this->Template->Render($cTemplate, $aSectionInfo);
     }
@@ -213,6 +185,20 @@ class OneppBase extends Events3Module {
     return $cSection;
   }
 
+  /**
+   * If an internal section href is set, this takes presedence.
+   * 
+   * @param mixed $cHref
+   * @param mixed $iSectionId
+   * @return
+   */
+  private function PostProcesColumnHref($cHref, $iSectionId) {
+    if ($iSectionId) {
+      $aSection = $this->IdfixStorage->LoadRecord($iSectionId);
+      $cHref = '#' . $this->GetSectionIdentifier($aSection);
+    }
+    return $cHref;
+  }
   /**
    * OneppBase::GetColumnClasses()
    * 
@@ -254,28 +240,25 @@ class OneppBase extends Events3Module {
   private function CreateStyles($aSection) {
     $cStyles = '';
 
-    // First check if we need a rule for the background color
-    // Does it start with a hash and is the number bigger than 0
-    $cColorCode = trim($aSection['BG_color']);
-    $bIsHex = (boolean)(substr($cColorCode, 0, 1) == '#');
-    $bIsColor = (boolean)(substr($cColorCode, 1, 3) != '000');
-    if ($bIsHex and $bIsColor) {
-      $cStyles .= "background-color:{$cColorCode};\n";
-    }
-    else {
-      $cStyles .= "background-color:none;\n";
-    }
-
-    // Check if we have a backgrounnd image
-    $cUpload = isset($aSection['BG_picture']) ? $aSection['BG_picture']['url'] : '';
-    $cUrl = $aSection['BG_Url'];
-    $cBackground = $cUrl ? $cUrl : ($cUpload ? $cUpload : '');
+    $cBackground = $this->GetPictureUrl($aSection);
     if ($cBackground) {
       $cStyles .= "background-image:url({$cBackground});\nbackground-size: cover;\n";
     }
     else {
       $cStyles .= "background-image:none;\n";
     }
+
+    // First check if we need a rule for the background color
+    // Does it start with a hash and is the number bigger than 0
+    // But no color if we have a picture bacjkground
+    $cColorCode = trim($aSection['BG_color']);
+    if (!$cBackground and $this->IsValidColorCode($cColorCode)) {
+      $cStyles .= "background-color:{$cColorCode};\n";
+    }
+    else {
+      $cStyles .= "background-color:none;\n";
+    }
+
 
     // Check if we need a height. It is always in EM
     $iHeight = (integer)$aSection['BG_height'];
@@ -285,5 +268,58 @@ class OneppBase extends Events3Module {
 
     return $cStyles;
 
+  }
+
+  /**
+   * Get a simple array with the social media identifier 
+   * as the key and the URL as the value.
+   * 
+   * All fields are prefixed smi_ in the configuration followed by the
+   * name of the social media brand is used in the FA library
+   * 
+   * @param array $aColumnInfo
+   * @return array Icon Name -> Social Media URL
+   */
+  private function GetSocialMediaIcons($aColumnInfo) {
+    $aIcons = array();
+    foreach ($aColumnInfo as $cName => $cUrl) {
+      if ($cUrl and (substr($cName, 0, 4) == 'smi_')) {
+        $aIcons[str_replace('_','-',substr($cName, 4))] = $cUrl;
+      }
+    }
+    return $aIcons;
+  }
+
+  private function GetPictureUrl($aSection) {
+    $cUpload = isset($aSection['BG_picture']) ? $aSection['BG_picture']['url'] : '';
+    $cUrl = $aSection['BG_Url'];
+    $cBackground = $cUrl ? $cUrl : ($cUpload ? $cUpload : '');
+    return $cBackground;
+  }
+
+  private function GetSupportColorStyles($cColor, $cTheme) {
+    $cStyles = '';
+    if ($this->IsValidColorCode($cColor)) {
+      $cCssFile = $this->GetThemeDirectory($cTheme) . 'color.css';
+      if (file_exists($cCssFile)) {
+        $cStyles = file_get_contents($cCssFile);
+        $cStyles = '<style>' . str_ireplace('%color%', $cColor, $cStyles) . '</style>';
+      }
+    }
+    return $cStyles;
+  }
+
+  /**
+   * Check if this is a valid colorcode and not black
+   * 
+   * @param char $cColorCode
+   * @return boolean
+   */
+  private function IsValidColorCode($cColorCode) {
+    $cColorCode = trim($cColorCode);
+    $bIsHex = (boolean)(substr($cColorCode, 0, 1) == '#');
+    $bIsColor = (boolean)(substr($cColorCode, 1, 3) != '000');
+    $bIsLenght = (strlen($cColorCode) == 7);
+    return $bIsColor and $bIsHex and $bIsLenght;
   }
 }

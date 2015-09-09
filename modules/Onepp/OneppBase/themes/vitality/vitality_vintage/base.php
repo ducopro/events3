@@ -14,10 +14,9 @@
     <!-- Font Awesome -->
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" />
 
-    <!-- Default Fonts -->
-    <link href='//fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900,900italic' rel='stylesheet' type='text/css' />
-    <link href='//fonts.googleapis.com/css?family=Raleway:400,100,200,300,600,500,700,800,900' rel='stylesheet' type='text/css' />
-
+    <!-- Vintage Style Fonts (Include these if you are using body.vintage!) -->
+    <link href='//fonts.googleapis.com/css?family=Sanchez:400italic,400' rel='stylesheet' type='text/css' />
+    <link href='//fonts.googleapis.com/css?family=Cardo:400,400italic,700' rel='stylesheet' type='text/css' />
     <!-- Plugin CSS -->
     <link href="//cdnjs.cloudflare.com/ajax/libs/owl-carousel/1.3.3/owl.carousel.css" rel="stylesheet" type="text/css" />
     <link href="//cdnjs.cloudflare.com/ajax/libs/owl-carousel/1.3.3/owl.theme.css" rel="stylesheet" type="text/css" />
@@ -38,7 +37,7 @@
     <![endif]-->
 </head>
 
-<body id="page-top">
+<body id="page-top" class="vintage">
 
     <?php print $_styles; ?>
     

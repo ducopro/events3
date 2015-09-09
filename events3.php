@@ -256,7 +256,7 @@ class Events3 {
     // return value of this method
     $xReturnValue = null;
 
-    if($this->bDebug){
+    if ($this->bDebug) {
       return $xReturnValue;
     }
 
@@ -271,7 +271,9 @@ class Events3 {
       unset($_SESSION[__method__][$cKey]);
     }
     elseif (is_null($xData)) {
-      $xReturnValue = @$_SESSION[__method__][$cKey];
+      if (isset($_SESSION[__method__][$cKey])) {
+        $xReturnValue = $_SESSION[__method__][$cKey];
+      }
     }
     else {
       $_SESSION[__method__][$cKey] = $xData;

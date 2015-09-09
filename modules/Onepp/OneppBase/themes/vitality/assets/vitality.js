@@ -3,6 +3,72 @@
  * Copyright 2013-2015 Start Bootstrap Themes
  * To use this theme you must have a license purchased at WrapBootstrap (https://wrapbootstrap.com)
  */
+//console.log('start');
+//console.log('wow int started');
+// Load WOW.js on non-touch devices
+var isPhoneDevice = "ontouchstart" in document.documentElement;
+$(document).ready(function() {
+    //console.log('wow int started');
+    if (isPhoneDevice) {
+        //mobile
+    } else {
+        //desktop               
+        // Initialize WOW.js
+        wow = new WOW({
+            offset: 50
+        })
+        wow.init();
+        //console.log('wow.init()');
+    }
+    
+    // Start Portfolio Filtering Scripts & Hover Effect
+    var filterList = {
+        init: function() {
+
+            // MixItUp plugin
+            // http://mixitup.io
+            $('#portfoliolist').mixitup({
+                targetSelector: '.portfolio',
+                filterSelector: '.filter',
+                effects: ['fade'],
+                easing: 'snap',
+                // call the hover effect
+                onMixEnd: filterList.hoverEffect()
+            });
+
+        },
+
+        hoverEffect: function() {
+
+            // Simple parallax effect
+            $('#portfoliolist .portfolio').hover(
+                function() {
+                    $(this).find('.caption').stop().animate({
+                        bottom: 0
+                    }, 200, 'easeOutQuad');
+                    $(this).find('img').stop().animate({
+                        top: -20
+                    }, 300, 'easeOutQuad');
+                },
+                function() {
+                    $(this).find('.caption').stop().animate({
+                        bottom: -75
+                    }, 200, 'easeInQuad');
+                    $(this).find('img').stop().animate({
+                        top: 0
+                    }, 300, 'easeOutQuad');
+                }
+            );
+
+        }
+
+    };
+
+    filterList.init();
+    // Stop Portfolio Filtering Scripts & Hover Effect
+    
+    
+});
 
 (function($) {
     "use strict"; // Start of use strict
@@ -97,81 +163,7 @@
         offset: 51
     })
 
-    // Portfolio Filtering Scripts & Hover Effect
-    var filterList = {
-        init: function() {
 
-            // MixItUp plugin
-            // http://mixitup.io
-            $('#portfoliolist').mixitup({
-                targetSelector: '.portfolio',
-                filterSelector: '.filter',
-                effects: ['fade'],
-                easing: 'snap',
-                // call the hover effect
-                onMixEnd: filterList.hoverEffect()
-            });
-
-        },
-
-        hoverEffect: function() {
-
-            // Simple parallax effect
-            $('#portfoliolist .portfolio').hover(
-                function() {
-                    $(this).find('.caption').stop().animate({
-                        bottom: 0
-                    }, 200, 'easeOutQuad');
-                    $(this).find('img').stop().animate({
-                        top: -20
-                    }, 300, 'easeOutQuad');
-                },
-                function() {
-                    $(this).find('.caption').stop().animate({
-                        bottom: -75
-                    }, 200, 'easeInQuad');
-                    $(this).find('img').stop().animate({
-                        top: 0
-                    }, 300, 'easeOutQuad');
-                }
-            );
-
-        }
-
-    };
-
-    filterList.init();
-
+    
 })(jQuery); // End of use strict
 
-// Load WOW.js on non-touch devices
-var isPhoneDevice = "ontouchstart" in document.documentElement;
-$(document).ready(function() {
-    if (isPhoneDevice) {
-        //mobile
-    } else {
-        //desktop               
-        // Initialize WOW.js
-        wow = new WOW({
-            offset: 50
-        })
-        wow.init();
-    }
-});
-
-// Analytics Tracking - DEMO ONLY!
-
-(function(i, s, o, g, r, a, m) {
-    i['GoogleAnalyticsObject'] = r;
-    i[r] = i[r] || function() {
-        (i[r].q = i[r].q || []).push(arguments)
-    }, i[r].l = 1 * new Date();
-    a = s.createElement(o),
-        m = s.getElementsByTagName(o)[0];
-    a.async = 1;
-    a.src = g;
-    m.parentNode.insertBefore(a, m)
-})(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
-
-ga('create', 'UA-38417733-23', 'auto');
-ga('send', 'pageview');

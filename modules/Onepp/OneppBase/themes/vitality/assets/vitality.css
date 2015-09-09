@@ -724,6 +724,8 @@ aside.cta-quote span.quote {
   -moz-background-size: cover;
   background-size: cover;
   -o-background-size: cover;
+  background-color: black;
+  opacity: 0.85 !important;
 }
 .portfolio-modal .modal-backdrop {
   display: none;
@@ -1100,7 +1102,8 @@ body.modern p.lead {
   font-weight: 700;
   text-transform: uppercase;
 }
-body.modern header .brand-name {
+body.modern header .brand-name,
+body.modern .navbar .navbar-brand {
   font-family: "Montserrat", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 700;
   text-transform: uppercase;
@@ -1142,7 +1145,8 @@ body.vintage p.lead {
   font-weight: 400;
   text-transform: uppercase;
 }
-body.vintage header .brand-name {
+body.vintage header .brand-name,
+body.vintage .navbar .navbar-brand {
   font-family: "Sanchez", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 400;
   text-transform: uppercase;

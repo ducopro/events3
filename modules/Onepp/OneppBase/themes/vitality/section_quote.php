@@ -7,6 +7,7 @@
 
 <aside class="cta-quote" id="<?php print $_identifier; ?>">
   <div class="container wow fadeIn">
+     
      <div class="row">
        <div class="col-md-10 col-md-offset-1">
               

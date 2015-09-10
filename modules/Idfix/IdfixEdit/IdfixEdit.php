@@ -97,7 +97,7 @@ class IdfixEdit extends Events3Module {
       'cPostUrl' => $cUploadUrl,
       );
 
-    $output = $this->Idfix->RenderTemplate('EditForm', $aTemplate);
+    $output .= $this->Idfix->RenderTemplate('EditForm', $aTemplate);
     //$this->IdfixDebug->Profiler(__method__, 'stop');
   }
 

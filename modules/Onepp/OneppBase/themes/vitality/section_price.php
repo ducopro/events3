@@ -4,10 +4,10 @@
 }
 </style>
 
-<section id="<?php print $_identifier; ?>" class="services">
-  <div class="container">
+<section class="pricing bg-gray" id="<?php print $_identifier; ?>">
+  <div class="container wow fadeIn">
      
-     <?php if($_header): ?>
+      <?php if($_header): ?>
       <div class="row text-center">
          <div class="col-lg-12 wow fadeIn">
             <?php print $_header; ?>
@@ -15,9 +15,8 @@
       </div>
       <?php endif; ?>
 
-     <div class="row content-row">
+     <div class="row text-center content-row">
        <?php print $_content; ?>
      </div>
   </div>
 </section>
-

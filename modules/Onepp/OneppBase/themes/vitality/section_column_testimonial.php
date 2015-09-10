@@ -20,13 +20,12 @@
                 <?php if($Name): ?>
                    <div class="testimonial-author">
                        <span class="name"><?php print $Name; ?></span>
-                       <!-- <p class="small">CEO of GeneriCorp</p> -->
                         <?php if(count($_smi)>0): ?>
                            <div class="stars">
                               <ul class="list-inline social">
                               <?php foreach($_smi as $smi_icon => $smi_url): ?>
                                  <li>
-                                    <a href="<?php print $smi_url; ?>"><i class="fa fa-<?php print $smi_icon; ?> fa-fw"></i></a>
+                                    <a class="stars" href="<?php print $smi_url; ?>"><i class="fa fa-<?php print $smi_icon; ?> fa-fw"></i></a>
                                  </li>
                               <?php endforeach; ?>
                               </ul>

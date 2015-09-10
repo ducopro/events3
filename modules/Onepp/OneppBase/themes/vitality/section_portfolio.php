@@ -6,24 +6,10 @@
 <section id="<?php print $_identifier; ?>">
   <div class="container text-center wow fadeIn">
       
-      <?php if( $Icon): ?>
-         <i class="fa fa-4x fa-<?php print $Icon; ?>"></i>
-      <?php endif; ?>
-      <?php if($Id): ?>
-         <h2><?php print $Id; ?></h2>
-      <?php endif; ?>
-      <?php if( $Name): ?>
-         <h4><?php print $Name; ?></h4>
-      <?php endif; ?>
-      <hr class="colored" />
-      <?php if( strip_tags($Text_1)): ?>
-         <p><?php print $Text_1; ?></p>
-      <?php endif; ?>
-      
-      
-      <?php if(count($_cats)>1): ?>
       <div class="row content-row">
           <div class="col-lg-12">
+              <?php print $_header; ?>
+              <?php if(count($_cats)>1): ?>
               <div class="portfolio-filter">
                   <ul id="filters" class="clearfix">
                      <li>
@@ -36,9 +22,10 @@
                      <?php endforeach; ?>
                   </ul>
               </div>
+              <?php endif; ?>
           </div>
       </div>
-      <?php endif; ?>
+      
       
       <div class="row">
          <div class="col-lg-12">

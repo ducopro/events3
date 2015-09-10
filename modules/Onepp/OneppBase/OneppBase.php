@@ -143,6 +143,7 @@ class OneppBase extends Events3Module {
       $aSectionInfo['_styles'] = $this->CreateStyles($aSectionInfo);
       $aSectionInfo['_identifier'] = $this->GetSectionIdentifier($aSectionInfo);
       $aSectionInfo['Description'] = $this->PostProcesColumnHref($aSectionInfo['Description'], $aSectionInfo['Section']);
+      $aSectionInfo['_header'] = $this->GetThemedHtml($aSiteRecord['Theme'], "header", $aSectionInfo);
 
       $cSectionType = $aSectionInfo['Char_1'];
 
@@ -153,8 +154,9 @@ class OneppBase extends Events3Module {
       $aColumns = $this->IdfixStorage->LoadAllRecords(40, $iSectionID, 'Weight');
       // Postproces and group the categories, create valid identifiers from the category names
       $aSectionInfo['_cats'] = $this->CreateCats($aColumns);
-      
+
       $iColumnCount = count($aColumns);
+      $iColumnCurrent = 0;
       foreach ($aColumns as $iColumnId => $aColumnInfo) {
         // Only render a popup if there is a need because of detailed information
         $bShowPopups = (boolean)strip_tags($aColumnInfo['Text_1']);
@@ -166,6 +168,7 @@ class OneppBase extends Events3Module {
         $aColumnInfo['_image'] = $this->GetPictureUrl($aColumnInfo);
         $aColumnInfo['_columns'] = $this->GetColumnClasses($aSectionInfo['BG_column_width'], $aColumnInfo['Int_2'], $aColumnInfo['Int_1'], $iColumnCount);
         $aColumnInfo['_columncount'] = $iColumnCount;
+        $aColumnInfo['_columncurrent'] = (++$iColumnCurrent);
         $aColumnInfo['_columnwidth'] = (int)$aColumnInfo['Int_2'];
         $aColumnInfo['_section'] = $aSectionInfo;
         $aColumnInfo['_site'] = $aSiteRecord;
@@ -174,7 +177,7 @@ class OneppBase extends Events3Module {
           $aSectionInfo['_popups'] .= $this->GetThemedHtml($aSiteRecord['Theme'], 'popup', $aColumnInfo);
         }
       }
-      
+
       $aSectionInfo['_columncount'] = $iColumnCount;
       $cSection .= $this->GetThemedHtml($aSiteRecord['Theme'], "section_{$cSectionType}", $aSectionInfo);
     }
@@ -253,7 +256,7 @@ class OneppBase extends Events3Module {
       $cStyles .= "background-color:{$cColorCode};\n";
     }
     else {
-      $cStyles .= "background-color:none;\n";
+      //$cStyles .= "background-color:none;\n";
     }
 
 
@@ -335,13 +338,13 @@ class OneppBase extends Events3Module {
    */
   private function GetThemedHtml($cThemeName, $cTemplateId, $aVariables) {
     $cHtml = '';
-    $cTemplateFile = $this->GetFileFromTheme($cThemeName, $cTemplateId);
-    $this->log($cTemplateFile);
+    $cTemplateFile = $this->GetFileFromTheme($cThemeName, $cTemplateId . '.php');
+    //$this->log($cTemplateFile);
     // file_exists() is already done
     if ($cTemplateFile) {
       $cHtml = $this->Template->Render($cTemplateFile, $aVariables);
     }
-    return $cHtml;
+    return trim($cHtml);
   }
 
   /**
@@ -357,12 +360,12 @@ class OneppBase extends Events3Module {
     $cBaseDir = dirname(__file__) . '/themes/';
     // Add filename to get a correct directoryname with: dirname()
     $cThemeDir = $this->GetThemeDirRecursive($cBaseDir, $cThemeName) . 'dummy.tmp';
-    $this->log($cThemeDir);
+    //$this->log($cThemeDir);
     do {
       // Result is a dirname without trailing backslash
       $cThemeDir = dirname($cThemeDir);
-      $this->log($cThemeDir);
-      $cCheckTemplateFile = $cThemeDir . '/' . $cTemplateId . '.php';
+      //$this->log($cThemeDir);
+      $cCheckTemplateFile = $cThemeDir . '/' . $cTemplateId;
       if (file_exists($cCheckTemplateFile)) {
         $cTemplateFileName = $cCheckTemplateFile;
         break;
@@ -419,7 +422,7 @@ class OneppBase extends Events3Module {
     $cUrl = str_replace('\\', '/', $cUrl);
     return $cUrl;
   }
-  
+
   private function GetAssetDir($cThemeName) {
     $cAssetDir = dirname(__file__) . "/themes/{$cThemeName}/assets/";
     $cBaseDir = dirname(__file__) . '/themes/';
@@ -447,23 +450,114 @@ class OneppBase extends Events3Module {
    * @param array $aColumns
    * @return array
    */
-  private function CreateCats(&$aColumns){
-     $aCats = array();
-     foreach($aColumns as &$aColumn) {
-      if(!isset($aColumn['Category']) or !$aColumn['Category']) {
-         continue;
+  private function CreateCats(&$aColumns) {
+    $aCats = array();
+    foreach ($aColumns as &$aColumn) {
+      if (!isset($aColumn['Category']) or !$aColumn['Category']) {
+        continue;
       }
       // Postproces and cleanup the name
       $aColumn['Category'] = $this->Idfix->ValidIdentifier($aColumn['Category']);
-      $cCat =  $aColumn['Category'];
-      if(isset($aCats[$cCat])) {
-         $aCats[$cCat]++;
+      $cCat = $aColumn['Category'];
+      if (isset($aCats[$cCat])) {
+        $aCats[$cCat]++;
       }
       else {
-         $aCats[$cCat] = 1;
+        $aCats[$cCat] = 1;
       }
-     }
-     return $aCats; 
+    }
+    return $aCats;
   }
+
+  /**
+   * Called after the edit form is created.
+   * We can add the theme documentation here if needed
+   * 
+   * @param mixed $output
+   * @return void
+   */
+  public function Events3IdfixActionEditAfter(&$output) {
+    $aInfo = array();
+    $cTitle = '';
+    $aRecord = $this->IdfixStorage->LoadRecord($this->Idfix->iObject);
+    // The typeid tells us what we are trying to edit
+    $iTypeId = @$aRecord['TypeID'];
+    if ($iTypeId == 40) {
+      // We are editing a column
+      $aSection = $this->IdfixStorage->LoadRecord($this->Idfix->iParent);
+      $aWebsite = $this->IdfixStorage->LoadRecord($aSection['ParentID']);
+      $cSectionID = $aSection['Char_1'];
+      $cThemeName = $aWebsite['Theme'];
+      $aInfo = $this->GetHelpFromFile($cThemeName, 'column_' . $cSectionID . 'ini', 'column.ini');
+      $cTitle = 'Documentation for content from section: ' . ucfirst($cSectionID);
+    }
+    elseif ($iTypeId == 30) {
+      // We are editing a section
+      $aSection = $aRecord;
+      $aWebsite = $this->IdfixStorage->LoadRecord($aSection['ParentID']);
+      $cSectionID = $aSection['Char_1'];
+      $cThemeName = $aWebsite['Theme'];
+      $aInfo = $this->GetHelpFromFile($cThemeName, 'section_' . $cSectionID . 'ini', 'section.ini');
+      $cTitle = 'Documentation for section: ' . ucfirst($cSectionID);
+    }
+    elseif ($iTypeId == 20) {
+      // We are editing the site-info
+      $cThemeName = $aRecord['Theme'];
+      $aInfo = $this->GetHelpFromFile($cThemeName, 'site.ini');
+      $cTitle = 'Documentation for basic site information';
+    }
+
+    // Result is now a key value array with all the info we need to rende in a table
+    if (count($aInfo) > 0) {
+      $this->Table->SetHeader(array('Property', 'Description'));
+      foreach ($aInfo as $cName => $cValue) {
+        $this->Table->SetRow(array( ucfirst($cName), $cValue));
+      }
+      $cTableContent = $this->Table->GetTable(array('class' => 'table table-striped'));
+      $cTitle = "<h3>{$cTitle}</h3>";
+      $cHtml = '<div class="row"><div class="col-lg-12"><div class="well">' . $cTitle . $cTableContent . '</div></div></div>';
+      $output .= $cHtml;
+    }
+    return;
+
+    // Check if it is a section: typeid 30
+    if ($aSection['TypeID'] == 30) {
+      // The section ID is needed because we need to render different
+      // information based on the section
+      $cSectionID = $aSection['Char_1'];
+
+      // We need the name of the theme for getting the correct template
+      $iWebsiteID = $aSection['ParentID'];
+      $aWebsite = $this->IdfixStorage->LoadRecord($iWebsiteID);
+      $cThemeName = $aWebsite['Theme'];
+
+      // Get the help information
+      $cDocFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cSectionID . '.html');
+      if ($cDocFile) {
+        $cHtml = '<div class="row"><div class="col-lg-12"><div class="well">' . file_get_contents($cDocFile) . '</div></div></div>';
+        $output .= $cHtml;
+      }
+    }
+  }
+
+  private function GetHelpFromFile($cThemeName, $cIniFile, $cIniBase = '') {
+    // Default values
+    $aBase = array();
+    if ($cIniBase) {
+      $cBaseFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cIniBase);
+      if ($cBaseFile) {
+        $aBase = parse_ini_file($cBaseFile);
+      }
+    }
+    // Custom Values
+    $aCustom = array();
+    $cIniFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cIniFile);
+    if ($cIniFile) {
+      $aCustom = parse_ini_file($cIniFile);
+    }
+    // Merge them where the custom values take presedence
+    return array_merge($aBase, $aCustom);
+  }
+
 
 }

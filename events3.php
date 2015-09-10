@@ -252,7 +252,7 @@ class Events3 {
    * @return NULL if nothing is found OR he cached data
    */
   private function _cache($cKey, $xData = null, $bDelete = false) {
-    //return null;
+    return null;
     // return value of this method
     $xReturnValue = null;
 

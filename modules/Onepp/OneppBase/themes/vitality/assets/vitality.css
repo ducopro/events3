@@ -879,7 +879,7 @@ aside.cta-quote span.quote {
 .pricing {
   color: white;
   background-color: #222222;
-  background: no-repeat center center scroll;
+  background: no-repeat center center scroll gray;
   -webkit-background-size: cover;
   -moz-background-size: cover;
   background-size: cover;

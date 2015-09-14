@@ -294,11 +294,13 @@ class IdfixStorage extends Events3Module {
    * @return
    */
   private function LoadPostProcess($aRow) {
-    $aProps = (array )unserialize(@$aRow['data']);
-    $aRow += $aProps;
-    unset($aRow['data']);
-    // Add reference to the current configuaration
-    $aRow['_config'] = $this->Idfix->cConfigName;
+    if (isset($aRow['data'])) {
+      $aProps = (array )unserialize(@$aRow['data']);
+      $aRow += $aProps;
+      unset($aRow['data']);
+      // Add reference to the current configuaration
+      $aRow['_config'] = $this->Idfix->cConfigName;
+    }
     return $aRow;
   }
 

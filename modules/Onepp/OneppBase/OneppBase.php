@@ -9,6 +9,35 @@
 
 class OneppBase extends Events3Module {
 
+  public function Events3ThemeSections() {
+    static $cache = null;
+    if (!is_null($cache)) {
+      return $cache;
+    }
+
+    $aRetval = array();
+    // Get current object trail
+    $iTrailId = $this->Idfix->iParent;
+    if ($iTrailId) {
+      //$this->log($iTrailId);
+      $aTrail = $this->Idfix->Trail($iTrailId);
+      //$this->log($aTrail);
+      $aTrail = array_flip($aTrail);
+      //$this->log($aTrail);
+      // Get the site-id
+      if (isset($aTrail[20])) {
+        $iSiteID = $aTrail[20];
+        $aSite = $this->IdfixStorage->LoadRecord($iSiteID);
+        $cThemeName = $aSite['Theme'];
+        $cInfiFile = $this->GetFileFromTheme($cThemeName, 'docs/theme.ini');
+        if ($cInfiFile) {
+          $aRetval = parse_ini_file($cInfiFile,false, INI_SCANNER_RAW);
+          $cache = $aRetval;
+        }
+      }
+    }
+    return $aRetval;
+  }
 
   /**
    * Catch URLS's with format oneppv/<subdomain>[/<otap>]
@@ -162,6 +191,7 @@ class OneppBase extends Events3Module {
         $bShowPopups = (boolean)strip_tags($aColumnInfo['Text_1']);
         $aColumnInfo['_popup_id'] = ($bShowPopups ? 'popup-' . $iColumnId : '');
         $aColumnInfo['_smi'] = $this->GetSocialMediaIcons($aColumnInfo);
+        $aColumnInfo['_smi_list'] = $this->GetThemedHtml($aSiteRecord['Theme'], 'social', $aColumnInfo);
         // Generate an URL
         $aColumnInfo['Description'] = $this->PostProcesColumnHref($aColumnInfo['Description'], $aColumnInfo['Section']);
         // Pictures can be uploaded of set by link
@@ -481,14 +511,14 @@ class OneppBase extends Events3Module {
     $cTitle = '';
     $aRecord = $this->IdfixStorage->LoadRecord($this->Idfix->iObject);
     // The typeid tells us what we are trying to edit
-    $iTypeId = @$aRecord['TypeID'];
+    $iTypeId = (integer)(isset($aRecord['TypeID']) ? $aRecord['TypeID'] : 0);
     if ($iTypeId == 40) {
       // We are editing a column
       $aSection = $this->IdfixStorage->LoadRecord($this->Idfix->iParent);
       $aWebsite = $this->IdfixStorage->LoadRecord($aSection['ParentID']);
       $cSectionID = $aSection['Char_1'];
       $cThemeName = $aWebsite['Theme'];
-      $aInfo = $this->GetHelpFromFile($cThemeName, 'column_' . $cSectionID . 'ini', 'column.ini');
+      $aInfo = $this->GetHelpFromFile($cThemeName, 'column_' . $cSectionID . '.ini', 'column.ini');
       $cTitle = 'Documentation for content from section: ' . ucfirst($cSectionID);
     }
     elseif ($iTypeId == 30) {
@@ -497,7 +527,7 @@ class OneppBase extends Events3Module {
       $aWebsite = $this->IdfixStorage->LoadRecord($aSection['ParentID']);
       $cSectionID = $aSection['Char_1'];
       $cThemeName = $aWebsite['Theme'];
-      $aInfo = $this->GetHelpFromFile($cThemeName, 'section_' . $cSectionID . 'ini', 'section.ini');
+      $aInfo = $this->GetHelpFromFile($cThemeName, 'section_' . $cSectionID . '.ini', 'section.ini');
       $cTitle = 'Documentation for section: ' . ucfirst($cSectionID);
     }
     elseif ($iTypeId == 20) {
@@ -511,7 +541,7 @@ class OneppBase extends Events3Module {
     if (count($aInfo) > 0) {
       $this->Table->SetHeader(array('Property', 'Description'));
       foreach ($aInfo as $cName => $cValue) {
-        $this->Table->SetRow(array( ucfirst($cName), $cValue));
+        $this->Table->SetRow(array(ucfirst($cName), $cValue));
       }
       $cTableContent = $this->Table->GetTable(array('class' => 'table table-striped'));
       $cTitle = "<h3>{$cTitle}</h3>";
@@ -519,25 +549,6 @@ class OneppBase extends Events3Module {
       $output .= $cHtml;
     }
     return;
-
-    // Check if it is a section: typeid 30
-    if ($aSection['TypeID'] == 30) {
-      // The section ID is needed because we need to render different
-      // information based on the section
-      $cSectionID = $aSection['Char_1'];
-
-      // We need the name of the theme for getting the correct template
-      $iWebsiteID = $aSection['ParentID'];
-      $aWebsite = $this->IdfixStorage->LoadRecord($iWebsiteID);
-      $cThemeName = $aWebsite['Theme'];
-
-      // Get the help information
-      $cDocFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cSectionID . '.html');
-      if ($cDocFile) {
-        $cHtml = '<div class="row"><div class="col-lg-12"><div class="well">' . file_get_contents($cDocFile) . '</div></div></div>';
-        $output .= $cHtml;
-      }
-    }
   }
 
   private function GetHelpFromFile($cThemeName, $cIniFile, $cIniBase = '') {
@@ -546,14 +557,16 @@ class OneppBase extends Events3Module {
     if ($cIniBase) {
       $cBaseFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cIniBase);
       if ($cBaseFile) {
-        $aBase = parse_ini_file($cBaseFile);
+        $aBase = (array) parse_ini_file($cBaseFile,false, INI_SCANNER_RAW);
       }
     }
     // Custom Values
     $aCustom = array();
+    $this->log($cIniFile);
     $cIniFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cIniFile);
+    $this->log($cIniFile);
     if ($cIniFile) {
-      $aCustom = parse_ini_file($cIniFile);
+      $aCustom = (array) parse_ini_file($cIniFile,false, INI_SCANNER_RAW);
     }
     // Merge them where the custom values take presedence
     return array_merge($aBase, $aCustom);

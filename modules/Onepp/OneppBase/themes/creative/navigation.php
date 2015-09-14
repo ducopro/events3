@@ -8,7 +8,10 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand page-scroll" href="#page-top"><?php print $Name; ?></a>
+                <a class="navbar-brand page-scroll" href="#page-top">
+                   <?php if($Icon) print "<i class=\"fa fa-{$Icon} text-primary\"></i>&nbsp;"; ?>
+                   <?php print $Name; ?>
+                </a>
             </div>
 
             <!-- Collect the nav links, forms, and other content for toggling -->

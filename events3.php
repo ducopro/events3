@@ -157,10 +157,9 @@ class Events3 {
    * First argument should be the case sensitive event name
    * followed by an optional number of extra parameters
    *
-   * @return void
+   * @return array with returnvalues indexed by the modulename
    */
   public function Raise($sEvent, &$xParam = null) {
-
     // Get generic parameters
     $aParams = func_get_args();
     // Strip the first two .. we already have them
@@ -173,6 +172,9 @@ class Events3 {
     // By now, the parameter array is filled with a first
     // element by reference and the optional rest by value
 
+    // Create an array with return values
+    $aReturnValues = array();
+
     // Now create an array with the modules
     if (isset($this->_aEventList[$sEvent])) {
       $aModuleList = $this->_aEventList[$sEvent];
@@ -181,7 +183,7 @@ class Events3 {
         $iStart = microtime(true);
 
         $oModule = $this->LoadModule($cModulePath);
-        call_user_func_array(array($oModule, $sEventName), $aNewParams);
+        $aReturnValues[$cModulePath] = call_user_func_array(array($oModule, $sEventName), $aNewParams);
 
         // Very basic profiling information with low overhead
         $fTime = (float)microtime(true) - $iStart;
@@ -193,7 +195,7 @@ class Events3 {
       }
     }
 
-
+    return $aReturnValues;
   }
 
   /**

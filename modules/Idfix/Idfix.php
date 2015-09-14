@@ -712,11 +712,16 @@ class Idfix extends Events3Module {
     if (is_array($aConfig)) {
       foreach ($aConfig as $cElementName => &$aConfig_element) {
 
+        // 1. Parse callbacks (Events)
+        // Example: -options=@@MyEvent
+        if (is_string($aConfig_element) and substr($aConfig_element, 0, 2) === '@@') {
+          $aConfig_element = $this->PostprocesCallbacks($aConfig_element);
+        }
+
         // 1. Get dynamic display values, option elements!!!!
         if ((is_string($aConfig_element) and (stripos($aConfig_element, '%%') !== false))) {
           $aConfig_element = $this->DynamicDisplayValues($aConfig_element, $aRecord);
         }
-
         // 2. Get normal dynamic values to parse?
         if (is_string($aConfig_element) and (stripos($aConfig_element, '%') !== false)) {
           $aConfig_element = $this->DynamicValues($aConfig_element, $aRecord);
@@ -1216,6 +1221,38 @@ class Idfix extends Events3Module {
       }
       return $cJavaScript;
     }
+  }
+
+  /**
+   * Postprocess the config if needed and call some code
+   * Example: @@MyEvent
+   * 
+   * No parameters allowed (yet)
+   * 
+   * Super simple implementation. The frameworke can already call
+   * events very efficiently
+   * 
+   * Note that we only support a single unique event!!
+   * If there are multiple events only the first return value
+   * is used.
+   * 
+   * @param string $cCallback
+   * @return mixed result of the callback or original inputstring
+   */
+  private function PostprocesCallbacks($cEvent) {
+    $xRetval = $cEvent;
+    // Strip the prefix
+    $cEvent = trim(substr($cEvent, 2));
+    if ($cEvent) {
+      // Get all event return values
+      $aEventReturns = $this->ev3->Raise($cEvent);
+      if(count($aEventReturns) >= 1) {
+         // .. but only use the first one ..
+         $xRetval = array_shift($aEventReturns);
+      }
+    }
+
+    return $xRetval;
   }
 
 }

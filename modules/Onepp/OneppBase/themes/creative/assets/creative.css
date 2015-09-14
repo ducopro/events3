@@ -55,6 +55,10 @@ p {
     background-color: #f05f40;
 }
 
+.bg-primary .social a {
+   color: white;
+}
+
 .bg-dark {
     color: #fff;
     background-color: #222;
@@ -65,11 +69,18 @@ p {
 }
 
 section {
-    padding: 100px 0;
+    padding: 100px 0 50px 0;
+}
+section div.container{
+   padding-bottom:50px;
 }
 
 aside {
     padding: 50px 0;
+}
+
+aside div.container.content {
+   padding-top: 50px;
 }
 
 .no-padding {
@@ -313,6 +324,15 @@ header .header-content .header-content-inner p {
    width:100%;
 }
 
+.portfolio-box-caption-content a {
+   color:white;
+}
+.portfolio-box-caption-content a:hover {
+   color:gray;
+   opacity:0.9;
+   text-decoration: none;
+}
+
 @media(min-width:768px) {
     .portfolio-box .portfolio-box-caption .portfolio-box-caption-content .project-category {
         font-size: 16px;
@@ -478,4 +498,12 @@ img::-moz-selection {
 
 body {
     webkit-tap-highlight-color: #222;
+}
+
+.onepp-content2 hr {
+   border-color:white;
+} 
+.onepp-content2 .btn-primary {
+   background-color:white;
+   color:black;
 }

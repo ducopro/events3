@@ -31,7 +31,7 @@ class OneppBase extends Events3Module {
         $cThemeName = $aSite['Theme'];
         $cInfiFile = $this->GetFileFromTheme($cThemeName, 'docs/theme.ini');
         if ($cInfiFile) {
-          $aRetval = parse_ini_file($cInfiFile,false, INI_SCANNER_RAW);
+          $aRetval = parse_ini_file($cInfiFile, false, INI_SCANNER_RAW);
           $cache = $aRetval;
         }
       }
@@ -55,7 +55,7 @@ class OneppBase extends Events3Module {
     //echo $cUrl;
 
     if ($cOneppIdentifier == 'oneppv') {
-      $cCacheFile = $this->GetCacheFileName($cSubdomain, $cOtap);
+      $cCacheFile = $this->GetCacheFileName($cSubdomain, $cOtap,true);
 
       if (file_exists($cCacheFile)) {
         echo file_get_contents($cCacheFile);
@@ -117,7 +117,7 @@ class OneppBase extends Events3Module {
       $aSiteRecord['_sections'] = $this->CreateFullBody($aSiteRecord, $aSections);
 
       $cFullPage = $this->GetThemedHtml($aSiteRecord['Theme'], 'base', $aSiteRecord);
-      $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id'], $cOtap);
+      $cCacheFile = $this->GetCacheFileName($aSiteRecord['Id'], $cOtap, true);
 
       // Add a footer to tell us when it was generated
       $fTime = round((microtime(true) - $iStart) * 1000, 2);
@@ -128,8 +128,17 @@ class OneppBase extends Events3Module {
 
       // And save it as a cache file
       file_put_contents($cCacheFile, $cFullPage);
-
       $this->Idfix->FlashMessage('Cached OnePP Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
+
+      // Now check if we need to write a second file for the optional domain name.
+      // Later we can use a symbolic link
+      if ($aSiteRecord['Char_1']) {
+        $cDomainName = trim(strtolower($aSiteRecord['Char_1']));
+        $cCacheFile = $this->GetCacheFileName($cDomainName, $cOtap);
+        file_put_contents($cCacheFile, $cFullPage);
+        $this->Idfix->FlashMessage('Custom Domain Website Created: ' . $cCacheFile . " ({$fTime} ms.)");
+      }
+      //$this->log($_SERVER);
     }
   }
 
@@ -150,13 +159,23 @@ class OneppBase extends Events3Module {
     return $this->Idfix->ValidIdentifier('div_' . $aSectionInfo['Menu'] . $aSectionInfo['MainID']);
   }
 
-  private function GetCacheFileName($cSubdomainID, $cOtap = '') {
+  private function GetCacheFileName($cSubdomainID, $cOtap = '', $bAddDomainName = false) {
     if (!stristr(',dev,test,acc,prod,', ',' . $cOtap . ',')) {
       $cOtap = (isset($_GET['otap']) ? $_GET['otap'] : 'prod');
     }
-
     $cOtap = $this->Idfix->ValidIdentifier($cOtap);
-    $cSubdomainID = $this->Idfix->ValidIdentifier($cSubdomainID);
+
+    // Add a domain name, NAME + TLD
+    if ($bAddDomainName) {
+      $cFullDomain = trim(strtolower($_SERVER['HTTP_HOST']));
+      $aParts = explode('.', $cFullDomain);
+      if (count($aParts) >= 2) {
+         $cTld = array_pop($aParts);
+         $cDomainName = array_pop($aParts);
+         $cSubdomainID = $this->Idfix->ValidIdentifier($cSubdomainID) . '.' .  $cDomainName . '.' . $cTld;
+      }
+    }
+    //$cSubdomainID = $this->Idfix->ValidIdentifier($cSubdomainID);
     return $this->ev3->PublicPath . "/onepp/{$cOtap}/{$cSubdomainID}.html";
   }
 
@@ -557,7 +576,7 @@ class OneppBase extends Events3Module {
     if ($cIniBase) {
       $cBaseFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cIniBase);
       if ($cBaseFile) {
-        $aBase = (array) parse_ini_file($cBaseFile,false, INI_SCANNER_RAW);
+        $aBase = (array )parse_ini_file($cBaseFile, false, INI_SCANNER_RAW);
       }
     }
     // Custom Values
@@ -566,7 +585,7 @@ class OneppBase extends Events3Module {
     $cIniFile = $this->GetFileFromTheme($cThemeName, 'docs/' . $cIniFile);
     $this->log($cIniFile);
     if ($cIniFile) {
-      $aCustom = (array) parse_ini_file($cIniFile,false, INI_SCANNER_RAW);
+      $aCustom = (array )parse_ini_file($cIniFile, false, INI_SCANNER_RAW);
     }
     // Merge them where the custom values take presedence
     return array_merge($aBase, $aCustom);

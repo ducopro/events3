@@ -623,6 +623,10 @@ class IdfixUser extends Events3Module {
    *  
    */
   private function Try2LoginWithUsernameAndHashcode() {
+    if(!isset($_SERVER['PATH_INFO'])) {
+      return;
+    }
+    
     $aCommand = explode('/', parse_url(urldecode($_SERVER['PATH_INFO']), PHP_URL_PATH));
     //$this->log($aCommand);
     // Position 7 and 8 should always be the username and hash

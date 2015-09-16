@@ -9,6 +9,52 @@
 
 class OneppBase extends Events3Module {
 
+  // Name of the config we will listen for
+  const NAME = 'onepp';
+
+  /**
+   * Clear the configuration cache in development
+   * every time we access it.
+   * 
+   * @return void
+   */
+  public function Events3IdfixConfigCache() {
+    if ($this->Idfix->cConfigName == self::NAME) {
+      $this->Idfix->IdfixConfigCache = false;
+    }
+  }
+
+  /**
+   * We create this handler as a AFTER eventhandler
+   * Because we need to override every call to this configuration
+   * and substitue it with our own config
+   * 
+   * @return void
+   */
+  public function Events3IdfixGetConfig() {
+    // Which config did we call?
+    $cConfigName = $this->Idfix->cConfigName;
+
+    // Is it a config we need to listen to???
+    if ($cConfigName == self::NAME) {
+      $cFileName = dirname(__file__) . '/onepp.rb';
+      // Parse our config
+      $aConfig = $this->IdfixParse->Parse($cFileName);
+      // And call the same event as called from the IdfixParse module
+      // Otap module configures tablespace and filespace
+      // user module adds the user system
+      $this->Idfix->Event('AfterParse', $aConfig);
+      $this->Idfix->aConfig = $aConfig;
+    }
+  }
+  
+  /**
+   * Event Handler called from the idfix-script to get
+   * a dynamic list of all the sectiomn types the current
+   * theme supports.
+   * 
+   * @return array SectionId->SectionDescription
+   */
   public function Events3ThemeSections() {
     static $cache = null;
     if (!is_null($cache)) {
@@ -55,7 +101,7 @@ class OneppBase extends Events3Module {
     //echo $cUrl;
 
     if ($cOneppIdentifier == 'oneppv') {
-      $cCacheFile = $this->GetCacheFileName($cSubdomain, $cOtap,true);
+      $cCacheFile = $this->GetCacheFileName($cSubdomain, $cOtap, true);
 
       if (file_exists($cCacheFile)) {
         echo file_get_contents($cCacheFile);
@@ -69,7 +115,10 @@ class OneppBase extends Events3Module {
 
 
   /**
+   * Idfix Event Handler
    * Generate the website if columns/section/site is changed
+   * 
+   * @return void
    */
   public function Events3IdfixSaveRecordDone($aRecord) {
     if ($this->IsCorrectConfig()) {
@@ -91,10 +140,10 @@ class OneppBase extends Events3Module {
   /**
    * Check if we are running in the context of the correct config
    * 
-   * @return
+   * @return boolean true if we are running the onepp configuration
    */
   private function IsCorrectConfig() {
-    return (boolean)($this->Idfix->cConfigName == 'onepp');
+    return (boolean)($this->Idfix->cConfigName == self::NAME);
   }
 
   private function CreateWebsite($iSiteId, $cOtap = '') {
@@ -170,9 +219,9 @@ class OneppBase extends Events3Module {
       $cFullDomain = trim(strtolower($_SERVER['HTTP_HOST']));
       $aParts = explode('.', $cFullDomain);
       if (count($aParts) >= 2) {
-         $cTld = array_pop($aParts);
-         $cDomainName = array_pop($aParts);
-         $cSubdomainID = $this->Idfix->ValidIdentifier($cSubdomainID) . '.' .  $cDomainName . '.' . $cTld;
+        $cTld = array_pop($aParts);
+        $cDomainName = array_pop($aParts);
+        $cSubdomainID = $this->Idfix->ValidIdentifier($cSubdomainID) . '.' . $cDomainName . '.' . $cTld;
       }
     }
     //$cSubdomainID = $this->Idfix->ValidIdentifier($cSubdomainID);

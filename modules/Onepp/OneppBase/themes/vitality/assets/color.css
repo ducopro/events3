@@ -1,0 +1,102 @@
+input.form-control:focus {
+  border-color: %color%;
+}
+.btn-primary {
+  background-color: %color%;
+  border-color: %color%;
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary.focus,
+.btn-primary:active,
+.btn-primary.active,
+.open > .dropdown-toggle.btn-primary {
+  background-color: white;
+  border-color: #0878b3;
+}
+.btn-primary.disabled,
+.btn-primary[disabled],
+fieldset[disabled] .btn-primary,
+.btn-primary.disabled:hover,
+.btn-primary[disabled]:hover,
+fieldset[disabled] .btn-primary:hover,
+.btn-primary.disabled:focus,
+.btn-primary[disabled]:focus,
+fieldset[disabled] .btn-primary:focus,
+.btn-primary.disabled.focus,
+.btn-primary[disabled].focus,
+fieldset[disabled] .btn-primary.focus,
+.btn-primary.disabled:active,
+.btn-primary[disabled]:active,
+fieldset[disabled] .btn-primary:active,
+.btn-primary.disabled.active,
+.btn-primary[disabled].active,
+fieldset[disabled] .btn-primary.active {
+  background-color: %color%;
+  border-color: %color%;
+}
+.btn-primary .badge {
+  color: %color%;
+}
+a {
+  color: %color%;
+}
+a.navbar-brand i {
+   color: %color%;
+}
+hr.colored {
+  border-color: %color%;
+}
+.text-primary {
+  color: %color%;
+}
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus,
+.navbar-inverse .navbar-nav > .active > a,
+.navbar-inverse .navbar-nav > .active > a:hover,
+.navbar-inverse .navbar-nav > .active > a:focus {
+  color: %color%;
+}
+.navbar-default {
+  background-color: %color%;
+}
+.testimonials .testimonials-carousel .owl-controls .owl-prev,
+.testimonials .testimonials-carousel .owl-controls .owl-next {
+  background-color: %color% !important;
+}
+.about-carousel .owl-controls .owl-prev,
+.about-carousel .owl-controls .owl-next {
+  background-color: %color% !important;
+}
+.portfolio-carousel .owl-controls .owl-prev,
+.portfolio-carousel .owl-controls .owl-next {
+  background-color: %color% !important;
+}
+.portfolio-filter #filters li .filter.active {
+  background-color: %color%;
+  border-color: %color%;
+}
+#portfoliolist .portfolio .portfolio-wrapper .caption .caption-bg {
+  background: %color%;
+}
+.floating-label-form-group-with-focus label {
+  color: %color%;
+}
+.btn-outline-light:hover,
+.btn-outline-light:focus {
+  color: %color%;
+}
+.btn-outline-dark:hover,
+.btn-outline-dark:focus {
+  background: %color%;
+  border-color: %color%;
+}
+.btn-full-width:hover {
+  background-color: %color%;
+}
+
+aside.cta-quote span.quote i {
+   color: %color%;
+   font-style: normal;
+}

@@ -124,8 +124,8 @@ class IdfixUser extends Events3Module {
     $password = $this->Idfix->RenderTemplate('LoginPassword', $aTemplateVars);
 
     // Cache the shit ..
-    header("Cache-Control: no-transform,public,max-age=300,s-maxage=900");
-    header("Pragma: cache");
+    //header("Cache-Control: no-transform,public,max-age=300,s-maxage=900");
+    //header("Pragma: cache");
     // Render the tabular container
     $output = $this->Idfix->RenderTemplate('LoginTabs', compact('form', 'password', 'app'));
   }
@@ -623,6 +623,10 @@ class IdfixUser extends Events3Module {
    *  
    */
   private function Try2LoginWithUsernameAndHashcode() {
+    if(!isset($_SERVER['PATH_INFO'])) {
+      return;
+    }
+    
     $aCommand = explode('/', parse_url(urldecode($_SERVER['PATH_INFO']), PHP_URL_PATH));
     //$this->log($aCommand);
     // Position 7 and 8 should always be the username and hash

@@ -86,6 +86,11 @@ class IdfixStorage extends Events3Module {
 
 
     }
+
+    // Call a hook for triggering a post action
+    $aFields['MainID'] = $iRetval;
+    $this->Idfix->Event('SaveRecordDone', $aFields);
+
     return $iRetval;
   }
 
@@ -146,7 +151,7 @@ class IdfixStorage extends Events3Module {
     if ($cLimit) {
       $cSql .= ' LIMIT ' . $cLimit;
     }
-
+    //echo $cSql;
     $aData = $this->Database->DataQuery($cSql);
 
     // Postprocess the rows
@@ -289,11 +294,13 @@ class IdfixStorage extends Events3Module {
    * @return
    */
   private function LoadPostProcess($aRow) {
-    $aProps = (array )unserialize(@$aRow['data']);
-    $aRow += $aProps;
-    unset($aRow['data']);
-    // Add reference to the current configuaration
-    $aRow['_config'] = $this->Idfix->cConfigName;
+    if (isset($aRow['data'])) {
+      $aProps = (array )unserialize(@$aRow['data']);
+      $aRow += $aProps;
+      unset($aRow['data']);
+      // Add reference to the current configuaration
+      $aRow['_config'] = $this->Idfix->cConfigName;
+    }
     return $aRow;
   }
 
